@@ -1,0 +1,38 @@
+########################################
+# The HyperNEAT specific configuration #
+########################################
+hyperneat:
+  # The threshold value to indicate which links should be included
+  link_threshold: 0.2
+
+  # The weight range defines the minimum and maximum values for weights on substrate connections
+  weight_range: 3
+
+  # The substrate activation function, determines which activation function each node in the substrate will have.
+  substrate_activator: SigmoidSteepenedActivation
+
+  # The CPPN activation functions list to choose from (activation function -> it's selection probability)
+  cppn_activators:
+    - SigmoidBipolarActivation 0.25
+    - GaussianBipolarActivation 0.25
+    - LinearAbsActivation 0.25
+    - SineActivation 0.25
+
+###########################################
+# The ES-HyperNEAT specific configuration #
+###########################################
+es-hyperneat:
+  # InitialDepth defines the initial ES-HyperNEAT sample resolution.
+  initial_depth: 3
+  # Maximal ES-HyperNEAT sample resolution if the variance is still higher than the given division threshold
+  maximal_depth: 3
+
+  # DivisionThreshold defines the substrate division threshold.
+  division_threshold: 0.03
+  # VarianceThreshold defines the variance threshold for the initial sampling.
+  variance_threshold: 0.03
+  # BandingThreshold defines the threshold that determines when points are regarded to be in a band.
+  banding_threshold: 0.3
+
+  # ESIterations defines how many times ES-HyperNEAT should iterativelty discover new hidden nodes.
+  es_iterations: 1
