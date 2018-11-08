@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/viper"
 	"strings"
 	"strconv"
+	"errors"
 )
 
 // The HyperNEAT execution context
@@ -29,21 +30,27 @@ type HyperNEATContext struct {
 	SubstrateActivator     network.NodeActivationType
 }
 
+// Loads context from provided configuration data
 func (h *HyperNEATContext) LoadContext(r io.Reader) error {
 	viper.SetConfigType("YAML")
 	err := viper.ReadConfig(r)
 	if err != nil {
 		return err
 	}
-	h.LinkThershold = viper.GetFloat64("link_threshold")
-	h.WeightRange = viper.GetInt("weight_range")
+	v := viper.Sub("hyperneat")
+	if v == nil {
+		return errors.New("hyperneat subsection not found in configuration")
+	}
+
+	h.LinkThershold = v.GetFloat64("link_threshold")
+	h.WeightRange = v.GetInt("weight_range")
 
 	// read substrate activator
-	subAct := viper.GetString("substrate_activator")
+	subAct := v.GetString("substrate_activator")
 	h.SubstrateActivator = network.NodeActivators.ActivationTypeFromName(subAct)
 
 	// read activation functions list
-	actFns := viper.GetStringSlice("cppn_activators")
+	actFns := v.GetStringSlice("cppn_activators")
 	h.CPPNNodeActivators = make([]network.NodeActivationType, len(actFns))
 	h.CPPNNodeActivatorsProb = make([]float64, len(actFns))
 	for i, line := range actFns {
@@ -57,4 +64,14 @@ func (h *HyperNEATContext) LoadContext(r io.Reader) error {
 	}
 
 	return nil
+}
+
+func (e *HyperNEATContext) LoadFullContext(r io.Reader) error {
+	//var buff bytes.Buffer
+	//tee := io.TeeReader(r, &buff)
+
+	//TODO: implement NEAT context loading
+
+	err := e.LoadContext(r)
+	return err
 }
