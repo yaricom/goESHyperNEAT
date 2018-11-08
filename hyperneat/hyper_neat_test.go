@@ -20,9 +20,13 @@ func TestHyperNEATContext_LoadContext(t *testing.T) {
 	}
 	activators := []network.NodeActivationType{network.SigmoidBipolarActivation,
 		network.GaussianBipolarActivation, network.LinearAbsActivation, network.SineActivation}
+	probs := []float64{0.25, 0.35, 0.15, 0.25}
 	for i, a := range activators {
 		if context.CPPNNodeActivators[i] != a {
 			t.Error("Wrong CPPN activator type at: ", i)
+		}
+		if context.CPPNNodeActivatorsProb[i] != probs[i] {
+			t.Error("Wrong CPPN activator probability at: ", i)
 		}
 	}
 
@@ -40,6 +44,6 @@ const test_hyper_neat_yml = "# The threshold value to indicate which links shoul
 	"# The activation functions list to choose from (activation function -> it's selection probability)\n" +
 	"cppn_activators:\n" +
 	"- SigmoidBipolarActivation 0.25\n" +
-	"- GaussianBipolarActivation 0.25\n" +
-	"- LinearAbsActivation 0.25\n" +
+	"- GaussianBipolarActivation 0.35\n" +
+	"- LinearAbsActivation 0.15\n" +
 	"- SineActivation 0.25\n"
