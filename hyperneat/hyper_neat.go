@@ -9,6 +9,7 @@ import (
 	"strings"
 	"strconv"
 	"errors"
+	"bytes"
 )
 
 // The HyperNEAT execution context
@@ -67,11 +68,16 @@ func (h *HyperNEATContext) LoadContext(r io.Reader) error {
 }
 
 func (e *HyperNEATContext) LoadFullContext(r io.Reader) error {
-	//var buff bytes.Buffer
-	//tee := io.TeeReader(r, &buff)
+	var buff bytes.Buffer
+	tee := io.TeeReader(r, &buff)
 
-	//TODO: implement NEAT context loading
+	// NEAT context loading
+	e.NeatContext = &neat.NeatContext{}
+	err := e.NeatContext.LoadContext(tee)
+	if err != nil {
+		return err
+	}
 
-	err := e.LoadContext(r)
+	err = e.LoadContext(&buff)
 	return err
 }

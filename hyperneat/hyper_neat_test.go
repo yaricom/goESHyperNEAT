@@ -2,17 +2,20 @@ package hyperneat
 
 import (
 	"testing"
-	"bytes"
 	"github.com/yaricom/goNEAT/neat/network"
 	"errors"
 	"fmt"
+	"os"
 )
 
 func TestHyperNEATContext_LoadContext(t *testing.T) {
-	r := bytes.NewBufferString(test_hyper_neat_yml)
+	r, err := os.Open("../data/test_es_hyper.neat.yml")
+	if err != nil {
+		t.Error("Failed to open config file", err)
+	}
 
 	context := &HyperNEATContext{}
-	err := context.LoadContext(r)
+	err = context.LoadContext(r)
 	if err != nil {
 		t.Error(err)
 	}
@@ -43,14 +46,3 @@ func checkHyperNEATContext(context *HyperNEATContext) error {
 	}
 	return nil
 }
-
-const test_hyper_neat_yml =
-	"hyperneat:\n" +
-	"  link_threshold: 0.2\n" +
-	"  weight_range: 3\n" +
-	"  substrate_activator: SigmoidSteepenedActivation\n" +
-	"  cppn_activators:\n" +
-	"    - SigmoidBipolarActivation 0.25\n" +
-	"    - GaussianBipolarActivation 0.35\n" +
-	"    - LinearAbsActivation 0.15\n" +
-	"    - SineActivation 0.25\n"

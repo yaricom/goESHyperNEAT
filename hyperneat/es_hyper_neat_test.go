@@ -2,14 +2,17 @@ package hyperneat
 
 import (
 	"testing"
-	"bytes"
 	"errors"
+	"os"
 )
 
 func TestESHyperNEATContext_LoadContext(t *testing.T) {
-	r := bytes.NewBufferString(test_es_hyper_neat_yml)
+	r, err := os.Open("../data/test_es_hyper.neat.yml")
+	if err != nil {
+		t.Error("Failed to open config file", err)
+	}
 	context := &ESHyperNEATContext{}
-	err := context.LoadContext(r)
+	err = context.LoadContext(r)
 	if err != nil {
 		t.Error(err)
 	}
@@ -21,9 +24,12 @@ func TestESHyperNEATContext_LoadContext(t *testing.T) {
 }
 
 func TestESHyperNEATContext_LoadFullContext(t *testing.T) {
-	r := bytes.NewBufferString(test_hyper_neat_yml + "\n" + test_es_hyper_neat_yml)
+	r, err := os.Open("../data/test_es_hyper.neat.yml")
+	if err != nil {
+		t.Error("Failed to open config file", err)
+	}
 	context := &ESHyperNEATContext{}
-	err := context.LoadFullContext(r)
+	err = context.LoadFullContext(r)
 	if err != nil {
 		t.Error(err)
 	}
@@ -60,12 +66,3 @@ func checkESHyperNEATContext(context *ESHyperNEATContext) error {
 	}
 	return nil
 }
-
-const test_es_hyper_neat_yml =
-	"es-hyperneat:\n" +
-	"  initial_depth: 3\n" +
-	"  maximal_depth: 5\n" +
-	"  division_threshold: 0.01\n" +
-	"  variance_threshold: 0.03\n" +
-	"  banding_threshold: 0.3\n" +
-	"  es_iterations: 1\n"
