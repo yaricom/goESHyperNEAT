@@ -7,7 +7,7 @@ The implementation of Evolvable-Substrate HyperNEAT (ES-HyperNEAT) algorithm in 
 The **HyperNEAT** is hypercube-based extension of NEAT allowing to encode ANNs in the substrate with specific geometric topology and with significant
 number of neural units. In this respect it is similar to it's biological equivalent (brain) which also has defined topological
 structure with groups of neural units in different regions performing different cognitive tasks. Another definitive trait
-of HyperNEAT is usage of [Compositional Pattern Producing Network][7] (CPPN) to generate patterns of weights between network nodes
+of HyperNEAT is usage of [Compositional Pattern Producing Network][7] (**CPPN**) to generate patterns of weights between network nodes
 which allows to compactly encode huge neural network structures.
 
 With all the power of **HyperNEAT** algorithm is has major drawback that neural nodes must be manually placed into substrate
@@ -15,7 +15,7 @@ by human before algorithm execution to reflect inherent geometrical topology of 
 of hidden nodes in the network this leads to the reduction of algorithm efficiency due to lack of ability to estimate where
 CPPN generated patterns will have intersection with manually seeded nodes.
 
-This drawback is addressed by Evolved-Substrate HyperNEAT  method which allows to encode hidden nodes position
+This drawback is addressed by **Evolved-Substrate HyperNEAT** method which allows to encode hidden nodes position
 in the substrate in the CPPN generated patterns of weights. As additional benefit of this the substrate is able to evolve it's
 geometrical topology during training, producing regions with varying neural density, thereby providing a kind of scaffolding
 for situating cognitive structures in the biological brains.
