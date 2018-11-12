@@ -2,6 +2,11 @@
 // NEAT algorithm implementation
 package cppn
 
+// Defines point with float precision coordinates
+type PointF struct {
+	X, Y float64
+}
+
 // Defines the quad-point in the 4 dimensional hypercube
 type QuadPoint struct {
 	// The associated coordinates
@@ -13,17 +18,17 @@ type QuadPoint struct {
 // Defines quad-tree node to model 4 dimensional hypercube
 type QuadNode struct {
 	// The coordinates of center of this quad-tree node's square
-	X, Y   float64
+	X, Y  float64
 	// The width of this quad-tree node's square
-	Width  float64
+	Width float64
 
-	// The weight of link encoded by this node
-	Weight float64
+	// The CPPN activation level for this node
+	W     float64
 	// The level of this node in the quad-tree
-	Level  int
+	Level int
 
 	// The children of this node
-	Nodes  []*QuadNode
+	Nodes []*QuadNode
 }
 
 // Creates new quad-node with given parameters
@@ -32,7 +37,7 @@ func NewQuadNode(x, y, width float64, level int) *QuadNode {
 		X:x,
 		Y:y,
 		Width:width,
-		Weight:0.0,
+		W:0.0,
 		Level:level,
 		Nodes:make([]*QuadNode, 0),
 	}
