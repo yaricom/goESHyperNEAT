@@ -2,9 +2,15 @@
 // NEAT algorithm implementation
 package cppn
 
+import "fmt"
+
 // Defines point with float precision coordinates
 type PointF struct {
 	X, Y float64
+}
+
+func (p *PointF) String() string {
+	return fmt.Sprintf("(%f, %f)", p.X, p.Y)
 }
 
 // Defines the quad-point in the 4 dimensional hypercube
@@ -13,6 +19,10 @@ type QuadPoint struct {
 	X1, X2, Y1, Y2 float64
 	// The value for this point
 	Value          float64
+}
+
+func (q *QuadPoint) String() string {
+	return fmt.Sprintf("((%f, %f),(%f, %f)) = %f", q.X1, q.Y1, q.X2, q.Y2, q.Value)
 }
 
 // Defines quad-tree node to model 4 dimensional hypercube
@@ -29,6 +39,10 @@ type QuadNode struct {
 
 	// The children of this node
 	Nodes []*QuadNode
+}
+
+func (q *QuadNode) String() string {
+	return fmt.Sprintf("((%f, %f), %f) = %f at %d", q.X, q.Y, q.Width, q.W, q.Level)
 }
 
 // Creates new quad-node with given parameters
