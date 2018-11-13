@@ -1,12 +1,15 @@
 package cppn
 
-import "github.com/yaricom/goNEAT/neat/network"
+import (
+	"github.com/yaricom/goNEAT/neat/network"
+	"errors"
+)
 
 
 // Defines layout of neurons in the substrate
 type SubtrateLayout interface {
-	// Returns coordinates of next neuron with specified type
-	NextNode(index int, n_type network.NodeType) PointF
+	// Returns coordinates of the neuron with specified index [0; count) and type
+	NodePosition(index int, n_type network.NodeNeuronType) (*PointF, error)
 
 	// Returns number of BIAS neurons in the layout
 	BiasCount() int
@@ -53,6 +56,44 @@ func NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount int)
 		s.outputDelta = 2.0 / float64(outputCount)
 	}
 	return &s
+}
+
+func (g *GridSubstrateLayout) NodePosition(index int, n_type network.NodeNeuronType) (*PointF, error) {
+	if index < 0 {
+		return nil, errors.New("The neuron index can not be negative")
+	}
+	point := PointF{X:0.0, Y:0.0}
+	delta := 0.0
+	count := 0
+	switch n_type {
+	case network.BiasNeuron:
+		count = g.biasCount
+
+	case network.HiddenNeuron:
+		delta = g.hiddenDelta
+		count = g.hiddenCount
+
+	case network.InputNeuron:
+		delta = g.inputDelta
+		count = g.inputCount
+		point.Y = -1.0
+
+	case network.OutputNeuron:
+		delta = g.outputDelta
+		count = g.outputCount
+		point.Y = 1.0
+	}
+
+	if index >= count {
+		return nil, errors.New("The neuron's index is out of range")
+	} else if n_type == network.BiasNeuron {
+		return &point, nil
+	}
+	// calculate X position
+	point.X = -1.0 + delta / 2.0 // the initial position with half delta shift
+	point.X += float64(index) * delta
+
+	return &point, nil
 }
 
 func (g *GridSubstrateLayout) BiasCount() int {
