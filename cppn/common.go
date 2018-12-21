@@ -2,7 +2,13 @@
 // NEAT algorithm implementation
 package cppn
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/yaricom/goESHyperNEAT/hyperneat"
+	"github.com/yaricom/goNEAT/neat/network"
+	"math"
+	"errors"
+)
 
 // Defines point with float precision coordinates
 type PointF struct {
@@ -56,4 +62,41 @@ func NewQuadNode(x, y, width float64, level int) *QuadNode {
 		Nodes:make([]*QuadNode, 0),
 	}
 	return &node
+}
+
+// Creates link between source and target nodes, given calculated CPPN output for their coordinates
+func createLink(cppnOutput float64, srcIndx, dstIndx int, context *hyperneat.HyperNEATContext) network.FastNetworkLink {
+	weight := (math.Abs(cppnOutput) - context.LinkThershold) / (1 - context.LinkThershold) // normalize [0, 1]
+	weight *= context.WeightRange // scale to fit given weight range
+	if math.Signbit(cppnOutput) {
+		weight *= -1 // restore sign
+	}
+	link := network.FastNetworkLink{
+		Weight:weight,
+		SourceIndx:srcIndx,
+		TargetIndx:dstIndx,
+	}
+	return &link
+}
+
+// Calculates outputs of provided CPPN network solver with given hypercube coordinates.
+func queryCPPN(coordinates[]float64, cppn network.NetworkSolver) ([]float64, error) {
+	// flush networks activation from previous run
+	if res, err := cppn.Flush(); err != nil {
+		return nil, err
+	} else if !res {
+		return nil, errors.New("failed to flush CPPN network")
+	}
+	// load inputs
+	if err := cppn.LoadSensors(coordinates); err != nil {
+		return nil, err
+	}
+	// do activations
+	if res, err := cppn.RecursiveSteps(); err != nil {
+		return nil, err
+	} else if !res {
+		return nil, errors.New("failed to relax CPPN network recursively")
+	}
+
+	return cppn.ReadOutputs(), nil
 }
