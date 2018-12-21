@@ -39,7 +39,7 @@ func TestGridSubstrateLayout_NodePosition(t *testing.T) {
 	}
 }
 
-func checkNeuronLayoutPositions(positions[]float64, n_type network.NodeNeuronType, layout SubtrateLayout, t *testing.T) {
+func checkNeuronLayoutPositions(positions[]float64, n_type network.NodeNeuronType, layout SubstrateLayout, t *testing.T) {
 	count := len(positions) / 2
 	for i := 0; i < count; i++ {
 		pos, err := layout.NodePosition(i, n_type)

@@ -3,11 +3,12 @@ package cppn
 import (
 	"github.com/yaricom/goNEAT/neat/network"
 	"errors"
+	"fmt"
 )
 
 
 // Defines layout of neurons in the substrate
-type SubtrateLayout interface {
+type SubstrateLayout interface {
 	// Returns coordinates of the neuron with specified index [0; count) and type
 	NodePosition(index int, n_type network.NodeNeuronType) (*PointF, error)
 
@@ -24,13 +25,13 @@ type SubtrateLayout interface {
 // Defines grid substrate layout
 type GridSubstrateLayout struct {
 	// The number of bias nodes encoded in this substrate
-	biasCount      int
+	biasCount   int
 	// The number of input nodes encoded in this substrate
-	inputCount     int
+	inputCount  int
 	// The number of hidden nodes encoded in this substrate
-	hiddenCount    int
+	hiddenCount int
 	// The number of output nodes encoded in this substrate
-	outputCount    int
+	outputCount int
 
 	// The input coordinates increment
 	inputDelta  float64
@@ -42,7 +43,7 @@ type GridSubstrateLayout struct {
 
 // Creates new instance with specified number of nodes to create layout for
 func NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount int) *GridSubstrateLayout {
-	s := GridSubstrateLayout{biasCount:biasCount, inputCount:inputCount, outputCount:outputCount,hiddenCount:hiddenCount}
+	s := GridSubstrateLayout{biasCount:biasCount, inputCount:inputCount, outputCount:outputCount, hiddenCount:hiddenCount}
 
 	if s.inputCount != 0 {
 		s.inputDelta = 2.0 / float64(inputCount)
@@ -67,7 +68,7 @@ func (g *GridSubstrateLayout) NodePosition(index int, n_type network.NodeNeuronT
 	count := 0
 	switch n_type {
 	case network.BiasNeuron:
-		count = g.biasCount
+		return &point, nil // BIAS always located at (0, 0)
 
 	case network.HiddenNeuron:
 		delta = g.hiddenDelta
@@ -110,4 +111,10 @@ func (g *GridSubstrateLayout) HiddenCount() int {
 
 func (g *GridSubstrateLayout) OutputCount() int {
 	return g.outputCount
+}
+
+func (g *GridSubstrateLayout) String() string {
+	str := fmt.Sprintf("GridSubstrateLayout:\n\tINPT: %d\n\tHIDN: %d\n\tOUTP: %d\n\tBIAS: %d",
+		g.inputCount, g.hiddenCount, g.outputCount, g.biasCount)
+	return str
 }
