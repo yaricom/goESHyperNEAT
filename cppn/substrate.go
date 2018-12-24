@@ -19,7 +19,7 @@ type Substrate struct {
 }
 
 // Creates new instance
-func NewSubstrate(layout *SubstrateLayout, nodesActivation network.NodeActivationType) *Substrate {
+func NewSubstrate(layout SubstrateLayout, nodesActivation network.NodeActivationType) *Substrate {
 	substr := Substrate{
 		Layout:layout,
 		NodesActivation:nodesActivation,
@@ -189,7 +189,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, context *hyp
 	solver := network.NewFastModularNetworkSolver(
 		s.Layout.BiasCount(), s.Layout.InputCount(), s.Layout.OutputCount(), totalNeuronCount,
 		activations, connections, biasList, nil)
-	return solver
+	return solver, nil
 }
 
 
