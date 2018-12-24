@@ -1,5 +1,6 @@
 # The seed genome configuration for GenomeBuilder testing
-genome: {id: 26045}
+genome:
+  id: 26045
   # The traits used in this genome
   traits:
     - trait: {id: 1,  params: [0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
