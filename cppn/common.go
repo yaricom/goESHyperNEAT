@@ -65,7 +65,7 @@ func NewQuadNode(x, y, width float64, level int) *QuadNode {
 }
 
 // Creates link between source and target nodes, given calculated CPPN output for their coordinates
-func createLink(cppnOutput float64, srcIndx, dstIndx int, context *hyperneat.HyperNEATContext) network.FastNetworkLink {
+func createLink(cppnOutput float64, srcIndx, dstIndx int, context *hyperneat.HyperNEATContext) *network.FastNetworkLink {
 	weight := (math.Abs(cppnOutput) - context.LinkThershold) / (1 - context.LinkThershold) // normalize [0, 1]
 	weight *= context.WeightRange // scale to fit given weight range
 	if math.Signbit(cppnOutput) {
