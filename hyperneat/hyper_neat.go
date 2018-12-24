@@ -48,7 +48,9 @@ func (h *HyperNEATContext) LoadContext(r io.Reader) error {
 
 	// read substrate activator
 	subAct := v.GetString("substrate_activator")
-	h.SubstrateActivator = network.NodeActivators.ActivationTypeFromName(subAct)
+	if h.SubstrateActivator, err = network.NodeActivators.ActivationTypeFromName(subAct); err != nil {
+		return err
+	}
 
 	// read activation functions list
 	actFns := v.GetStringSlice("cppn_activators")
@@ -56,12 +58,14 @@ func (h *HyperNEATContext) LoadContext(r io.Reader) error {
 	h.CPPNNodeActivatorsProb = make([]float64, len(actFns))
 	for i, line := range actFns {
 		fields := strings.Fields(line)
-		h.CPPNNodeActivators[i] = network.NodeActivators.ActivationTypeFromName(fields[0])
-		prob, err := strconv.ParseFloat(fields[1], 64)
-		if err != nil {
+		if h.CPPNNodeActivators[i], err  = network.NodeActivators.ActivationTypeFromName(fields[0]); err != nil {
 			return err
 		}
-		h.CPPNNodeActivatorsProb[i] = prob
+		if prob, err := strconv.ParseFloat(fields[1], 64); err != nil {
+			return err
+		} else {
+			h.CPPNNodeActivatorsProb[i] = prob
+		}
 	}
 
 	return nil
