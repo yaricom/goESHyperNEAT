@@ -68,7 +68,11 @@ func (g *GridSubstrateLayout) NodePosition(index int, n_type network.NodeNeuronT
 	count := 0
 	switch n_type {
 	case network.BiasNeuron:
-		return &point, nil // BIAS always located at (0, 0)
+		if index < g.biasCount {
+			return &point, nil // BIAS always located at (0, 0)
+		} else {
+			return nil, errors.New("The BIAS index is out of range")
+		}
 
 	case network.HiddenNeuron:
 		delta = g.hiddenDelta
