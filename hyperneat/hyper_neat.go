@@ -20,7 +20,7 @@ type HyperNEATContext struct {
 	// The threshold value to indicate which links should be included
 	LinkThershold          float64
 	// The weight range defines the minimum and maximum values for weights on substrate connections, they go from -WeightRange to +WeightRange, and can be any integer
-	WeightRange            int
+	WeightRange            float64
 
 	// The CPPN neuron nodes activation functions list to choose from
 	CPPNNodeActivators     []network.NodeActivationType
@@ -44,7 +44,7 @@ func (h *HyperNEATContext) LoadContext(r io.Reader) error {
 	}
 
 	h.LinkThershold = v.GetFloat64("link_threshold")
-	h.WeightRange = v.GetInt("weight_range")
+	h.WeightRange = v.GetFloat64("weight_range")
 
 	// read substrate activator
 	subAct := v.GetString("substrate_activator")
