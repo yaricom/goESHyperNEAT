@@ -51,7 +51,7 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 		return
 	}
 
-	solver, err := substr.CreateNetworkSolver(cppn, context)
+	solver, err := substr.CreateNetworkSolver(cppn, nil, context)
 	if err != nil {
 		t.Error(err)
 		return
