@@ -14,34 +14,34 @@ type GraphBuilder interface {
 	// Adds edge between two graph nodes
 	AddWeightedEdge(sourceId, targetId int, weight float64) error
 
-	// Serialize built graph to the provided writer
-	Marshall(w io.Writer) error
+	// Marshal graph to the provided writer
+	Marshal(w io.Writer) error
+	// Unmarshal graph from the provided reader
+	UnMarshal(r io.Reader) error
 }
 
 // The graph builder based on GraphML specification
 type GraphMLBuilder struct {
 	// The GraphML instance
 	graphML  *graphml.GraphML
-	// The current graph instance
-	graph    *graphml.Graph
+
+	// The flag to indicate whether marshal should generate compact graph presentation
+	compact  bool
 
 	// The map to hold already added nodes
 	nodesMap map[int]*graphml.Node
 }
 
-// Creates new instance with specified description to be included into serialized graph
-func NewGraphMLBuilder(description string) (*GraphMLBuilder, error) {
+// Creates new instance with specified description to be included into serialized graph. If compact is true than graph
+// will be marshaled into compact form
+func NewGraphMLBuilder(description string, compact bool) (*GraphMLBuilder, error) {
 	graph_builder := &GraphMLBuilder{
 		nodesMap:make(map[int]*graphml.Node),
+		compact:compact,
 	}
 
 	// create GraphML
 	graph_builder.graphML = graphml.NewGraphML(description)
-	if graph, err := graph_builder.graphML.AddGraph("", graphml.EdgeDirectionDirected, nil); err != nil {
-		return nil, err
-	} else {
-		graph_builder.graph = graph
-	}
 
 	return graph_builder, nil
 }
@@ -58,7 +58,9 @@ func (gml *GraphMLBuilder) AddNode(nodeId int, nodeNeuronType network.NodeNeuron
 	n_attr["Y"] = position.Y
 
 	// add node to the graph
-	if node, err := gml.graph.AddNode(n_attr, ""); err != nil {
+	if graph, err := gml.graph(); err != nil {
+		return err
+	} else if node, err := graph.AddNode(n_attr, ""); err != nil {
 		return err
 	} else {
 		// store node
@@ -67,7 +69,7 @@ func (gml *GraphMLBuilder) AddNode(nodeId int, nodeNeuronType network.NodeNeuron
 	return nil
 }
 
-func (gml *GraphMLBuilder) AddWeightedEdge(sourceId, targetId int, weight float64) error {
+func (gml *GraphMLBuilder) AddWeightedEdge(sourceId, targetId int, weight float64) (err error) {
 	// create attributes map
 	e_attr := make(map[string]interface{})
 	e_attr["weight"] = weight
@@ -83,6 +85,37 @@ func (gml *GraphMLBuilder) AddWeightedEdge(sourceId, targetId int, weight float6
 	if target, ok = gml.nodesMap[targetId]; !ok {
 		return errors.New("target node not found")
 	}
-	_, err := gml.graph.AddEdge(source, target, e_attr, graphml.EdgeDirectionDefault, "")
+
+	if graph, err := gml.graph(); err != nil {
+		return err
+	} else {
+		_, err = graph.AddEdge(source, target, e_attr, graphml.EdgeDirectionDefault, "")
+	}
 	return err
+}
+
+func (gml *GraphMLBuilder) Marshal(w io.Writer) error {
+	return gml.graphML.Encode(w, !gml.compact)
+}
+
+func (gml *GraphMLBuilder) UnMarshal(r io.Reader) error {
+	if err := gml.graphML.Decode(r); err != nil {
+		return err
+	} else if len(gml.graphML.Graphs) != 1 {
+		return errors.New("none or more than one graph detected")
+	}
+	return nil
+}
+
+// returns graph associated with this builder
+func (gml *GraphMLBuilder) graph() (*graphml.Graph, error) {
+	if len(gml.graphML.Graphs) == 0 {
+		// add new graph
+		if graph, err := gml.graphML.AddGraph("", graphml.EdgeDirectionDirected, nil); err != nil {
+			return nil, err
+		} else {
+			return graph, nil
+		}
+	}
+	return gml.graphML.Graphs[0], nil
 }
