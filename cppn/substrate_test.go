@@ -6,6 +6,7 @@ import (
 	"github.com/yaricom/goNEAT/neat/genetics"
 	"testing"
 	"github.com/yaricom/goESHyperNEAT/hyperneat"
+	"bytes"
 )
 
 const (
@@ -88,6 +89,76 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 
 	}
 	t.Log(solver)
+}
+
+func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
+	biasCount, inputCount, hiddenCount, outputCount := 1, 4, 2, 2
+	layout := NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount)
+
+	// create graph builder
+	builder, err := NewGraphMLBuilder("", false)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	// create new substrate
+	substr := NewSubstrate(layout, network.SigmoidSteepenedActivation)
+	if substr == nil {
+		t.Error("substr == nil")
+		return
+	}
+	if substr.NodesActivation != network.SigmoidSteepenedActivation {
+		t.Error("substr.NodesActivation != network.SigmoidSteepenedActivation", substr.NodesActivation)
+	}
+
+	// create solver from substrate
+	cppn, err := buildCPPNfromGenome(cppn_hyperneat_test_genome_path)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	context, err := loadHyperNeatContext("../data/test_hyper.neat.yml")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	solver, err := substr.CreateNetworkSolver(cppn, builder, context)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if solver == nil {
+		t.Error("solver == nil")
+	}
+
+	// test builder
+	graph, err := builder.graph()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	s_nodes := biasCount +inputCount+ hiddenCount+ outputCount
+	if len(graph.Nodes) != s_nodes {
+		t.Error("len(graph.Nodes) != s_nodes", len(graph.Nodes), s_nodes)
+	}
+	s_edges := 14
+	if len(graph.Edges) != s_edges {
+		t.Error("len(graph.Edges) != s_edges", len(graph.Edges), s_edges)
+	}
+
+	var buf bytes.Buffer
+	err = builder.Marshal(&buf)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	str_out := buf.String()
+	if len(str_out) != 6000 {
+		t.Error("len(str_out) != 6000", len(str_out))
+	}
+	//t.Log(len(str_out))
+	//t.Log(str_out)
 }
 
 // Loads HyperNeat context from provided config file's path
