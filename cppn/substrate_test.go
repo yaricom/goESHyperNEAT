@@ -1,12 +1,14 @@
 package cppn
 
 import (
-	"github.com/yaricom/goNEAT/neat/network"
 	"os"
-	"github.com/yaricom/goNEAT/neat/genetics"
 	"testing"
-	"github.com/yaricom/goESHyperNEAT/hyperneat"
 	"bytes"
+
+	"github.com/yaricom/goNEAT/neat/utils"
+	"github.com/yaricom/goESHyperNEAT/hyperneat"
+	"github.com/yaricom/goNEAT/neat/genetics"
+	"github.com/yaricom/goNEAT/neat/network"
 )
 
 const (
@@ -18,11 +20,11 @@ func TestNewSubstrate(t *testing.T) {
 	layout := NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount)
 
 	// create new substrate
-	substr := NewSubstrate(layout, network.SigmoidSteepenedActivation)
+	substr := NewSubstrate(layout, utils.SigmoidSteepenedActivation)
 	if substr == nil {
 		t.Error("substr == nil")
 	}
-	if substr.NodesActivation != network.SigmoidSteepenedActivation {
+	if substr.NodesActivation != utils.SigmoidSteepenedActivation {
 		t.Error("substr.NodesActivation != network.SigmoidSteepenedActivation", substr.NodesActivation)
 	}
 }
@@ -32,11 +34,11 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 	layout := NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount)
 
 	// create new substrate
-	substr := NewSubstrate(layout, network.SigmoidSteepenedActivation)
+	substr := NewSubstrate(layout, utils.SigmoidSteepenedActivation)
 	if substr == nil {
 		t.Error("substr == nil")
 	}
-	if substr.NodesActivation != network.SigmoidSteepenedActivation {
+	if substr.NodesActivation != utils.SigmoidSteepenedActivation {
 		t.Error("substr.NodesActivation != network.SigmoidSteepenedActivation", substr.NodesActivation)
 	}
 
@@ -103,12 +105,12 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 	}
 
 	// create new substrate
-	substr := NewSubstrate(layout, network.SigmoidSteepenedActivation)
+	substr := NewSubstrate(layout, utils.SigmoidSteepenedActivation)
 	if substr == nil {
 		t.Error("substr == nil")
 		return
 	}
-	if substr.NodesActivation != network.SigmoidSteepenedActivation {
+	if substr.NodesActivation != utils.SigmoidSteepenedActivation {
 		t.Error("substr.NodesActivation != network.SigmoidSteepenedActivation", substr.NodesActivation)
 	}
 
@@ -138,7 +140,7 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	s_nodes := biasCount +inputCount+ hiddenCount+ outputCount
+	s_nodes := biasCount + inputCount + hiddenCount + outputCount
 	if len(graph.Nodes) != s_nodes {
 		t.Error("len(graph.Nodes) != s_nodes", len(graph.Nodes), s_nodes)
 	}

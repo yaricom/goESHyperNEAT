@@ -2,9 +2,11 @@ package cppn
 
 import (
 	"testing"
-	"github.com/yaricom/goNEAT/neat/network"
 	"bytes"
 	"strings"
+
+	"github.com/yaricom/goNEAT/neat/utils"
+	"github.com/yaricom/goNEAT/neat/network"
 )
 
 func TestNewGraphMLBuilder(t *testing.T) {
@@ -45,7 +47,7 @@ func TestGraphMLBuilder_AddNode(t *testing.T) {
 	for _, node := range nodes {
 		position := &PointF{X:node["X"].(float64), Y:node["Y"].(float64)}
 		if err := builder.AddNode(node["id"].(int), node["NodeNeuronType"].(network.NodeNeuronType),
-			node["NodeActivationType"].(network.NodeActivationType), position); err != nil {
+			node["NodeActivationType"].(utils.NodeActivationType), position); err != nil {
 			t.Error(err)
 			return
 		}
@@ -77,7 +79,7 @@ func TestGraphMLBuilder_AddNode(t *testing.T) {
 					t.Error("gn_attr[k] != nnt", gn_attr[k], nnt)
 				}
 			} else if k == "NodeActivationType" {
-				nat, err := network.NodeActivators.ActivationNameFromType(v.(network.NodeActivationType))
+				nat, err := utils.NodeActivators.ActivationNameFromType(v.(utils.NodeActivationType))
 				if err != nil {
 					t.Error(err)
 					return
@@ -109,7 +111,7 @@ func TestGraphMLBuilder_AddWeightedEdge(t *testing.T) {
 	for _, node := range nodes {
 		position := &PointF{X:node["X"].(float64), Y:node["Y"].(float64)}
 		if err := builder.AddNode(node["id"].(int), node["NodeNeuronType"].(network.NodeNeuronType),
-			node["NodeActivationType"].(network.NodeActivationType), position); err != nil {
+			node["NodeActivationType"].(utils.NodeActivationType), position); err != nil {
 			t.Error(err)
 			return
 		}
@@ -167,7 +169,7 @@ func TestGraphMLBuilder_Marshal(t *testing.T) {
 	for _, node := range nodes {
 		position := &PointF{X:node["X"].(float64), Y:node["Y"].(float64)}
 		if err := builder.AddNode(node["id"].(int), node["NodeNeuronType"].(network.NodeNeuronType),
-			node["NodeActivationType"].(network.NodeActivationType), position); err != nil {
+			node["NodeActivationType"].(utils.NodeActivationType), position); err != nil {
 			t.Error(err)
 			return
 		}
@@ -235,11 +237,11 @@ func createTestEdges() []map[string]interface{} {
 
 func createTestNodes() []map[string]interface{} {
 	return []map[string]interface{}{
-		{"id":1, "X":-0.5, "Y":-1.0, "NodeNeuronType":network.InputNeuron, "NodeActivationType":network.NullActivation},
-		{"id":2, "X": 0.5, "Y":-1.0, "NodeNeuronType":network.InputNeuron, "NodeActivationType":network.NullActivation},
-		{"id":3, "X": 0.0, "Y": 0.0, "NodeNeuronType":network.HiddenNeuron, "NodeActivationType":network.SigmoidSteepenedActivation},
-		{"id":4, "X": 0.0, "Y": 0.0, "NodeNeuronType":network.HiddenNeuron, "NodeActivationType":network.SigmoidSteepenedActivation},
-		{"id":5, "X": 0.0, "Y": 1.0, "NodeNeuronType":network.OutputNeuron, "NodeActivationType":network.LinearActivation},
+		{"id":1, "X":-0.5, "Y":-1.0, "NodeNeuronType":network.InputNeuron, "NodeActivationType":utils.NullActivation},
+		{"id":2, "X": 0.5, "Y":-1.0, "NodeNeuronType":network.InputNeuron, "NodeActivationType":utils.NullActivation},
+		{"id":3, "X": 0.0, "Y": 0.0, "NodeNeuronType":network.HiddenNeuron, "NodeActivationType":utils.SigmoidSteepenedActivation},
+		{"id":4, "X": 0.0, "Y": 0.0, "NodeNeuronType":network.HiddenNeuron, "NodeActivationType":utils.SigmoidSteepenedActivation},
+		{"id":5, "X": 0.0, "Y": 1.0, "NodeNeuronType":network.OutputNeuron, "NodeActivationType":utils.LinearActivation},
 	}
 }
 

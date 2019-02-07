@@ -1,16 +1,18 @@
 package cppn
 
 import (
-	"github.com/yaricom/goNEAT/neat/network"
-	"github.com/yaricom/goGraphML/graphml"
 	"errors"
 	"io"
+	
+	"github.com/yaricom/goNEAT/neat/network"
+	"github.com/yaricom/goNEAT/neat/utils"
+	"github.com/yaricom/goGraphML/graphml"
 )
 
 // The graph builder able to build weighted directed graphs representing substrate networks
 type GraphBuilder interface {
 	// Adds specified node to the graph with provided position
-	AddNode(nodeId int, nodeNeuronType network.NodeNeuronType, nodeActivation network.NodeActivationType, position *PointF) error
+	AddNode(nodeId int, nodeNeuronType network.NodeNeuronType, nodeActivation utils.NodeActivationType, position *PointF) error
 	// Adds edge between two graph nodes
 	AddWeightedEdge(sourceId, targetId int, weight float64) error
 
@@ -46,12 +48,12 @@ func NewGraphMLBuilder(description string, compact bool) (*GraphMLBuilder, error
 	return graph_builder, nil
 }
 
-func (gml *GraphMLBuilder) AddNode(nodeId int, nodeNeuronType network.NodeNeuronType, nodeActivation network.NodeActivationType, position *PointF) (err error) {
+func (gml *GraphMLBuilder) AddNode(nodeId int, nodeNeuronType network.NodeNeuronType, nodeActivation utils.NodeActivationType, position *PointF) (err error) {
 	// create attributes map
 	n_attr := make(map[string]interface{})
 	n_attr["id"] = nodeId
 	n_attr["NodeNeuronType"] = network.NeuronTypeName(nodeNeuronType)
-	if n_attr["NodeActivationType"], err = network.NodeActivators.ActivationNameFromType(nodeActivation); err != nil {
+	if n_attr["NodeActivationType"], err = utils.NodeActivators.ActivationNameFromType(nodeActivation); err != nil {
 		return err
 	}
 	n_attr["X"] = position.X

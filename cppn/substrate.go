@@ -1,10 +1,12 @@
 package cppn
 
 import (
-	"github.com/yaricom/goNEAT/neat/network"
-	"github.com/yaricom/goESHyperNEAT/hyperneat"
 	"errors"
 	"math"
+	
+	"github.com/yaricom/goNEAT/neat/network"
+	"github.com/yaricom/goNEAT/neat/utils"
+	"github.com/yaricom/goESHyperNEAT/hyperneat"
 )
 
 // Represents substrate holding configuration of ANN with weights produced by CPPN. According to HyperNEAT method
@@ -15,11 +17,11 @@ type Substrate struct {
 	Layout          SubstrateLayout
 
 	// The activation function's type for neurons encoded
-	NodesActivation network.NodeActivationType
+	NodesActivation utils.NodeActivationType
 }
 
 // Creates new instance
-func NewSubstrate(layout SubstrateLayout, nodesActivation network.NodeActivationType) *Substrate {
+func NewSubstrate(layout SubstrateLayout, nodesActivation utils.NodeActivationType) *Substrate {
 	substr := Substrate{
 		Layout:layout,
 		NodesActivation:nodesActivation,
@@ -50,11 +52,11 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, graph_builde
 	biasList := make([]float64, totalNeuronCount)
 
 	// inline function to find activation type for a given neuron
-	activationForNeuron := func(n_index int) network.NodeActivationType {
+	activationForNeuron := func(n_index int) utils.NodeActivationType {
 		if n_index < firstOutput {
 			// all bias and input neurons has null activation function associated because they actually has
 			// no inputs to be activated upon
-			return network.NullActivation
+			return utils.NullActivation
 		} else {
 			return s.NodesActivation
 		}
@@ -248,7 +250,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, graph_builde
 	}
 
 	// build activations
-	activations := make([]network.NodeActivationType, totalNeuronCount)
+	activations := make([]utils.NodeActivationType, totalNeuronCount)
 	for i := 0; i < totalNeuronCount; i++ {
 		activations[i] = activationForNeuron(i)
 	}
@@ -260,7 +262,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, graph_builde
 	return solver, nil
 }
 
-func addNodeToBuilder(builder GraphBuilder, nodeId int, nodeType network.NodeNeuronType, nodeActivation network.NodeActivationType, position *PointF) (bool, error) {
+func addNodeToBuilder(builder GraphBuilder, nodeId int, nodeType network.NodeNeuronType, nodeActivation utils.NodeActivationType, position *PointF) (bool, error) {
 	if builder == nil {
 		return false, nil
 	} else if err := builder.AddNode(nodeId, nodeType, nodeActivation, position); err != nil {
