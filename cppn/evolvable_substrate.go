@@ -1,0 +1,84 @@
+package cppn
+
+import (
+	"github.com/yaricom/goNEAT/neat/network"
+	"container/list"
+	"github.com/yaricom/goESHyperNEAT/hyperneat"
+	"math"
+)
+
+// The evolvable substrate holds configuration of ANN produced by CPPN within hypecube where each 4-dimensional point
+// mark connection weight between two ANN units. The topology of ANN is not rigid as in plain substrate and can be evolved
+// by introducing novel nodes to the ANN. This provides extra benefits that the topology of ANN should not be handcrafted
+// by human, but produced during substrate generation from controlling CPPN and nodes locations may be arbitrary that suits
+// the best for the task at hand.
+type EvolvableSubstrate struct {
+	// The CPPN network solver to describe geometry of substrate
+	cppn  network.NetworkSolver
+
+	// The reusable coordinates bufer
+	coord []float64
+}
+
+// Divides and initialize the quadtree from provided coordinates of source (outgoing = true) or target node (outgoing = false) at (a, b).
+// Returns quadtree, in which each quadnode at (x,y) stores CPPN activation level for its position. The initialized
+// quadtree is used in the PruningAndExtraction phase to generate the actual ANN connections.
+func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool, context *hyperneat.ESHyperNEATContext) (root *QuadNode, err error) {
+	root = NewQuadNode(0.0, 0.0, 1.0, 1)
+
+	queue := list.New()
+	queue.PushBack(root)
+
+	for queue.Len() > 0 {
+		// de-queue
+		p := queue.Remove(queue.Front()).(QuadNode)
+
+		// Divide into sub-regions and assign children to parent
+		p.Nodes = append(p.Nodes, NewQuadNode(p.X - p.Width / 2.0, p.Y - p.Width / 2.0, p.Width / 2.0, p.Level + 1))
+		p.Nodes = append(p.Nodes, NewQuadNode(p.X - p.Width / 2.0, p.Y + p.Width / 2.0, p.Width / 2.0, p.Level + 1))
+		p.Nodes = append(p.Nodes, NewQuadNode(p.X + p.Width / 2.0, p.Y - p.Width / 2.0, p.Width / 2.0, p.Level + 1))
+		p.Nodes = append(p.Nodes, NewQuadNode(p.X + p.Width / 2.0, p.Y + p.Width / 2.0, p.Width / 2.0, p.Level + 1))
+
+		for _, c := range p.Nodes {
+			if outgoing {
+				// Querying connection from input or hidden node (Outgoing connectivity pattern)
+				if c.W, err = es.queryCPPN(a, b, c.X, c.Y); err != nil {
+					return nil, err
+				}
+			} else {
+				// Querying connection to output node (Incoming connectivity pattern)
+				if c.W, err = es.queryCPPN(c.X, c.Y, a, b); err != nil {
+					return nil, err
+				}
+			}
+
+		}
+
+		// Divide until initial resolution or if variance is still high
+		if p.Level < context.InitialDepth || (p.Level < context.MaximalDepth && es.variance(p) > context.DivisionThreshold) {
+			for _, c := range p.Nodes {
+				queue.PushBack(c)
+			}
+		}
+	}
+	return root
+}
+
+// Query CPPN associated with this substrate for specified Hypercube coordinate and returns value produced or error if
+// operation failed
+func (es *EvolvableSubstrate) queryCPPN(x1, y1, x2, y2 float64) (float64, error) {
+	es.coord[0] = x1
+	es.coord[1] = y1
+	es.coord[2] = x2
+	es.coord[3] = y2
+
+	if outs, err := queryCPPN(es.coord, es.cppn); err != nil {
+		return math.MaxFloat64, err
+	} else {
+		return outs[0], nil
+	}
+}
+
+func (es *EvolvableSubstrate) variance(node *QuadNode) float64 {
+
+}
