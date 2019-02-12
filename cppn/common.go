@@ -59,7 +59,6 @@ func NewQuadNode(x, y, width float64, level int) *QuadNode {
 		Width:width,
 		W:0.0,
 		Level:level,
-		Nodes:make([]*QuadNode, 0),
 	}
 	return &node
 }
@@ -99,4 +98,44 @@ func queryCPPN(coordinates[]float64, cppn network.NetworkSolver) ([]float64, err
 	}
 
 	return cppn.ReadOutputs(), nil
+}
+
+// Determines variance among CPPN values for certain hypercube region around specified node.
+// This variance is a heuristic indicator of the heterogeneity (i.e. presence of information) of a region.
+func NodeVariance(node *QuadNode) float64 {
+	// quick check
+	if len(node.Nodes) == 0 {
+		return 0.0
+	}
+
+	cppn_vals := nodeCPPNValues(node)
+	// calculate median and variance
+	m, v := 0.0, 0.0
+	for _, f := range cppn_vals {
+		m += f
+	}
+	m /= float64(len(cppn_vals))
+
+	for _, f := range cppn_vals {
+		v += math.Pow(f - m, 2)
+	}
+	v /= float64(len(cppn_vals))
+
+	return v
+}
+
+// Collects the CPPN values stored in a given quadtree node
+// Used to estimate the variance in a certain region of space around node
+func nodeCPPNValues(n *QuadNode) []float64 {
+	if len(n.Nodes) > 0 {
+		accumulator := make([]float64, 0)
+		for _, p := range n.Nodes {
+			// go into child nodes
+			p_vals := nodeCPPNValues(p)
+			accumulator = append(accumulator, p_vals...)
+		}
+		return accumulator
+	} else {
+		return []float64{n.W}
+	}
 }
