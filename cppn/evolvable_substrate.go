@@ -31,13 +31,15 @@ func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool,
 
 	for queue.Len() > 0 {
 		// de-queue
-		p := queue.Remove(queue.Front()).(QuadNode)
+		p := queue.Remove(queue.Front()).(*QuadNode)
 
 		// Divide into sub-regions and assign children to parent
-		p.Nodes = append(p.Nodes, NewQuadNode(p.X - p.Width / 2.0, p.Y - p.Width / 2.0, p.Width / 2.0, p.Level + 1))
-		p.Nodes = append(p.Nodes, NewQuadNode(p.X - p.Width / 2.0, p.Y + p.Width / 2.0, p.Width / 2.0, p.Level + 1))
-		p.Nodes = append(p.Nodes, NewQuadNode(p.X + p.Width / 2.0, p.Y - p.Width / 2.0, p.Width / 2.0, p.Level + 1))
-		p.Nodes = append(p.Nodes, NewQuadNode(p.X + p.Width / 2.0, p.Y + p.Width / 2.0, p.Width / 2.0, p.Level + 1))
+		p.Nodes = []*QuadNode{
+			NewQuadNode(p.X - p.Width / 2.0, p.Y - p.Width / 2.0, p.Width / 2.0, p.Level + 1),
+			NewQuadNode(p.X - p.Width / 2.0, p.Y + p.Width / 2.0, p.Width / 2.0, p.Level + 1),
+			NewQuadNode(p.X + p.Width / 2.0, p.Y - p.Width / 2.0, p.Width / 2.0, p.Level + 1),
+			NewQuadNode(p.X + p.Width / 2.0, p.Y + p.Width / 2.0, p.Width / 2.0, p.Level + 1),
+		}
 
 		for _, c := range p.Nodes {
 			if outgoing {
@@ -55,13 +57,67 @@ func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool,
 		}
 
 		// Divide until initial resolution or if variance is still high
-		if p.Level < context.InitialDepth || (p.Level < context.MaximalDepth && es.variance(p) > context.DivisionThreshold) {
+		if p.Level < context.InitialDepth || (p.Level < context.MaximalDepth && NodeVariance(p) > context.DivisionThreshold) {
 			for _, c := range p.Nodes {
 				queue.PushBack(c)
 			}
 		}
 	}
-	return root
+	return root, nil
+}
+
+// Decides what regions should have higher neuron density based on variation and express new neurons and connections into
+// these regions.
+// Receives coordinates of source (outgoing = true) or target node (outgoing = false) at (a, b) and initialized quadtree node.
+// Adds the connections that are in bands of the two-dimensional cross-section of the  hypercube containing the source
+// or target node to the connections list and return modified list.
+func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections[]*QuadPoint, node *QuadNode, outgoing bool, context *hyperneat.ESHyperNEATContext) ([]*QuadPoint, error) {
+	// fast check
+	if len(node.Nodes) == 0 {
+		return connections, nil
+	}
+
+	// Traverse quadtree depth-first until the current node’s variance is smaller than the variance threshold or
+	// until the node has no children (which means that the variance is zero).
+	left, right, top, bottom := 0.0, 0.0, 0.0, 0.0
+	for _, c := range node.Nodes {
+		childVariance := NodeVariance(c)
+
+		if childVariance >= context.VarianceThreshold {
+			if conn, err := es.pruneAndExpress(a, b, connections, c, outgoing, context); err != nil {
+				return nil, err
+			} else {
+				connections = append(connections, conn...)
+			}
+		} else {
+			// Determine if point is in a band by checking neighbor CPPN values
+			if outgoing {
+				left = math.Abs(c.W - es.queryCPPN(a, b, c.X - node.Width, c.Y))
+				right = math.Abs(c.W - es.queryCPPN(a, b, c.X + node.Width, c.Y))
+				top = math.Abs(c.W - es.queryCPPN(a, b, c.X, c.Y - node.Width))
+				bottom = math.Abs(c.W - es.queryCPPN(a, b, c.X, c.Y + node.Width))
+			} else {
+				left = math.Abs(c.W - es.queryCPPN(c.X - node.Width, c.Y, a, b))
+				right = math.Abs(c.W - es.queryCPPN(c.X + node.Width, c.Y, a, b))
+				top = math.Abs(c.W - es.queryCPPN(c.X, c.Y - node.Width, a, b))
+				bottom = math.Abs(c.W - es.queryCPPN(c.X, c.Y + node.Width, a, b))
+			}
+
+			if math.Max(math.Min(top, bottom), math.Min(left, right)) > context.BandingThreshold {
+				// Create new connection specified by QuadPoint(x1,y1,x2,y2,weight) in 4D hypercube
+				var conn *QuadPoint
+				if outgoing {
+					conn = NewQuadPoint(a, b, c.X, c.Y, c.W)
+				} else {
+					conn = NewQuadPoint(c.X, c.Y, a, b, c.W)
+				}
+
+				connections = append(connections, conn)
+			}
+		}
+	}
+
+	return connections
 }
 
 // Query CPPN associated with this substrate for specified Hypercube coordinate and returns value produced or error if
@@ -77,8 +133,4 @@ func (es *EvolvableSubstrate) queryCPPN(x1, y1, x2, y2 float64) (float64, error)
 	} else {
 		return outs[0], nil
 	}
-}
-
-func (es *EvolvableSubstrate) variance(node *QuadNode) float64 {
-
 }
