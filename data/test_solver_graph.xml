@@ -1,0 +1,147 @@
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+    <key id="d0" for="node" attr.name="Y" attr.type="double"></key>
+    <key id="d1" for="node" attr.name="id" attr.type="int"></key>
+    <key id="d2" for="node" attr.name="NodeNeuronType" attr.type="string"></key>
+    <key id="d3" for="node" attr.name="NodeActivationType" attr.type="string"></key>
+    <key id="d4" for="node" attr.name="X" attr.type="double"></key>
+    <key id="d5" for="edge" attr.name="weight" attr.type="double"></key>
+    <key id="d6" for="edge" attr.name="sourceId" attr.type="int"></key>
+    <key id="d7" for="edge" attr.name="targetId" attr.type="int"></key>
+    <graph id="g0" edgedefault="directed">
+        <node id="n0">
+            <data key="d0">0</data>
+            <data key="d1">0</data>
+            <data key="d2">BIAS</data>
+            <data key="d3">NullActivation</data>
+            <data key="d4">0</data>
+        </node>
+        <node id="n1">
+            <data key="d2">HIDN</data>
+            <data key="d3">SigmoidSteepenedActivation</data>
+            <data key="d4">-0.5</data>
+            <data key="d0">0</data>
+            <data key="d1">7</data>
+        </node>
+        <node id="n2">
+            <data key="d0">0</data>
+            <data key="d1">8</data>
+            <data key="d2">HIDN</data>
+            <data key="d3">SigmoidSteepenedActivation</data>
+            <data key="d4">-0.5</data>
+        </node>
+        <node id="n3">
+            <data key="d1">5</data>
+            <data key="d2">OUTP</data>
+            <data key="d3">SigmoidSteepenedActivation</data>
+            <data key="d4">-0.5</data>
+            <data key="d0">1</data>
+        </node>
+        <node id="n4">
+            <data key="d4">0.5</data>
+            <data key="d0">1</data>
+            <data key="d1">6</data>
+            <data key="d2">OUTP</data>
+            <data key="d3">SigmoidSteepenedActivation</data>
+        </node>
+        <node id="n5">
+            <data key="d0">-1</data>
+            <data key="d1">1</data>
+            <data key="d2">INPT</data>
+            <data key="d3">NullActivation</data>
+            <data key="d4">-0.75</data>
+        </node>
+        <node id="n6">
+            <data key="d1">2</data>
+            <data key="d2">INPT</data>
+            <data key="d3">NullActivation</data>
+            <data key="d4">-0.25</data>
+            <data key="d0">-1</data>
+        </node>
+        <node id="n7">
+            <data key="d1">3</data>
+            <data key="d2">INPT</data>
+            <data key="d3">NullActivation</data>
+            <data key="d4">0.25</data>
+            <data key="d0">-1</data>
+        </node>
+        <node id="n8">
+            <data key="d2">INPT</data>
+            <data key="d3">NullActivation</data>
+            <data key="d4">0.75</data>
+            <data key="d0">-1</data>
+            <data key="d1">4</data>
+        </node>
+        <edge id="e0" source="n0" target="n1">
+            <data key="d5">-0.1365606199840186</data>
+            <data key="d6">0</data>
+            <data key="d7">7</data>
+        </edge>
+        <edge id="e1" source="n0" target="n2">
+            <data key="d5">-0.1365606199840186</data>
+            <data key="d6">0</data>
+            <data key="d7">8</data>
+        </edge>
+        <edge id="e2" source="n0" target="n3">
+            <data key="d5">0.23843938001598142</data>
+            <data key="d6">0</data>
+            <data key="d7">5</data>
+        </edge>
+        <edge id="e3" source="n0" target="n4">
+            <data key="d5">2.011560619984018</data>
+            <data key="d6">0</data>
+            <data key="d7">6</data>
+        </edge>
+        <edge id="e4" source="n5" target="n1">
+            <data key="d5">-2.026403061713073</data>
+            <data key="d6">1</data>
+            <data key="d7">7</data>
+        </edge>
+        <edge id="e5" source="n5" target="n2">
+            <data key="d5">-2.026403061713073</data>
+            <data key="d6">1</data>
+            <data key="d7">8</data>
+        </edge>
+        <edge id="e6" source="n6" target="n1">
+            <data key="d5">-1.4639030617130728</data>
+            <data key="d6">2</data>
+            <data key="d7">7</data>
+        </edge>
+        <edge id="e7" source="n6" target="n2">
+            <data key="d5">-1.4639030617130728</data>
+            <data key="d6">2</data>
+            <data key="d7">8</data>
+        </edge>
+        <edge id="e8" source="n7" target="n1">
+            <data key="d5">-0.901403061713073</data>
+            <data key="d6">3</data>
+            <data key="d7">7</data>
+        </edge>
+        <edge id="e9" source="n7" target="n2">
+            <data key="d5">-0.901403061713073</data>
+            <data key="d6">3</data>
+            <data key="d7">8</data>
+        </edge>
+        <edge id="e10" source="n8" target="n1">
+            <data key="d5">-0.33890306171307316</data>
+            <data key="d6">4</data>
+            <data key="d7">7</data>
+        </edge>
+        <edge id="e11" source="n8" target="n2">
+            <data key="d5">-0.33890306171307316</data>
+            <data key="d6">4</data>
+            <data key="d7">8</data>
+        </edge>
+        <edge id="e12" source="n1" target="n4">
+            <data key="d5">1.4490606199840184</data>
+            <data key="d6">7</data>
+            <data key="d7">6</data>
+        </edge>
+        <edge id="e13" source="n2" target="n4">
+            <data key="d5">1.4490606199840184</data>
+            <data key="d6">8</data>
+            <data key="d7">6</data>
+        </edge>
+    </graph>
+</graphml>

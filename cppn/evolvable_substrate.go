@@ -1,10 +1,11 @@
 package cppn
 
 import (
-	"github.com/yaricom/goNEAT/neat/network"
-	"container/list"
-	"github.com/yaricom/goESHyperNEAT/hyperneat"
 	"math"
+	"container/list"
+
+	"github.com/yaricom/goNEAT/neat/network"
+	"github.com/yaricom/goESHyperNEAT/hyperneat"
 )
 
 // The evolvable substrate holds configuration of ANN produced by CPPN within hypecube where each 4-dimensional point
@@ -18,6 +19,23 @@ type EvolvableSubstrate struct {
 
 	// The reusable coordinates bufer
 	coord []float64
+}
+
+// Creates new instance of evolvable substrate
+func NewEvolvableSubstrate() *EvolvableSubstrate {
+	es := EvolvableSubstrate{
+		coord:make([]float64, 4),
+	}
+	return &es
+}
+
+// Creates network solver based on current substrate layout and provided Compositional Pattern Producing Network which
+// used to define connections between network nodes. Optional graph_builder can be provided to collect graph nodes and edges
+// of created network solver. With graph builder it is possible to save/load network configuration as well as visualize it.
+func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, graph_builder GraphBuilder, context *hyperneat.HyperNEATContext) (network.NetworkSolver, error) {
+	es.cppn = cppn
+
+	return nil, nil
 }
 
 // Divides and initialize the quadtree from provided coordinates of source (outgoing = true) or target node (outgoing = false) at (a, b).
