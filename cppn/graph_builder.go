@@ -121,3 +121,22 @@ func (gml *GraphMLBuilder) graph() (*graphml.Graph, error) {
 	}
 	return gml.graphML.Graphs[0], nil
 }
+
+func addNodeToBuilder(builder GraphBuilder, nodeId int, nodeType network.NodeNeuronType, nodeActivation utils.NodeActivationType, position *PointF) (bool, error) {
+	if builder == nil {
+		return false, nil
+	} else if err := builder.AddNode(nodeId, nodeType, nodeActivation, position); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func addEdgeToBuilder(builder GraphBuilder, sourceId, targetId int, weight float64) (bool, error) {
+	if builder == nil {
+		return false, nil
+	} else if err := builder.AddWeightedEdge(sourceId, targetId, weight); err != nil {
+		return false, err
+	}
+	return true, nil
+
+}
