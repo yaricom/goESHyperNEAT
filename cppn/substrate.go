@@ -67,7 +67,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, graph_builde
 	for bi := firstBias; bi < firstInput; bi++ {
 
 		// the bias coordinates
-		if b_coord, err := s.Layout.NodePosition(bi, network.BiasNeuron); err != nil {
+		if b_coord, err := s.Layout.NodePosition(bi - firstBias, network.BiasNeuron); err != nil {
 			return nil, err
 		} else {
 			coord[0] = b_coord.X
@@ -83,7 +83,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, graph_builde
 		// link the bias to all hidden nodes.
 		for hi := firstHidden; hi < lastHidden; hi++ {
 			// get hidden neuron coordinates
-			if h_coord, err := s.Layout.NodePosition(0, network.HiddenNeuron); err != nil {
+			if h_coord, err := s.Layout.NodePosition(hi - firstHidden, network.HiddenNeuron); err != nil {
 				return nil, err
 			} else {
 				coord[2] = h_coord.X
@@ -156,7 +156,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, graph_builde
 			}
 			for hi := firstHidden; hi < lastHidden; hi++ {
 				// get hidden neuron coordinates
-				if h_coord, err := s.Layout.NodePosition(0, network.HiddenNeuron); err != nil {
+				if h_coord, err := s.Layout.NodePosition(hi - firstHidden, network.HiddenNeuron); err != nil {
 					return nil, err
 				} else {
 					coord[2] = h_coord.X
@@ -180,7 +180,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, graph_builde
 
 		// link all hidden nodes to all output nodes.
 		for hi := firstHidden; hi < lastHidden; hi++ {
-			if h_coord, err := s.Layout.NodePosition(0, network.HiddenNeuron); err != nil {
+			if h_coord, err := s.Layout.NodePosition(hi - firstHidden, network.HiddenNeuron); err != nil {
 				return nil, err
 			} else {
 				coord[0] = h_coord.X
