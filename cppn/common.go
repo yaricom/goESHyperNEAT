@@ -15,6 +15,10 @@ type PointF struct {
 	X, Y float64
 }
 
+func NewPointF(x, y float64) PointF {
+	return PointF{X:x, Y:y}
+}
+
 func (p *PointF) String() string {
 	return fmt.Sprintf("(%f, %f)", p.X, p.Y)
 }
