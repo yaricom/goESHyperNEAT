@@ -6,6 +6,7 @@ import (
 
 	"github.com/yaricom/goNEAT/neat/network"
 	"github.com/yaricom/goESHyperNEAT/hyperneat"
+	"github.com/yaricom/goNEAT/neat/utils"
 )
 
 // The evolvable substrate holds configuration of ANN produced by CPPN within hypecube where each 4-dimensional point
@@ -14,17 +15,24 @@ import (
 // by human, but produced during substrate generation from controlling CPPN and nodes locations may be arbitrary that suits
 // the best for the task at hand.
 type EvolvableSubstrate struct {
-	// The CPPN network solver to describe geometry of substrate
-	cppn  network.NetworkSolver
+	// The layout of neuron nodes in this substrate
+	Layout          EvolvableSubstrateLayout
+	// The activation function's type for neurons encoded
+	NodesActivation utils.NodeActivationType
 
+
+	// The CPPN network solver to describe geometry of substrate
+	cppn            network.NetworkSolver
 	// The reusable coordinates bufer
-	coord []float64
+	coord           []float64
 }
 
 // Creates new instance of evolvable substrate
-func NewEvolvableSubstrate() *EvolvableSubstrate {
+func NewEvolvableSubstrate(layout EvolvableSubstrateLayout, nodesActivation utils.NodeActivationType) *EvolvableSubstrate {
 	es := EvolvableSubstrate{
 		coord:make([]float64, 4),
+		Layout:layout,
+		NodesActivation:nodesActivation,
 	}
 	return &es
 }
@@ -32,8 +40,151 @@ func NewEvolvableSubstrate() *EvolvableSubstrate {
 // Creates network solver based on current substrate layout and provided Compositional Pattern Producing Network which
 // used to define connections between network nodes. Optional graph_builder can be provided to collect graph nodes and edges
 // of created network solver. With graph builder it is possible to save/load network configuration as well as visualize it.
-func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, graph_builder GraphBuilder, context *hyperneat.HyperNEATContext) (network.NetworkSolver, error) {
+func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, graph_builder GraphBuilder, context *hyperneat.ESHyperNEATContext) (network.NetworkSolver, error) {
 	es.cppn = cppn
+
+	// the network layers will be collected in order: bias, input, output, hidden
+	//firstBias := 0
+	firstInput := es.Layout.BiasCount()
+	firstOutput := firstInput + es.Layout.InputCount()
+	firstHidden := firstOutput + es.Layout.OutputCount()
+
+	connections := make([]*network.FastNetworkLink, 0)
+
+	// Build connections from input nodes to the hidden nodes
+	var root *QuadNode
+	for in := firstInput; in < firstOutput; in++ {
+		// Analyse outgoing connectivity pattern from this input
+		input, err := es.Layout.NodePosition(in - firstInput, network.InputNeuron)
+		if err != nil {
+			return nil, err
+		}
+		// add input node to graph
+		if _, err := addNodeToBuilder(graph_builder, in, network.InputNeuron, es.NodesActivation, input); err != nil {
+			return nil, err
+		}
+
+		if root, err = es.quadTreeDivideAndInit(input.X, input.Y, true, context); err != nil {
+			return nil, err
+		}
+		qPoints := make([]*QuadPoint, 0)
+		if qPoints, err = es.pruneAndExpress(input.X, input.Y, qPoints, root, true, context); err != nil {
+			return nil, err
+		}
+		// iterate over quad points and add nodes/connections
+		for _, qp := range qPoints {
+			nodePoint := NewPointF(qp.X2, qp.Y2)
+			targetIndex := es.Layout.IndexOfHidden(nodePoint)
+			if targetIndex == -1 {
+				// add hidden node to substrate layout
+				if targetIndex, err = es.Layout.AddHiddenNode(nodePoint); err != nil {
+					return nil, err
+				}
+			}
+			targetIndex += firstHidden // adjust index to the global indexes space
+			// add a node to the graph
+			if _, err := addNodeToBuilder(graph_builder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
+				return nil, err
+			}
+			// add connection
+			link := createLink(qp.Value * context.HyperNEAT.WeightRange, in, targetIndex, context)
+			connections = append(connections, link)
+
+			// add an edge to the graph
+			if _, err := addEdgeToBuilder(graph_builder, in, targetIndex, link.Weight); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	// Build more hidden nodes into unexplored area through a number of iterations
+	firstHiddenIter := firstHidden
+	lastHidden := firstHiddenIter + es.Layout.HiddenCount()
+	for step := 0; step < context.ESIterations; step ++ {
+		for hi := firstHiddenIter; hi < lastHidden; hi++ {
+			// Analyse outgoing connectivity pattern from this hidden node
+			hidden, err := es.Layout.NodePosition(hi - firstHidden, network.HiddenNeuron)
+			if err != nil {
+				return err
+			}
+			if root, err = es.quadTreeDivideAndInit(hidden.X, hidden.Y, true, context); err != nil {
+				return nil, err
+			}
+			qPoints := make([]*QuadPoint, 0)
+			if qPoints, err = es.pruneAndExpress(hidden.X, hidden.Y, qPoints, root, true, context); err != nil {
+				return nil, err
+			}
+			// iterate over quad points and add nodes/connections
+			for _, qp := range qPoints {
+				nodePoint := NewPointF(qp.X2, qp.Y2)
+				targetIndex := es.Layout.IndexOfHidden(nodePoint)
+				if targetIndex == -1 {
+					// add hidden node to substrate layout
+					if targetIndex, err = es.Layout.AddHiddenNode(nodePoint); err != nil {
+						return nil, err
+					}
+				}
+				targetIndex += firstHidden // adjust index to the global indexes space
+				// add a node to the graph
+				if _, err := addNodeToBuilder(graph_builder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
+					return nil, err
+				}
+				// add connection
+				link := createLink(qp.Value * context.HyperNEAT.WeightRange, hi, targetIndex, context)
+				connections = append(connections, link)
+
+				// add an edge to the graph
+				if _, err := addEdgeToBuilder(graph_builder, hi, targetIndex, link.Weight); err != nil {
+					return nil, err
+				}
+			}
+		}
+
+		// move to the next window
+		firstHiddenIter = lastHidden
+		lastHidden = lastHidden + (es.Layout.HiddenCount() - lastHidden)
+	}
+
+	// Connect hidden nodes to the output
+	for oi := firstOutput; oi < firstHidden; oi++ {
+		// Analyse incoming connectivity pattern
+		output, err := es.Layout.NodePosition(oi - firstOutput, network.OutputNeuron)
+		if err != nil {
+			return err
+		}
+		// add output node to graph
+		if _, err := addNodeToBuilder(graph_builder, oi, network.OutputNeuron, es.NodesActivation, output); err != nil {
+			return nil, err
+		}
+
+		if root, err = es.quadTreeDivideAndInit(output.X, output.Y, false, context); err != nil {
+			return nil, err
+		}
+		qPoints := make([]*QuadPoint, 0)
+		if qPoints, err = es.pruneAndExpress(output.X, output.Y, qPoints, root, false, context); err != nil {
+			return nil, err
+		}
+		// iterate over quad points and add nodes/connections where appropriate
+		for _, qp := range qPoints {
+			nodePoint := NewPointF(qp.X2, qp.Y2)
+			sourceIndex := es.Layout.IndexOfHidden(nodePoint)
+			if sourceIndex != -1 {
+				// only connect to the hidden nodes that already exists and connected to the input/hidden nodes
+				// add connection
+				sourceIndex += firstHidden // adjust index to the global indexes space
+
+				link := createLink(qp.Value * context.HyperNEAT.WeightRange, sourceIndex, oi, context)
+				connections = append(connections, link)
+
+				// add an edge to the graph
+				if _, err := addEdgeToBuilder(graph_builder, sourceIndex, oi, link.Weight); err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
+	// TODO: connect bias neurons if any
 
 	return nil, nil
 }
@@ -135,7 +286,7 @@ func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections[]*QuadPo
 		}
 	}
 
-	return connections
+	return connections, nil
 }
 
 // Query CPPN associated with this substrate for specified Hypercube coordinate and returns value produced or error if
