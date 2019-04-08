@@ -127,5 +127,5 @@ es-hyperneat:
   # BandingThreshold defines the threshold that determines when points are regarded to be in a band.
   banding_threshold: 0.3
 
-  # ESIterations defines how many times ES-HyperNEAT should iterativelty discover new hidden nodes.
+  # ESIterations defines how many times ES-HyperNEAT should iteratively discover new hidden nodes.
   es_iterations: 1
