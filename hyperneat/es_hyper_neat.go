@@ -21,12 +21,16 @@ type ESHyperNEATContext struct {
 	// the initial resolution is reached, ES-HyperNEAT will sample down further (values greater than 1.0 will disable
 	// this feature). Note that sampling at really high resolutions can become computationally expensive.
 	DivisionThreshold float64
-	// VarianceThreshold defines the variance threshold for the initial sampling.
+	// VarianceThreshold defines the variance threshold for the initial sampling. The bigger this value the less new
+	// connections will be added directly and the more chances that the new collection will be included in bands
+	// (see BandingThreshold)
 	VarianceThreshold float64
-	// BandingThreshold defines the threshold that determines when points are regarded to be in a band.
+	// BandingThreshold defines the threshold that determines when points are regarded to be in a band. If the point
+	// is in the band then no new connection will be added and as result no new hidden node will be introduced.
+	// The bigger this value the less connections/hidden nodes will be added, i.e. wide bands approximation.
 	BandingThreshold  float64
 
-	// ESIterations defines how many times ES-HyperNEAT should iterativelty discover new hidden nodes.
+	// ESIterations defines how many times ES-HyperNEAT should iteratively discover new hidden nodes.
 	ESIterations      int
 }
 
