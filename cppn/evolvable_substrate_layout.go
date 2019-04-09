@@ -15,8 +15,6 @@ type EvolvableSubstrateLayout interface {
 	// Returns index of hidden node at specified position or -1 if not fund
 	IndexOfHidden(position *PointF) int
 
-	// Returns number of BIAS neurons in the layout
-	BiasCount() int
 	// Returns number of INPUT neurons in the layout
 	InputCount() int
 	// Returns number of HIDDEN neurons in the layout

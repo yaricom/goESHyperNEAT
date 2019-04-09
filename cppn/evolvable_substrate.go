@@ -44,8 +44,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 	es.cppn = cppn
 
 	// the network layers will be collected in order: bias, input, output, hidden
-	//firstBias := 0
-	firstInput := es.Layout.BiasCount()
+	firstInput := 0
 	firstOutput := firstInput + es.Layout.InputCount()
 	firstHidden := firstOutput + es.Layout.OutputCount()
 
@@ -60,7 +59,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 			return nil, err
 		}
 		// add input node to graph
-		if _, err := addNodeToBuilder(graph_builder, in, network.InputNeuron, es.NodesActivation, input); err != nil {
+		if _, err := addNodeToBuilder(graph_builder, in, network.InputNeuron, utils.NullActivation, input); err != nil {
 			return nil, err
 		}
 
@@ -170,9 +169,9 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 			sourceIndex := es.Layout.IndexOfHidden(nodePoint)
 			if sourceIndex != -1 {
 				// only connect to the hidden nodes that already exists and connected to the input/hidden nodes
-				// add connection
 				sourceIndex += firstHidden // adjust index to the global indexes space
 
+				// add connection
 				link := createLink(qp.Value * context.HyperNEAT.WeightRange, sourceIndex, oi, context)
 				connections = append(connections, link)
 
@@ -184,9 +183,26 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 		}
 	}
 
-	// TODO: connect bias neurons if any
+	totalNeuronCount := es.Layout.InputCount() + es.Layout.OutputCount() + es.Layout.HiddenCount()
 
-	return nil, nil
+	// build activations
+	activations := make([]utils.NodeActivationType, totalNeuronCount)
+	for i := 0; i < totalNeuronCount; i++ {
+		if i < firstOutput {
+			// input nodes - NULL activation
+			activations[i] = utils.NullActivation
+		} else {
+			// hidden/output nodes - defined activation
+			activations[i] = es.NodesActivation
+		}
+
+	}
+
+	// create fast network solver
+	solver := network.NewFastModularNetworkSolver(
+		0, es.Layout.InputCount(), es.Layout.OutputCount(), totalNeuronCount,
+		activations, connections, nil, nil) // No BIAS
+	return solver, nil
 }
 
 // Divides and initialize the quadtree from provided coordinates of source (outgoing = true) or target node (outgoing = false) at (a, b).
