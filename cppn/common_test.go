@@ -2,11 +2,15 @@ package cppn
 
 import "testing"
 
+const (
+	cppn_hyperneat_test_genome_path = "../data/test_cppn_hyperneat_genome.yml"
+)
+
 func TestQuadNode_NodeVariance(t *testing.T) {
 	root := buildTree()
 
 	// get variance and check results
-	variance := NodeVariance(root)
+	variance := nodeVariance(root)
 	if variance != 3.3877551020408165 {
 		t.Error("variance != 3.3877551020408165", variance)
 	}
@@ -28,6 +32,41 @@ func TestQuadNode_nodeCPPNValues(t *testing.T) {
 		if vals[i] != v {
 			t.Error("vals[i] != v, at:", i, vals[i], v)
 		}
+	}
+}
+
+func TestReadCPPNfromGenomeFile(t *testing.T) {
+	cppn, err := ReadCPPNfromGenomeFile(cppn_hyperneat_test_genome_path)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if cppn == nil {
+		t.Error("cppn == nil")
+		return
+	}
+	if cppn.NodeCount() != 7 {
+		t.Error("cppn.NodeCount() != 7", cppn.NodeCount())
+	}
+	if cppn.LinkCount() != 7 {
+		t.Error("cppn.LinkCount() != 7", cppn.LinkCount())
+	}
+	// test query
+	coords := []float64{0.0, 0.0, 0.5, 0.5}
+	outs, err := queryCPPN(coords, cppn)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if outs == nil {
+		t.Error("outs == nil")
+		return
+	}
+	if len(outs) != 1 {
+		t.Error("len(outs) != 1", len(outs))
+	}
+	if outs[0] != 0.4864161653290716 {
+		t.Error("uts[0] != 0.4864161653290716", outs[0])
 	}
 }
 

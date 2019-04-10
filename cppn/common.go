@@ -4,10 +4,11 @@ package cppn
 
 import (
 	"fmt"
-	"github.com/yaricom/goESHyperNEAT/hyperneat"
 	"github.com/yaricom/goNEAT/neat/network"
 	"math"
 	"errors"
+	"github.com/yaricom/goNEAT/neat/genetics"
+	"os"
 )
 
 // Defines point with float precision coordinates
@@ -15,8 +16,8 @@ type PointF struct {
 	X, Y float64
 }
 
-func NewPointF(x, y float64) PointF {
-	return PointF{X:x, Y:y}
+func NewPointF(x, y float64) *PointF {
+	return &PointF{X:x, Y:y}
 }
 
 func (p *PointF) String() string {
@@ -72,10 +73,25 @@ func NewQuadNode(x, y, width float64, level int) *QuadNode {
 	return &node
 }
 
+// Reads CPPN from specified genome and creates network solver
+func ReadCPPNfromGenomeFile(genomePath string) (network.NetworkSolver, error) {
+	if genomeFile, err := os.Open(genomePath); err != nil {
+		return nil, err
+	} else if r, err := genetics.NewGenomeReader(genomeFile, genetics.YAMLGenomeEncoding); err != nil {
+		return nil, err
+	} else if genome, err := r.Read(); err != nil {
+		return nil, err
+	} else if netw, err := genome.Genesis(genome.Id); err != nil {
+		return nil, err
+	} else {
+		return netw.FastNetworkSolver()
+	}
+}
+
 // Creates link between source and target nodes, given calculated CPPN output for their coordinates
-func createLink(cppnOutput float64, srcIndx, dstIndx int, context *hyperneat.HyperNEATContext) *network.FastNetworkLink {
-	weight := (math.Abs(cppnOutput) - context.LinkThershold) / (1 - context.LinkThershold) // normalize [0, 1]
-	weight *= context.WeightRange // scale to fit given weight range
+func createLink(cppnOutput float64, srcIndx, dstIndx int, linkThreshold, weightRange float64) *network.FastNetworkLink {
+	weight := (math.Abs(cppnOutput) - linkThreshold) / (1 - linkThreshold) // normalize [0, 1]
+	weight *= weightRange // scale to fit given weight range
 	if math.Signbit(cppnOutput) {
 		weight *= -1 // restore sign
 	}
@@ -111,7 +127,7 @@ func queryCPPN(coordinates[]float64, cppn network.NetworkSolver) ([]float64, err
 
 // Determines variance among CPPN values for certain hypercube region around specified node.
 // This variance is a heuristic indicator of the heterogeneity (i.e. presence of information) of a region.
-func NodeVariance(node *QuadNode) float64 {
+func nodeVariance(node *QuadNode) float64 {
 	// quick check
 	if len(node.Nodes) == 0 {
 		return 0.0
