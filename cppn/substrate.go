@@ -99,7 +99,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, graph_builde
 				return nil, err
 			} else if math.Abs(outs[0]) > context.LinkThershold {
 				// add only connections with signal exceeding provided threshold
-				link := createLink(outs[0], bi, hi, context)
+				link := createLink(outs[0], bi, hi, context.LinkThershold, context.WeightRange)
 				biasList[hi] = link.Weight
 
 				// add node and edge to graph
@@ -128,7 +128,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, graph_builde
 				return nil, err
 			} else if math.Abs(outs[0]) > context.LinkThershold {
 				// add only connections with signal exceeding provided threshold
-				link := createLink(outs[0], bi, oi, context)
+				link := createLink(outs[0], bi, oi, context.LinkThershold, context.WeightRange)
 				biasList[oi] = link.Weight
 
 				// add node and edge to graph
@@ -167,7 +167,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, graph_builde
 					return nil, err
 				} else if math.Abs(outs[0]) > context.LinkThershold {
 					// add only connections with signal exceeding provided threshold
-					link := createLink(outs[0], in, hi, context)
+					link := createLink(outs[0], in, hi, context.LinkThershold, context.WeightRange)
 					connections = append(connections, link)
 
 					// add node and edge to graph
@@ -199,7 +199,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, graph_builde
 					return nil, err
 				} else if math.Abs(outs[0]) > context.LinkThershold {
 					// add only connections with signal exceeding provided threshold
-					link := createLink(outs[0], hi, oi, context)
+					link := createLink(outs[0], hi, oi, context.LinkThershold, context.WeightRange)
 					connections = append(connections, link)
 
 					// add node and edge to graph
@@ -237,7 +237,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, graph_builde
 					return nil, err
 				} else if math.Abs(outs[0]) > context.LinkThershold {
 					// add only connections with signal exceeding provided threshold
-					link := createLink(outs[0], in, oi, context)
+					link := createLink(outs[0], in, oi, context.LinkThershold, context.WeightRange)
 					connections = append(connections, link)
 
 					// add node and edge to graph

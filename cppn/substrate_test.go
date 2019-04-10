@@ -7,12 +7,6 @@ import (
 
 	"github.com/yaricom/goNEAT/neat/utils"
 	"github.com/yaricom/goESHyperNEAT/hyperneat"
-	"github.com/yaricom/goNEAT/neat/genetics"
-	"github.com/yaricom/goNEAT/neat/network"
-)
-
-const (
-	cppn_hyperneat_test_genome_path = "../data/test_cppn_hyperneat_genome.yml"
 )
 
 func TestNewSubstrate(t *testing.T) {
@@ -43,7 +37,7 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 	}
 
 	// create solver from substrate
-	cppn, err := buildCPPNfromGenome(cppn_hyperneat_test_genome_path)
+	cppn, err := ReadCPPNfromGenomeFile(cppn_hyperneat_test_genome_path)
 	if err != nil {
 		t.Error(err)
 		return
@@ -65,6 +59,7 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 	if solver.NodeCount() != totalNodeCount {
 		t.Error("solver.NodeCount() != totalNodeCount", solver.NodeCount(), totalNodeCount)
 	}
+	t.Log(solver)
 	totalLinkCount := 14//biasCount * (hiddenCount + outputCount)
 	if solver.LinkCount() != totalLinkCount {
 		t.Error("Wrong link count", solver.LinkCount())
@@ -115,7 +110,7 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 	}
 
 	// create solver from substrate
-	cppn, err := buildCPPNfromGenome(cppn_hyperneat_test_genome_path)
+	cppn, err := ReadCPPNfromGenomeFile(cppn_hyperneat_test_genome_path)
 	if err != nil {
 		t.Error(err)
 		return
@@ -174,21 +169,6 @@ func loadHyperNeatContext(configPath string) (*hyperneat.HyperNEATContext, error
 		} else {
 			return context, nil
 		}
-	}
-}
-
-// Builds test CPPN from specified genome
-func buildCPPNfromGenome(genomePath string) (network.NetworkSolver, error) {
-	if genomeFile, err := os.Open(genomePath); err != nil {
-		return nil, err
-	} else if r, err := genetics.NewGenomeReader(genomeFile, genetics.YAMLGenomeEncoding); err != nil {
-		return nil, err
-	} else if genome, err := r.Read(); err != nil {
-		return nil, err
-	} else if netw, err := genome.Genesis(genome.Id); err != nil {
-		return nil, err
-	} else {
-		return netw.FastNetworkSolver()
 	}
 }
 

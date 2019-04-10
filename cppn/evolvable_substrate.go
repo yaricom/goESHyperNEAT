@@ -86,7 +86,8 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 				return nil, err
 			}
 			// add connection
-			link := createLink(qp.Value * context.HyperNEAT.WeightRange, in, targetIndex, context)
+			link := createLink(qp.Value * context.HyperNEAT.WeightRange, in, targetIndex,
+				context.HyperNEAT.LinkThershold, context.HyperNEAT.WeightRange)
 			connections = append(connections, link)
 
 			// add an edge to the graph
@@ -104,7 +105,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 			// Analyse outgoing connectivity pattern from this hidden node
 			hidden, err := es.Layout.NodePosition(hi - firstHidden, network.HiddenNeuron)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			if root, err = es.quadTreeDivideAndInit(hidden.X, hidden.Y, true, context); err != nil {
 				return nil, err
@@ -129,7 +130,8 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 					return nil, err
 				}
 				// add connection
-				link := createLink(qp.Value * context.HyperNEAT.WeightRange, hi, targetIndex, context)
+				link := createLink(qp.Value * context.HyperNEAT.WeightRange, hi, targetIndex,
+					context.HyperNEAT.LinkThershold, context.HyperNEAT.WeightRange)
 				connections = append(connections, link)
 
 				// add an edge to the graph
@@ -149,7 +151,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 		// Analyse incoming connectivity pattern
 		output, err := es.Layout.NodePosition(oi - firstOutput, network.OutputNeuron)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		// add output node to graph
 		if _, err := addNodeToBuilder(graph_builder, oi, network.OutputNeuron, es.NodesActivation, output); err != nil {
@@ -172,7 +174,8 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 				sourceIndex += firstHidden // adjust index to the global indexes space
 
 				// add connection
-				link := createLink(qp.Value * context.HyperNEAT.WeightRange, sourceIndex, oi, context)
+				link := createLink(qp.Value * context.HyperNEAT.WeightRange, sourceIndex, oi,
+					context.HyperNEAT.LinkThershold, context.HyperNEAT.WeightRange)
 				connections = append(connections, link)
 
 				// add an edge to the graph
@@ -242,7 +245,7 @@ func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool,
 		}
 
 		// Divide until initial resolution or if variance is still high
-		if p.Level < context.InitialDepth || (p.Level < context.MaximalDepth && NodeVariance(p) > context.DivisionThreshold) {
+		if p.Level < context.InitialDepth || (p.Level < context.MaximalDepth && nodeVariance(p) > context.DivisionThreshold) {
 			for _, c := range p.Nodes {
 				queue.PushBack(c)
 			}
@@ -266,7 +269,7 @@ func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections[]*QuadPo
 	// until the node has no children (which means that the variance is zero).
 	left, right, top, bottom := 0.0, 0.0, 0.0, 0.0
 	for _, c := range node.Nodes {
-		childVariance := NodeVariance(c)
+		childVariance := nodeVariance(c)
 
 		if childVariance >= context.VarianceThreshold {
 			if conn, err := es.pruneAndExpress(a, b, connections, c, outgoing, context); err != nil {
@@ -277,15 +280,47 @@ func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections[]*QuadPo
 		} else {
 			// Determine if point is in a band by checking neighbor CPPN values
 			if outgoing {
-				left = math.Abs(c.W - es.queryCPPN(a, b, c.X - node.Width, c.Y))
-				right = math.Abs(c.W - es.queryCPPN(a, b, c.X + node.Width, c.Y))
-				top = math.Abs(c.W - es.queryCPPN(a, b, c.X, c.Y - node.Width))
-				bottom = math.Abs(c.W - es.queryCPPN(a, b, c.X, c.Y + node.Width))
+				if l, err := es.queryCPPN(a, b, c.X - node.Width, c.Y); err != nil {
+					return nil, err
+				} else {
+					left = math.Abs(c.W - l)
+				}
+				if r, err := es.queryCPPN(a, b, c.X + node.Width, c.Y); err != nil {
+					return nil, err
+				} else {
+					right = math.Abs(c.W - r)
+				}
+				if t, err := es.queryCPPN(a, b, c.X, c.Y - node.Width); err != nil {
+					return nil, err
+				} else {
+					top = math.Abs(c.W - t)
+				}
+				if b, err := es.queryCPPN(a, b, c.X, c.Y + node.Width); err != nil {
+					return nil, err
+				} else {
+					bottom = math.Abs(c.W - b)
+				}
 			} else {
-				left = math.Abs(c.W - es.queryCPPN(c.X - node.Width, c.Y, a, b))
-				right = math.Abs(c.W - es.queryCPPN(c.X + node.Width, c.Y, a, b))
-				top = math.Abs(c.W - es.queryCPPN(c.X, c.Y - node.Width, a, b))
-				bottom = math.Abs(c.W - es.queryCPPN(c.X, c.Y + node.Width, a, b))
+				if l, err := es.queryCPPN(c.X - node.Width, c.Y, a, b); err != nil {
+					return nil, err
+				} else {
+					left = math.Abs(c.W - l)
+				}
+				if r, err := es.queryCPPN(c.X + node.Width, c.Y, a, b); err != nil {
+					return nil, err
+				} else {
+					right = math.Abs(c.W - r)
+				}
+				if t, err := es.queryCPPN(c.X, c.Y - node.Width, a, b); err != nil {
+					return nil, err
+				} else {
+					top = math.Abs(c.W - t)
+				}
+				if b, err := es.queryCPPN(c.X, c.Y + node.Width, a, b); err != nil {
+					return nil, err
+				} else {
+					bottom = math.Abs(c.W - b)
+				}
 			}
 
 			if math.Max(math.Min(top, bottom), math.Min(left, right)) > context.BandingThreshold {
