@@ -118,10 +118,15 @@ func (l *MappedEvolvableSubstrateLayout) AddHiddenNode(position *PointF) (int, e
 
 func (l *MappedEvolvableSubstrateLayout) IndexOfHidden(position *PointF) int {
 	if index, ok := l.hNodesMap[*position]; ok {
-		return -1
-	} else {
 		return index
+	} else {
+		return -1
 	}
+}
+
+func (g *MappedEvolvableSubstrateLayout) BiasCount() int {
+	// No BIAS nodes
+	return 0
 }
 
 func (l *MappedEvolvableSubstrateLayout) InputCount() int {
