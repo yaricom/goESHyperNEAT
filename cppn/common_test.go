@@ -4,6 +4,7 @@ import "testing"
 
 const (
 	cppn_hyperneat_test_genome_path = "../data/test_cppn_hyperneat_genome.yml"
+	cppn_leo_hyperneat_test_genome_path = "../data/test_cppn_leo_hyperneat_genome.yml"
 )
 
 func TestQuadNode_NodeVariance(t *testing.T) {

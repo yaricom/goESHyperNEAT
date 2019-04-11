@@ -88,13 +88,25 @@ func ReadCPPNfromGenomeFile(genomePath string) (network.NetworkSolver, error) {
 	}
 }
 
-// Creates link between source and target nodes, given calculated CPPN output for their coordinates
-func createLink(cppnOutput float64, srcIndx, dstIndx int, linkThreshold, weightRange float64) *network.FastNetworkLink {
+// Creates normalized by threshold value link between source and target nodes, given calculated CPPN output for their coordinates
+func createThreshlodNormalizedLink(cppnOutput float64, srcIndx, dstIndx int, linkThreshold, weightRange float64) *network.FastNetworkLink {
 	weight := (math.Abs(cppnOutput) - linkThreshold) / (1 - linkThreshold) // normalize [0, 1]
 	weight *= weightRange // scale to fit given weight range
 	if math.Signbit(cppnOutput) {
 		weight *= -1 // restore sign
 	}
+	link := network.FastNetworkLink{
+		Weight:weight,
+		SourceIndx:srcIndx,
+		TargetIndx:dstIndx,
+	}
+	return &link
+}
+
+// Creates link between source and target nodes, given calculated CPPN output for their coordinates
+func createLink(cppnOutput float64, srcIndx, dstIndx int, weightRange float64) *network.FastNetworkLink {
+	weight := cppnOutput
+	weight *= weightRange // scale to fit given weight range
 	link := network.FastNetworkLink{
 		Weight:weight,
 		SourceIndx:srcIndx,

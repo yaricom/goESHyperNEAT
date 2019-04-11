@@ -86,8 +86,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 				return nil, err
 			}
 			// add connection
-			link := createLink(qp.Value * context.HyperNEAT.WeightRange, in, targetIndex,
-				context.HyperNEAT.LinkThershold, context.HyperNEAT.WeightRange)
+			link := createLink(qp.Value * context.HyperNEAT.WeightRange, in, targetIndex, context.HyperNEAT.WeightRange)
 			connections = append(connections, link)
 
 			// add an edge to the graph
@@ -130,8 +129,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 					return nil, err
 				}
 				// add connection
-				link := createLink(qp.Value * context.HyperNEAT.WeightRange, hi, targetIndex,
-					context.HyperNEAT.LinkThershold, context.HyperNEAT.WeightRange)
+				link := createLink(qp.Value * context.HyperNEAT.WeightRange, hi, targetIndex, context.HyperNEAT.WeightRange)
 				connections = append(connections, link)
 
 				// add an edge to the graph
@@ -174,8 +172,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 				sourceIndex += firstHidden // adjust index to the global indexes space
 
 				// add connection
-				link := createLink(qp.Value * context.HyperNEAT.WeightRange, sourceIndex, oi,
-					context.HyperNEAT.LinkThershold, context.HyperNEAT.WeightRange)
+				link := createLink(qp.Value * context.HyperNEAT.WeightRange, sourceIndex, oi, context.HyperNEAT.WeightRange)
 				connections = append(connections, link)
 
 				// add an edge to the graph
