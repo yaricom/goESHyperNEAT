@@ -75,23 +75,24 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 			nodePoint := NewPointF(qp.X2, qp.Y2)
 			targetIndex := es.Layout.IndexOfHidden(nodePoint)
 			if targetIndex == -1 {
-				// add hidden node to substrate layout
+				// add hidden node to the substrate layout
 				if targetIndex, err = es.Layout.AddHiddenNode(nodePoint); err != nil {
 					return nil, err
 				}
-			}
-			targetIndex += firstHidden // adjust index to the global indexes space
-			// add a node to the graph
-			if _, err := addNodeToBuilder(graph_builder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
-				return nil, err
-			}
-			// add connection
-			link := createLink(qp.Value * context.HyperNEAT.WeightRange, in, targetIndex, context.HyperNEAT.WeightRange)
-			connections = append(connections, link)
 
-			// add an edge to the graph
-			if _, err := addEdgeToBuilder(graph_builder, in, targetIndex, link.Weight); err != nil {
-				return nil, err
+				targetIndex += firstHidden // adjust index to the global indexes space
+				// add a node to the graph
+				if _, err := addNodeToBuilder(graph_builder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
+					return nil, err
+				}
+				// add connection
+				link := createLink(qp.Value * context.HyperNEAT.WeightRange, in, targetIndex, context.HyperNEAT.WeightRange)
+				connections = append(connections, link)
+
+				// add an edge to the graph
+				if _, err := addEdgeToBuilder(graph_builder, in, targetIndex, link.Weight); err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
@@ -118,23 +119,24 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 				nodePoint := NewPointF(qp.X2, qp.Y2)
 				targetIndex := es.Layout.IndexOfHidden(nodePoint)
 				if targetIndex == -1 {
-					// add hidden node to substrate layout
+					// add hidden node to the substrate layout
 					if targetIndex, err = es.Layout.AddHiddenNode(nodePoint); err != nil {
 						return nil, err
 					}
-				}
-				targetIndex += firstHidden // adjust index to the global indexes space
-				// add a node to the graph
-				if _, err := addNodeToBuilder(graph_builder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
-					return nil, err
-				}
-				// add connection
-				link := createLink(qp.Value * context.HyperNEAT.WeightRange, hi, targetIndex, context.HyperNEAT.WeightRange)
-				connections = append(connections, link)
 
-				// add an edge to the graph
-				if _, err := addEdgeToBuilder(graph_builder, hi, targetIndex, link.Weight); err != nil {
-					return nil, err
+					targetIndex += firstHidden // adjust index to the global indexes space
+					// add a node to the graph
+					if _, err := addNodeToBuilder(graph_builder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
+						return nil, err
+					}
+					// add connection
+					link := createLink(qp.Value * context.HyperNEAT.WeightRange, hi, targetIndex, context.HyperNEAT.WeightRange)
+					connections = append(connections, link)
+
+					// add an edge to the graph
+					if _, err := addEdgeToBuilder(graph_builder, hi, targetIndex, link.Weight); err != nil {
+						return nil, err
+					}
 				}
 			}
 		}
@@ -163,9 +165,10 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 		if qPoints, err = es.pruneAndExpress(output.X, output.Y, qPoints, root, false, context); err != nil {
 			return nil, err
 		}
+
 		// iterate over quad points and add nodes/connections where appropriate
 		for _, qp := range qPoints {
-			nodePoint := NewPointF(qp.X2, qp.Y2)
+			nodePoint := NewPointF(qp.X1, qp.Y1)
 			sourceIndex := es.Layout.IndexOfHidden(nodePoint)
 			if sourceIndex != -1 {
 				// only connect to the hidden nodes that already exists and connected to the input/hidden nodes
