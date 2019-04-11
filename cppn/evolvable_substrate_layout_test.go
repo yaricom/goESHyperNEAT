@@ -50,6 +50,10 @@ func TestMappedEvolvableSubstrateLayout_AddHiddenNode(t *testing.T) {
 		index++
 	}
 
+	if layout.HiddenCount() != index {
+		t.Error("layout.HiddenCount() != index - 1", layout.HiddenCount(), index )
+	}
+
 	// test get hidden
 	for i := 0; i < index; i++ {
 		x := -0.7 + float64(i) * 0.1
