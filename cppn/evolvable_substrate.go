@@ -7,6 +7,7 @@ import (
 	"github.com/yaricom/goNEAT/neat/network"
 	"github.com/yaricom/goESHyperNEAT/hyperneat"
 	"github.com/yaricom/goNEAT/neat/utils"
+	"fmt"
 )
 
 // The evolvable substrate holds configuration of ANN produced by CPPN within hypecube where each 4-dimensional point
@@ -49,6 +50,21 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 	firstHidden := firstOutput + es.Layout.OutputCount()
 
 	connections := make([]*network.FastNetworkLink, 0)
+	// The map to hold already created connections
+	connMap := make(map[string]*network.FastNetworkLink)
+
+	// The function to add new connection if appropriate
+	addConnection := func(weight float64, source, target int) (*network.FastNetworkLink, bool) {
+		key := fmt.Sprintf("%d_%d", source, target)
+		if _, ok := connMap[key]; ok {
+			// connection already excists
+			return nil, false
+		}
+		link := createLink(weight, source, target, context.HyperNEAT.WeightRange)
+		connections = append(connections, link)
+		connMap[key] = link
+		return link, true
+	}
 
 	// Build connections from input nodes to the hidden nodes
 	var root *QuadNode
@@ -85,10 +101,13 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 				if _, err := addNodeToBuilder(graph_builder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
 					return nil, err
 				}
-				// add connection
-				link := createLink(qp.Value * context.HyperNEAT.WeightRange, in, targetIndex, context.HyperNEAT.WeightRange)
-				connections = append(connections, link)
 
+			} else {
+				// adjust index to the global indexes space
+				targetIndex += firstHidden
+			}
+			// add connection
+			if link, ok := addConnection(qp.Value, in, targetIndex); ok {
 				// add an edge to the graph
 				if _, err := addEdgeToBuilder(graph_builder, in, targetIndex, link.Weight); err != nil {
 					return nil, err
@@ -129,10 +148,12 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 					if _, err := addNodeToBuilder(graph_builder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
 						return nil, err
 					}
-					// add connection
-					link := createLink(qp.Value * context.HyperNEAT.WeightRange, hi, targetIndex, context.HyperNEAT.WeightRange)
-					connections = append(connections, link)
-
+				} else {
+					// adjust index to the global indexes space
+					targetIndex += firstHidden
+				}
+				// add connection
+				if link, ok := addConnection(qp.Value, hi, targetIndex); ok {
 					// add an edge to the graph
 					if _, err := addEdgeToBuilder(graph_builder, hi, targetIndex, link.Weight); err != nil {
 						return nil, err
@@ -175,12 +196,11 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 				sourceIndex += firstHidden // adjust index to the global indexes space
 
 				// add connection
-				link := createLink(qp.Value * context.HyperNEAT.WeightRange, sourceIndex, oi, context.HyperNEAT.WeightRange)
-				connections = append(connections, link)
-
-				// add an edge to the graph
-				if _, err := addEdgeToBuilder(graph_builder, sourceIndex, oi, link.Weight); err != nil {
-					return nil, err
+				if link, ok := addConnection(qp.Value, sourceIndex, oi); ok {
+					// add an edge to the graph
+					if _, err := addEdgeToBuilder(graph_builder, sourceIndex, oi, link.Weight); err != nil {
+						return nil, err
+					}
 				}
 			}
 		}

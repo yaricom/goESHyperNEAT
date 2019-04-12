@@ -5,6 +5,7 @@ import (
 	"github.com/yaricom/goNEAT/neat/utils"
 	"github.com/yaricom/goESHyperNEAT/hyperneat"
 	"os"
+	"math"
 )
 
 func TestNewEvolvableSubstrate(t *testing.T) {
@@ -62,7 +63,7 @@ func TestEvolvableSubstrate_CreateNetworkSolver(t *testing.T) {
 	if solver.NodeCount() != totalNodeCount {
 		t.Error("solver.NodeCount() != totalNodeCount", solver.NodeCount(), totalNodeCount)
 	}
-	totalLinkCount := 4
+	totalLinkCount := 10
 	if solver.LinkCount() != totalLinkCount {
 		t.Error("Wrong link count", solver.LinkCount(), totalLinkCount)
 	}
@@ -79,13 +80,12 @@ func TestEvolvableSubstrate_CreateNetworkSolver(t *testing.T) {
 		t.Error("failed to relax network")
 	} else {
 		outs := solver.ReadOutputs()
-		out_expected := []float64{0.5000000095847159, 0.5}
+		out_expected := []float64{0.5, 0.5}
 		for i, out := range outs {
-			if out != out_expected[i] {
+			if math.Abs(out - out_expected[i]) > 0.0000000001 {
 				t.Error("out != out_expected", out, out_expected[i], i)
 			}
 		}
-
 	}
 }
 
