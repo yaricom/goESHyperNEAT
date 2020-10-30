@@ -3,10 +3,21 @@ package cppn
 import (
 	"errors"
 	"io"
-	
+
+	"github.com/yaricom/goGraphML/graphml"
 	"github.com/yaricom/goNEAT/neat/network"
 	"github.com/yaricom/goNEAT/neat/utils"
-	"github.com/yaricom/goGraphML/graphml"
+)
+
+const (
+	nodeAttrID                 = "id"
+	nodeAttrNodeNeuronType     = "NodeNeuronType"
+	nodeAttrNodeActivationType = "NodeActivationType"
+	nodeAttrX                  = "X"
+	nodeAttrY                  = "Y"
+	edgeAttrWeight             = "weight"
+	edgeAttrSourceId           = "sourceId"
+	edgeAttrTargetId           = "targetId"
 )
 
 // The graph builder able to build weighted directed graphs representing substrate networks
@@ -25,10 +36,10 @@ type GraphBuilder interface {
 // The graph builder based on GraphML specification
 type GraphMLBuilder struct {
 	// The GraphML instance
-	graphML  *graphml.GraphML
+	graphML *graphml.GraphML
 
 	// The flag to indicate whether marshal should generate compact graph presentation
-	compact  bool
+	compact bool
 
 	// The map to hold already added nodes
 	nodesMap map[int]*graphml.Node
@@ -36,33 +47,29 @@ type GraphMLBuilder struct {
 
 // Creates new instance with specified description to be included into serialized graph. If compact is true than graph
 // will be marshaled into compact form
-func NewGraphMLBuilder(description string, compact bool) (*GraphMLBuilder, error) {
-	graph_builder := &GraphMLBuilder{
-		nodesMap:make(map[int]*graphml.Node),
-		compact:compact,
+func NewGraphMLBuilder(description string, compact bool) *GraphMLBuilder {
+	return &GraphMLBuilder{
+		nodesMap: make(map[int]*graphml.Node),
+		compact:  compact,
+		graphML:  graphml.NewGraphML(description),
 	}
-
-	// create GraphML
-	graph_builder.graphML = graphml.NewGraphML(description)
-
-	return graph_builder, nil
 }
 
 func (gml *GraphMLBuilder) AddNode(nodeId int, nodeNeuronType network.NodeNeuronType, nodeActivation utils.NodeActivationType, position *PointF) (err error) {
 	// create attributes map
-	n_attr := make(map[string]interface{})
-	n_attr["id"] = nodeId
-	n_attr["NodeNeuronType"] = network.NeuronTypeName(nodeNeuronType)
-	if n_attr["NodeActivationType"], err = utils.NodeActivators.ActivationNameFromType(nodeActivation); err != nil {
+	nodeAttr := make(map[string]interface{})
+	nodeAttr[nodeAttrID] = nodeId
+	nodeAttr[nodeAttrNodeNeuronType] = network.NeuronTypeName(nodeNeuronType)
+	if nodeAttr[nodeAttrNodeActivationType], err = utils.NodeActivators.ActivationNameFromType(nodeActivation); err != nil {
 		return err
 	}
-	n_attr["X"] = position.X
-	n_attr["Y"] = position.Y
+	nodeAttr[nodeAttrX] = position.X
+	nodeAttr[nodeAttrY] = position.Y
 
 	// add node to the graph
 	if graph, err := gml.graph(); err != nil {
 		return err
-	} else if node, err := graph.AddNode(n_attr, ""); err != nil {
+	} else if node, err := graph.AddNode(nodeAttr, ""); err != nil {
 		return err
 	} else {
 		// store node
@@ -73,10 +80,10 @@ func (gml *GraphMLBuilder) AddNode(nodeId int, nodeNeuronType network.NodeNeuron
 
 func (gml *GraphMLBuilder) AddWeightedEdge(sourceId, targetId int, weight float64) (err error) {
 	// create attributes map
-	e_attr := make(map[string]interface{})
-	e_attr["weight"] = weight
-	e_attr["sourceId"] = sourceId
-	e_attr["targetId"] = targetId
+	edgeAttr := make(map[string]interface{})
+	edgeAttr[edgeAttrWeight] = weight
+	edgeAttr[edgeAttrSourceId] = sourceId
+	edgeAttr[edgeAttrTargetId] = targetId
 
 	// add edge to graph
 	var source, target *graphml.Node
@@ -91,7 +98,7 @@ func (gml *GraphMLBuilder) AddWeightedEdge(sourceId, targetId int, weight float6
 	if graph, err := gml.graph(); err != nil {
 		return err
 	} else {
-		_, err = graph.AddEdge(source, target, e_attr, graphml.EdgeDirectionDefault, "")
+		_, err = graph.AddEdge(source, target, edgeAttr, graphml.EdgeDirectionDefault, "")
 	}
 	return err
 }

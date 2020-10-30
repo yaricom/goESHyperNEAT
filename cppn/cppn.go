@@ -1,13 +1,13 @@
-// The package CPPN provides implementation of Compositional Pattern Producing Network which is a part of Hypercube-based
-// NEAT algorithm implementation
+// The package CPPN provides implementation of Compositional Pattern Producing Network
+// which is a part of Hypercube-based NEAT algorithm implementation
 package cppn
 
 import (
+	"errors"
 	"fmt"
+	"github.com/yaricom/goNEAT/neat/genetics"
 	"github.com/yaricom/goNEAT/neat/network"
 	"math"
-	"errors"
-	"github.com/yaricom/goNEAT/neat/genetics"
 	"os"
 )
 
@@ -17,7 +17,7 @@ type PointF struct {
 }
 
 func NewPointF(x, y float64) *PointF {
-	return &PointF{X:x, Y:y}
+	return &PointF{X: x, Y: y}
 }
 
 func (p *PointF) String() string {
@@ -29,7 +29,7 @@ type QuadPoint struct {
 	// The associated coordinates
 	X1, X2, Y1, Y2 float64
 	// The value for this point
-	Value          float64
+	Value float64
 }
 
 func (q *QuadPoint) String() string {
@@ -38,18 +38,18 @@ func (q *QuadPoint) String() string {
 
 // Creates new quad point
 func NewQuadPoint(x1, y1, x2, y2, value float64) *QuadPoint {
-	return &QuadPoint{X1:x1, Y1:y1, X2:x2, Y2:y2, Value:value}
+	return &QuadPoint{X1: x1, Y1: y1, X2: x2, Y2: y2, Value: value}
 }
 
 // Defines quad-tree node to model 4 dimensional hypercube
 type QuadNode struct {
 	// The coordinates of center of this quad-tree node's square
-	X, Y  float64
+	X, Y float64
 	// The width of this quad-tree node's square
 	Width float64
 
 	// The CPPN activation level for this node
-	W     float64
+	W float64
 	// The level of this node in the quad-tree
 	Level int
 
@@ -64,11 +64,11 @@ func (q *QuadNode) String() string {
 // Creates new quad-node with given parameters
 func NewQuadNode(x, y, width float64, level int) *QuadNode {
 	node := QuadNode{
-		X:x,
-		Y:y,
-		Width:width,
-		W:0.0,
-		Level:level,
+		X:     x,
+		Y:     y,
+		Width: width,
+		W:     0.0,
+		Level: level,
 	}
 	return &node
 }
@@ -89,34 +89,34 @@ func ReadCPPNfromGenomeFile(genomePath string) (network.NetworkSolver, error) {
 }
 
 // Creates normalized by threshold value link between source and target nodes, given calculated CPPN output for their coordinates
-func createThreshlodNormalizedLink(cppnOutput float64, srcIndx, dstIndx int, linkThreshold, weightRange float64) *network.FastNetworkLink {
+func createThresholdNormalizedLink(cppnOutput float64, srcIndex, dstIndex int, linkThreshold, weightRange float64) *network.FastNetworkLink {
 	weight := (math.Abs(cppnOutput) - linkThreshold) / (1 - linkThreshold) // normalize [0, 1]
-	weight *= weightRange // scale to fit given weight range
+	weight *= weightRange                                                  // scale to fit given weight range
 	if math.Signbit(cppnOutput) {
 		weight *= -1 // restore sign
 	}
 	link := network.FastNetworkLink{
-		Weight:weight,
-		SourceIndx:srcIndx,
-		TargetIndx:dstIndx,
+		Weight:     weight,
+		SourceIndx: srcIndex,
+		TargetIndx: dstIndex,
 	}
 	return &link
 }
 
 // Creates link between source and target nodes, given calculated CPPN output for their coordinates
-func createLink(cppnOutput float64, srcIndx, dstIndx int, weightRange float64) *network.FastNetworkLink {
+func createLink(cppnOutput float64, srcIndex, dstIndex int, weightRange float64) *network.FastNetworkLink {
 	weight := cppnOutput
 	weight *= weightRange // scale to fit given weight range
 	link := network.FastNetworkLink{
-		Weight:weight,
-		SourceIndx:srcIndx,
-		TargetIndx:dstIndx,
+		Weight:     weight,
+		SourceIndx: srcIndex,
+		TargetIndx: dstIndex,
 	}
 	return &link
 }
 
 // Calculates outputs of provided CPPN network solver with given hypercube coordinates.
-func queryCPPN(coordinates[]float64, cppn network.NetworkSolver) ([]float64, error) {
+func queryCPPN(coordinates []float64, cppn network.NetworkSolver) ([]float64, error) {
 	// flush networks activation from previous run
 	if res, err := cppn.Flush(); err != nil {
 		return nil, err
@@ -154,7 +154,7 @@ func nodeVariance(node *QuadNode) float64 {
 	m /= float64(len(cppn_vals))
 
 	for _, f := range cppn_vals {
-		v += math.Pow(f - m, 2)
+		v += math.Pow(f-m, 2)
 	}
 	v /= float64(len(cppn_vals))
 

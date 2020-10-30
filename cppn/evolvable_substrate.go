@@ -1,13 +1,13 @@
 package cppn
 
 import (
-	"math"
 	"container/list"
+	"github.com/yaricom/goESHyperNEAT/eshyperneat"
+	"math"
 
-	"github.com/yaricom/goNEAT/neat/network"
-	"github.com/yaricom/goESHyperNEAT/hyperneat"
-	"github.com/yaricom/goNEAT/neat/utils"
 	"fmt"
+	"github.com/yaricom/goNEAT/neat/network"
+	"github.com/yaricom/goNEAT/neat/utils"
 )
 
 // The evolvable substrate holds configuration of ANN produced by CPPN within hypecube where each 4-dimensional point
@@ -17,31 +17,29 @@ import (
 // the best for the task at hand.
 type EvolvableSubstrate struct {
 	// The layout of neuron nodes in this substrate
-	Layout          EvolvableSubstrateLayout
+	Layout EvolvableSubstrateLayout
 	// The activation function's type for neurons encoded
 	NodesActivation utils.NodeActivationType
 
-
 	// The CPPN network solver to describe geometry of substrate
-	cppn            network.NetworkSolver
-	// The reusable coordinates bufer
-	coord           []float64
+	cppn network.NetworkSolver
+	// The reusable coordinates buffer
+	coords []float64
 }
 
 // Creates new instance of evolvable substrate
 func NewEvolvableSubstrate(layout EvolvableSubstrateLayout, nodesActivation utils.NodeActivationType) *EvolvableSubstrate {
-	es := EvolvableSubstrate{
-		coord:make([]float64, 4),
-		Layout:layout,
-		NodesActivation:nodesActivation,
+	return &EvolvableSubstrate{
+		coords:          make([]float64, 4),
+		Layout:          layout,
+		NodesActivation: nodesActivation,
 	}
-	return &es
 }
 
 // Creates network solver based on current substrate layout and provided Compositional Pattern Producing Network which
 // used to define connections between network nodes. Optional graph_builder can be provided to collect graph nodes and edges
 // of created network solver. With graph builder it is possible to save/load network configuration as well as visualize it.
-func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, graph_builder GraphBuilder, context *hyperneat.ESHyperNEATContext) (network.NetworkSolver, error) {
+func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, graphBuilder GraphBuilder, context *eshyperneat.ESHyperNEATContext) (network.NetworkSolver, error) {
 	es.cppn = cppn
 
 	// the network layers will be collected in order: bias, input, output, hidden
@@ -60,7 +58,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 			// connection already excists
 			return nil, false
 		}
-		link := createLink(weight, source, target, context.HyperNEAT.WeightRange)
+		link := createLink(weight, source, target, context.WeightRange)
 		connections = append(connections, link)
 		connMap[key] = link
 		return link, true
@@ -70,12 +68,12 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 	var root *QuadNode
 	for in := firstInput; in < firstOutput; in++ {
 		// Analyse outgoing connectivity pattern from this input
-		input, err := es.Layout.NodePosition(in - firstInput, network.InputNeuron)
+		input, err := es.Layout.NodePosition(in-firstInput, network.InputNeuron)
 		if err != nil {
 			return nil, err
 		}
 		// add input node to graph
-		if _, err := addNodeToBuilder(graph_builder, in, network.InputNeuron, utils.NullActivation, input); err != nil {
+		if _, err := addNodeToBuilder(graphBuilder, in, network.InputNeuron, utils.NullActivation, input); err != nil {
 			return nil, err
 		}
 
@@ -98,7 +96,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 
 				targetIndex += firstHidden // adjust index to the global indexes space
 				// add a node to the graph
-				if _, err := addNodeToBuilder(graph_builder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
+				if _, err := addNodeToBuilder(graphBuilder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
 					return nil, err
 				}
 
@@ -109,7 +107,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 			// add connection
 			if link, ok := addConnection(qp.Value, in, targetIndex); ok {
 				// add an edge to the graph
-				if _, err := addEdgeToBuilder(graph_builder, in, targetIndex, link.Weight); err != nil {
+				if _, err := addEdgeToBuilder(graphBuilder, in, targetIndex, link.Weight); err != nil {
 					return nil, err
 				}
 			}
@@ -119,10 +117,10 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 	// Build more hidden nodes into unexplored area through a number of iterations
 	firstHiddenIter := firstHidden
 	lastHidden := firstHiddenIter + es.Layout.HiddenCount()
-	for step := 0; step < context.ESIterations; step ++ {
+	for step := 0; step < context.ESIterations; step++ {
 		for hi := firstHiddenIter; hi < lastHidden; hi++ {
 			// Analyse outgoing connectivity pattern from this hidden node
-			hidden, err := es.Layout.NodePosition(hi - firstHidden, network.HiddenNeuron)
+			hidden, err := es.Layout.NodePosition(hi-firstHidden, network.HiddenNeuron)
 			if err != nil {
 				return nil, err
 			}
@@ -145,7 +143,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 
 					targetIndex += firstHidden // adjust index to the global indexes space
 					// add a node to the graph
-					if _, err := addNodeToBuilder(graph_builder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
+					if _, err := addNodeToBuilder(graphBuilder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
 						return nil, err
 					}
 				} else {
@@ -155,7 +153,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 				// add connection
 				if link, ok := addConnection(qp.Value, hi, targetIndex); ok {
 					// add an edge to the graph
-					if _, err := addEdgeToBuilder(graph_builder, hi, targetIndex, link.Weight); err != nil {
+					if _, err := addEdgeToBuilder(graphBuilder, hi, targetIndex, link.Weight); err != nil {
 						return nil, err
 					}
 				}
@@ -170,12 +168,12 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 	// Connect hidden nodes to the output
 	for oi := firstOutput; oi < firstHidden; oi++ {
 		// Analyse incoming connectivity pattern
-		output, err := es.Layout.NodePosition(oi - firstOutput, network.OutputNeuron)
+		output, err := es.Layout.NodePosition(oi-firstOutput, network.OutputNeuron)
 		if err != nil {
 			return nil, err
 		}
 		// add output node to graph
-		if _, err := addNodeToBuilder(graph_builder, oi, network.OutputNeuron, es.NodesActivation, output); err != nil {
+		if _, err := addNodeToBuilder(graphBuilder, oi, network.OutputNeuron, es.NodesActivation, output); err != nil {
 			return nil, err
 		}
 
@@ -198,7 +196,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 				// add connection
 				if link, ok := addConnection(qp.Value, sourceIndex, oi); ok {
 					// add an edge to the graph
-					if _, err := addEdgeToBuilder(graph_builder, sourceIndex, oi, link.Weight); err != nil {
+					if _, err := addEdgeToBuilder(graphBuilder, sourceIndex, oi, link.Weight); err != nil {
 						return nil, err
 					}
 				}
@@ -231,7 +229,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 // Divides and initialize the quadtree from provided coordinates of source (outgoing = true) or target node (outgoing = false) at (a, b).
 // Returns quadtree, in which each quadnode at (x,y) stores CPPN activation level for its position. The initialized
 // quadtree is used in the PruningAndExtraction phase to generate the actual ANN connections.
-func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool, context *hyperneat.ESHyperNEATContext) (root *QuadNode, err error) {
+func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool, context *eshyperneat.ESHyperNEATContext) (root *QuadNode, err error) {
 	root = NewQuadNode(0.0, 0.0, 1.0, 1)
 
 	queue := list.New()
@@ -243,10 +241,10 @@ func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool,
 
 		// Divide into sub-regions and assign children to parent
 		p.Nodes = []*QuadNode{
-			NewQuadNode(p.X - p.Width / 2.0, p.Y - p.Width / 2.0, p.Width / 2.0, p.Level + 1),
-			NewQuadNode(p.X - p.Width / 2.0, p.Y + p.Width / 2.0, p.Width / 2.0, p.Level + 1),
-			NewQuadNode(p.X + p.Width / 2.0, p.Y - p.Width / 2.0, p.Width / 2.0, p.Level + 1),
-			NewQuadNode(p.X + p.Width / 2.0, p.Y + p.Width / 2.0, p.Width / 2.0, p.Level + 1),
+			NewQuadNode(p.X-p.Width/2.0, p.Y-p.Width/2.0, p.Width/2.0, p.Level+1),
+			NewQuadNode(p.X-p.Width/2.0, p.Y+p.Width/2.0, p.Width/2.0, p.Level+1),
+			NewQuadNode(p.X+p.Width/2.0, p.Y-p.Width/2.0, p.Width/2.0, p.Level+1),
+			NewQuadNode(p.X+p.Width/2.0, p.Y+p.Width/2.0, p.Width/2.0, p.Level+1),
 		}
 
 		for _, c := range p.Nodes {
@@ -279,7 +277,7 @@ func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool,
 // Receives coordinates of source (outgoing = true) or target node (outgoing = false) at (a, b) and initialized quadtree node.
 // Adds the connections that are in bands of the two-dimensional cross-section of the  hypercube containing the source
 // or target node to the connections list and return modified list.
-func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections[]*QuadPoint, node *QuadNode, outgoing bool, context *hyperneat.ESHyperNEATContext) ([]*QuadPoint, error) {
+func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections []*QuadPoint, node *QuadNode, outgoing bool, context *eshyperneat.ESHyperNEATContext) ([]*QuadPoint, error) {
 	// fast check
 	if len(node.Nodes) == 0 {
 		return connections, nil
@@ -300,43 +298,43 @@ func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections[]*QuadPo
 		} else {
 			// Determine if point is in a band by checking neighbor CPPN values
 			if outgoing {
-				if l, err := es.queryCPPN(a, b, c.X - node.Width, c.Y); err != nil {
+				if l, err := es.queryCPPN(a, b, c.X-node.Width, c.Y); err != nil {
 					return nil, err
 				} else {
 					left = math.Abs(c.W - l)
 				}
-				if r, err := es.queryCPPN(a, b, c.X + node.Width, c.Y); err != nil {
+				if r, err := es.queryCPPN(a, b, c.X+node.Width, c.Y); err != nil {
 					return nil, err
 				} else {
 					right = math.Abs(c.W - r)
 				}
-				if t, err := es.queryCPPN(a, b, c.X, c.Y - node.Width); err != nil {
+				if t, err := es.queryCPPN(a, b, c.X, c.Y-node.Width); err != nil {
 					return nil, err
 				} else {
 					top = math.Abs(c.W - t)
 				}
-				if b, err := es.queryCPPN(a, b, c.X, c.Y + node.Width); err != nil {
+				if b, err := es.queryCPPN(a, b, c.X, c.Y+node.Width); err != nil {
 					return nil, err
 				} else {
 					bottom = math.Abs(c.W - b)
 				}
 			} else {
-				if l, err := es.queryCPPN(c.X - node.Width, c.Y, a, b); err != nil {
+				if l, err := es.queryCPPN(c.X-node.Width, c.Y, a, b); err != nil {
 					return nil, err
 				} else {
 					left = math.Abs(c.W - l)
 				}
-				if r, err := es.queryCPPN(c.X + node.Width, c.Y, a, b); err != nil {
+				if r, err := es.queryCPPN(c.X+node.Width, c.Y, a, b); err != nil {
 					return nil, err
 				} else {
 					right = math.Abs(c.W - r)
 				}
-				if t, err := es.queryCPPN(c.X, c.Y - node.Width, a, b); err != nil {
+				if t, err := es.queryCPPN(c.X, c.Y-node.Width, a, b); err != nil {
 					return nil, err
 				} else {
 					top = math.Abs(c.W - t)
 				}
-				if b, err := es.queryCPPN(c.X, c.Y + node.Width, a, b); err != nil {
+				if b, err := es.queryCPPN(c.X, c.Y+node.Width, a, b); err != nil {
 					return nil, err
 				} else {
 					bottom = math.Abs(c.W - b)
@@ -363,12 +361,12 @@ func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections[]*QuadPo
 // Query CPPN associated with this substrate for specified Hypercube coordinate and returns value produced or error if
 // operation failed
 func (es *EvolvableSubstrate) queryCPPN(x1, y1, x2, y2 float64) (float64, error) {
-	es.coord[0] = x1
-	es.coord[1] = y1
-	es.coord[2] = x2
-	es.coord[3] = y2
+	es.coords[0] = x1
+	es.coords[1] = y1
+	es.coords[2] = x2
+	es.coords[3] = y2
 
-	if outs, err := queryCPPN(es.coord, es.cppn); err != nil {
+	if outs, err := queryCPPN(es.coords, es.cppn); err != nil {
 		return math.MaxFloat64, err
 	} else {
 		return outs[0], nil

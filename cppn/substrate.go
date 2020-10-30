@@ -4,9 +4,9 @@ import (
 	"errors"
 	"math"
 
+	"github.com/yaricom/goESHyperNEAT/hyperneat"
 	"github.com/yaricom/goNEAT/neat/network"
 	"github.com/yaricom/goNEAT/neat/utils"
-	"github.com/yaricom/goESHyperNEAT/hyperneat"
 )
 
 // Represents substrate holding configuration of ANN with weights produced by CPPN. According to HyperNEAT method
@@ -14,7 +14,7 @@ import (
 // By default neurons will be placed into substrate within grid layout
 type Substrate struct {
 	// The layout of neuron nodes in this substrate
-	Layout          SubstrateLayout
+	Layout SubstrateLayout
 
 	// The activation function's type for neurons encoded
 	NodesActivation utils.NodeActivationType
@@ -23,8 +23,8 @@ type Substrate struct {
 // Creates new instance
 func NewSubstrate(layout SubstrateLayout, nodesActivation utils.NodeActivationType) *Substrate {
 	substr := Substrate{
-		Layout:layout,
-		NodesActivation:nodesActivation,
+		Layout:          layout,
+		NodesActivation: nodesActivation,
 	}
 	return &substr
 }
@@ -40,7 +40,6 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool
 	if s.Layout.BiasCount() > 1 {
 		return nil, errors.New("SUBSTRATE: maximum one BIAS node per network supported")
 	}
-
 
 	// the network layers will be collected in order: bias, input, output, hidden
 	firstBias := 0
@@ -71,7 +70,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool
 	for bi := firstBias; bi < firstInput; bi++ {
 
 		// the bias coordinates
-		if b_coord, err := s.Layout.NodePosition(bi - firstBias, network.BiasNeuron); err != nil {
+		if b_coord, err := s.Layout.NodePosition(bi-firstBias, network.BiasNeuron); err != nil {
 			return nil, err
 		} else {
 			coord[0] = b_coord.X
@@ -83,11 +82,10 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool
 			}
 		}
 
-
 		// link the bias to all hidden nodes.
 		for hi := firstHidden; hi < lastHidden; hi++ {
 			// get hidden neuron coordinates
-			if h_coord, err := s.Layout.NodePosition(hi - firstHidden, network.HiddenNeuron); err != nil {
+			if h_coord, err := s.Layout.NodePosition(hi-firstHidden, network.HiddenNeuron); err != nil {
 				return nil, err
 			} else {
 				coord[2] = h_coord.X
@@ -105,9 +103,9 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool
 			} else if use_leo && outs[1] > 0 {
 				// add links only when CPPN's LEO output signals to
 				link = createLink(outs[0], bi, hi, context.WeightRange)
-			} else if !use_leo && math.Abs(outs[0]) > context.LinkThershold {
+			} else if !use_leo && math.Abs(outs[0]) > context.LinkThreshold {
 				// add only connections with signal exceeding provided threshold
-				link = createThreshlodNormalizedLink(outs[0], bi, hi, context.LinkThershold, context.WeightRange)
+				link = createThresholdNormalizedLink(outs[0], bi, hi, context.LinkThreshold, context.WeightRange)
 			}
 			if link != nil {
 				biasList[hi] = link.Weight
@@ -121,7 +119,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool
 		// link the bias to all output nodes
 		for oi := firstOutput; oi < firstHidden; oi++ {
 			// get output neuron coordinates
-			if o_coord, err := s.Layout.NodePosition(oi - firstOutput, network.OutputNeuron); err != nil {
+			if o_coord, err := s.Layout.NodePosition(oi-firstOutput, network.OutputNeuron); err != nil {
 				return nil, err
 			} else {
 				coord[2] = o_coord.X
@@ -139,9 +137,9 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool
 			} else if use_leo && outs[1] > 0 {
 				// add links only when CPPN's LEO output signals to
 				link = createLink(outs[0], bi, oi, context.WeightRange)
-			} else if !use_leo && math.Abs(outs[0]) > context.LinkThershold {
+			} else if !use_leo && math.Abs(outs[0]) > context.LinkThreshold {
 				// add only connections with signal exceeding provided threshold
-				link = createThreshlodNormalizedLink(outs[0], bi, oi, context.LinkThershold, context.WeightRange)
+				link = createThresholdNormalizedLink(outs[0], bi, oi, context.LinkThreshold, context.WeightRange)
 			}
 			if link != nil {
 				biasList[oi] = link.Weight
@@ -157,7 +155,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool
 		// link input nodes to hidden ones
 		for in := firstInput; in < firstOutput; in++ {
 			// get coordinates of input node
-			if i_coord, err := s.Layout.NodePosition(in - firstInput, network.InputNeuron); err != nil {
+			if i_coord, err := s.Layout.NodePosition(in-firstInput, network.InputNeuron); err != nil {
 				return nil, err
 			} else {
 				coord[0] = i_coord.X
@@ -170,7 +168,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool
 			}
 			for hi := firstHidden; hi < lastHidden; hi++ {
 				// get hidden neuron coordinates
-				if h_coord, err := s.Layout.NodePosition(hi - firstHidden, network.HiddenNeuron); err != nil {
+				if h_coord, err := s.Layout.NodePosition(hi-firstHidden, network.HiddenNeuron); err != nil {
 					return nil, err
 				} else {
 					coord[2] = h_coord.X
@@ -183,9 +181,9 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool
 				} else if use_leo && outs[1] > 0 {
 					// add links only when CPPN's LEO output signals to
 					link = createLink(outs[0], in, hi, context.WeightRange)
-				} else if !use_leo && math.Abs(outs[0]) > context.LinkThershold {
+				} else if !use_leo && math.Abs(outs[0]) > context.LinkThreshold {
 					// add only connections with signal exceeding provided threshold
-					link = createThreshlodNormalizedLink(outs[0], in, hi, context.LinkThershold, context.WeightRange)
+					link = createThresholdNormalizedLink(outs[0], in, hi, context.LinkThreshold, context.WeightRange)
 
 				}
 				if link != nil {
@@ -200,7 +198,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool
 
 		// link all hidden nodes to all output nodes.
 		for hi := firstHidden; hi < lastHidden; hi++ {
-			if h_coord, err := s.Layout.NodePosition(hi - firstHidden, network.HiddenNeuron); err != nil {
+			if h_coord, err := s.Layout.NodePosition(hi-firstHidden, network.HiddenNeuron); err != nil {
 				return nil, err
 			} else {
 				coord[0] = h_coord.X
@@ -208,7 +206,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool
 			}
 			for oi := firstOutput; oi < firstHidden; oi++ {
 				// get output neuron coordinates
-				if o_coord, err := s.Layout.NodePosition(oi - firstOutput, network.OutputNeuron); err != nil {
+				if o_coord, err := s.Layout.NodePosition(oi-firstOutput, network.OutputNeuron); err != nil {
 					return nil, err
 				} else {
 					coord[2] = o_coord.X
@@ -221,9 +219,9 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool
 				} else if use_leo && outs[1] > 0 {
 					// add links only when CPPN's LEO output signals to
 					link = createLink(outs[0], hi, oi, context.WeightRange)
-				} else if !use_leo && math.Abs(outs[0]) > context.LinkThershold {
+				} else if !use_leo && math.Abs(outs[0]) > context.LinkThreshold {
 					// add only connections with signal exceeding provided threshold
-					link = createThreshlodNormalizedLink(outs[0], hi, oi, context.LinkThershold, context.WeightRange)
+					link = createThresholdNormalizedLink(outs[0], hi, oi, context.LinkThreshold, context.WeightRange)
 				}
 				if link != nil {
 					connections = append(connections, link)
@@ -238,7 +236,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool
 		// connect all input nodes directly to all output nodes
 		for in := firstInput; in < firstOutput; in++ {
 			// get coordinates of input node
-			if i_coord, err := s.Layout.NodePosition(in - firstInput, network.InputNeuron); err != nil {
+			if i_coord, err := s.Layout.NodePosition(in-firstInput, network.InputNeuron); err != nil {
 				return nil, err
 			} else {
 				coord[0] = i_coord.X
@@ -251,7 +249,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool
 			}
 			for oi := firstOutput; oi < firstHidden; oi++ {
 				// get output neuron coordinates
-				if o_coord, err := s.Layout.NodePosition(oi - firstOutput, network.OutputNeuron); err != nil {
+				if o_coord, err := s.Layout.NodePosition(oi-firstOutput, network.OutputNeuron); err != nil {
 					return nil, err
 				} else {
 					coord[2] = o_coord.X
@@ -264,9 +262,9 @@ func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool
 				} else if use_leo && outs[1] > 0 {
 					// add links only when CPPN's LEO output signals to
 					link = createLink(outs[0], in, oi, context.WeightRange)
-				} else if !use_leo && math.Abs(outs[0]) > context.LinkThershold {
+				} else if !use_leo && math.Abs(outs[0]) > context.LinkThreshold {
 					// add only connections with signal exceeding provided threshold
-					link = createThreshlodNormalizedLink(outs[0], in, oi, context.LinkThershold, context.WeightRange)
+					link = createThresholdNormalizedLink(outs[0], in, oi, context.LinkThreshold, context.WeightRange)
 
 				}
 				if link != nil {
