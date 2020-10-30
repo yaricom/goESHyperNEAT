@@ -1,32 +1,22 @@
 package hyperneat
 
 import (
-	"testing"
-	"errors"
-	"os"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/yaricom/goNEAT/neat/utils"
+	"os"
+	"testing"
 )
 
 func TestHyperNEATContext_LoadContext(t *testing.T) {
 	r, err := os.Open("../data/test_es_hyper.neat.yml")
-	if err != nil {
-		t.Error("Failed to open config file", err)
-	}
+	require.NoError(t, err, "failed to open config file")
 
-	context := &HyperNEATContext{}
-	err = context.LoadContext(r)
-	if err != nil {
-		t.Error(err)
-	}
-	err = checkHyperNEATContext(context)
-	if err != nil {
-		t.Error(err)
-	}
-}
+	ctx, err := Load(r)
+	require.NoError(t, err, "failed to load context")
 
-func checkHyperNEATContext(context *HyperNEATContext) error {
-	if context.SubstrateActivator != utils.SigmoidSteepenedActivation {
-		return errors.New("context.SubstrateActivator != network.SigmoidSteepenedActivation")
-	}
-	return nil
+	// check values
+	assert.Equal(t, utils.SigmoidSteepenedActivation, ctx.SubstrateActivator)
+	assert.Equal(t, 0.2, ctx.LinkThreshold)
+	assert.Equal(t, 3.0, ctx.WeightRange)
 }

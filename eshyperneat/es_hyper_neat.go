@@ -1,21 +1,22 @@
-package hyperneat
+package eshyperneat
 
 import (
-	"io"
 	"bytes"
-	"github.com/spf13/viper"
 	"errors"
+	"github.com/spf13/viper"
+	"github.com/yaricom/goESHyperNEAT/hyperneat"
+	"io"
 )
 
 // ES-HyperNEAT execution context
 type ESHyperNEATContext struct {
 	// The included HyperNEAT context
-	HyperNEAT         *HyperNEATContext
+	*hyperneat.HyperNEATContext
 
 	// InitialDepth defines the initial ES-HyperNEAT sample resolution.
-	InitialDepth      int
+	InitialDepth int
 	// Maximal ES-HyperNEAT sample resolution if the variance is still higher than the given division threshold
-	MaximalDepth      int
+	MaximalDepth int
 
 	// DivisionThreshold defines the division threshold. If the variance in a region is greater than this value, after
 	// the initial resolution is reached, ES-HyperNEAT will sample down further (values greater than 1.0 will disable
@@ -28,14 +29,33 @@ type ESHyperNEATContext struct {
 	// BandingThreshold defines the threshold that determines when points are regarded to be in a band. If the point
 	// is in the band then no new connection will be added and as result no new hidden node will be introduced.
 	// The bigger this value the less connections/hidden nodes will be added, i.e. wide bands approximation.
-	BandingThreshold  float64
+	BandingThreshold float64
 
 	// ESIterations defines how many times ES-HyperNEAT should iteratively discover new hidden nodes.
-	ESIterations      int
+	ESIterations int
 }
 
-// Loads context from provided reader
-func (e *ESHyperNEATContext) LoadContext(r io.Reader) error {
+// Loads ESHyperNEAT context options from provided reader
+func Load(r io.Reader) (*ESHyperNEATContext, error) {
+	var buff bytes.Buffer
+	tee := io.TeeReader(r, &buff)
+
+	// load HyperNEAT options
+	hCtx, err := hyperneat.Load(tee)
+	if err != nil {
+		return nil, err
+	}
+
+	// load ES options
+	ctx := &ESHyperNEATContext{HyperNEATContext: hCtx}
+	if err := ctx.load(&buff); err != nil {
+		return nil, err
+	}
+
+	return ctx, nil
+}
+
+func (e *ESHyperNEATContext) load(r io.Reader) error {
 	viper.SetConfigType("YAML")
 	err := viper.ReadConfig(r)
 	if err != nil {
@@ -56,21 +76,4 @@ func (e *ESHyperNEATContext) LoadContext(r io.Reader) error {
 	e.ESIterations = v.GetInt("es_iterations")
 
 	return nil
-}
-
-// Loads this context and all included contexts data
-func (e *ESHyperNEATContext) LoadFullContext(r io.Reader) error {
-	var buff bytes.Buffer
-	tee := io.TeeReader(r, &buff)
-
-	// load included HyperNEAT context
-	e.HyperNEAT = &HyperNEATContext{}
-	err := e.HyperNEAT.LoadFullContext(tee)
-	if err != nil {
-		return err
-	}
-
-	// load this ES-HyperNEAT context
-	err = e.LoadContext(&buff)
-	return err
 }

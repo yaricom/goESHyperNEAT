@@ -2,9 +2,9 @@
 package hyperneat
 
 import (
-	"io"
-	"errors"
 	"bytes"
+	"errors"
+	"io"
 
 	"github.com/spf13/viper"
 	"github.com/yaricom/goNEAT/neat"
@@ -14,19 +14,39 @@ import (
 // The HyperNEAT execution context
 type HyperNEATContext struct {
 	// The NEAT context included
-	NeatContext        *neat.NeatContext
+	*neat.NeatContext
 
 	// The threshold value to indicate which links should be included
-	LinkThershold      float64
-	// The weight range defines the minimum and maximum values for weights on substrate connections, they go from -WeightRange to +WeightRange, and can be any integer
-	WeightRange        float64
+	LinkThreshold float64
+	// The weight range defines the minimum and maximum values for weights on substrate connections, they go
+	// from -WeightRange to +WeightRange, and can be any integer
+	WeightRange float64
 
 	// The substrate activation function
 	SubstrateActivator utils.NodeActivationType
 }
 
-// Loads context from provided configuration data
-func (h *HyperNEATContext) LoadContext(r io.Reader) error {
+// Load is to read HyperNEAT context options from the provided reader
+func Load(r io.Reader) (*HyperNEATContext, error) {
+	var buff bytes.Buffer
+	tee := io.TeeReader(r, &buff)
+
+	// NEAT context loading
+	nCtx := &neat.NeatContext{}
+	if err := nCtx.LoadContext(tee); err != nil {
+		return nil, err
+	}
+
+	// Load HyperNEAT options
+	ctx := &HyperNEATContext{NeatContext: nCtx}
+	if err := ctx.load(&buff); err != nil {
+		return nil, err
+	}
+	return ctx, nil
+}
+
+// Loads only HyperNEAT context from provided configuration data
+func (h *HyperNEATContext) load(r io.Reader) error {
 	viper.SetConfigType("YAML")
 	err := viper.ReadConfig(r)
 	if err != nil {
@@ -37,7 +57,7 @@ func (h *HyperNEATContext) LoadContext(r io.Reader) error {
 		return errors.New("hyperneat subsection not found in configuration")
 	}
 
-	h.LinkThershold = v.GetFloat64("link_threshold")
+	h.LinkThreshold = v.GetFloat64("link_threshold")
 	h.WeightRange = v.GetFloat64("weight_range")
 
 	// read substrate activator
@@ -47,19 +67,4 @@ func (h *HyperNEATContext) LoadContext(r io.Reader) error {
 	}
 
 	return nil
-}
-
-func (e *HyperNEATContext) LoadFullContext(r io.Reader) error {
-	var buff bytes.Buffer
-	tee := io.TeeReader(r, &buff)
-
-	// NEAT context loading
-	e.NeatContext = &neat.NeatContext{}
-	err := e.NeatContext.LoadContext(tee)
-	if err != nil {
-		return err
-	}
-
-	err = e.LoadContext(&buff)
-	return err
 }
