@@ -1,6 +1,9 @@
 # The experiments outputs
 out
 
+# The vendor dependencies
+vendor
+
 # The IDEA project forlder
 .idea
 
