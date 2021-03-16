@@ -175,6 +175,8 @@ github.com/subosito/gotenv v1.2.0 h1:Slr1R9HxAlEKefgq5jn9U+DnETlIUa6HfgEzj0g5d7s
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
+github.com/yaricom/goESHyperNEAT v0.0.0-20210315173628-f56070748916 h1:zSs84m58kO5SRbiW/xDhLgK6dveO/enp9Mb/IeM8jDk=
+github.com/yaricom/goESHyperNEAT v0.0.0-20210315173628-f56070748916/go.mod h1:imok/JvhE9Y/9zBSo6gk6wB2eR/DMcsb+cUU07/haaY=
 github.com/yaricom/goGraphML v0.0.0-20190109114128-b4665c578dfe h1:hZ3RTFDtNZpOHNKoyMY4yW6D00v44P0pXzhlG1MQdZw=
 github.com/yaricom/goGraphML v0.0.0-20190109114128-b4665c578dfe/go.mod h1:brbnKEQs1Fw8GF0wuypX6DObHS9S/nGQv6jul8ZrWVI=
 github.com/yaricom/goGraphML v1.1.0 h1:CrM6yGmZ8Azv2Id2KIzei277MPe5YFzKkOOJu45uOBM=
