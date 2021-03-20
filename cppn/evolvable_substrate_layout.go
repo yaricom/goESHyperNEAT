@@ -2,6 +2,7 @@ package cppn
 
 import (
 	"fmt"
+
 	"github.com/pkg/errors"
 	"github.com/yaricom/goNEAT/neat/network"
 )
