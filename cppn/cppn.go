@@ -18,10 +18,10 @@ func ReadCPPFromGenomeFile(genomePath string) (network.NetworkSolver, error) {
 		return nil, err
 	} else if genome, err := r.Read(); err != nil {
 		return nil, err
-	} else if netw, err := genome.Genesis(genome.Id); err != nil {
+	} else if net, err := genome.Genesis(genome.Id); err != nil {
 		return nil, err
 	} else {
-		return netw.FastNetworkSolver()
+		return net.FastNetworkSolver()
 	}
 }
 
