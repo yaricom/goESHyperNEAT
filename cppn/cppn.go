@@ -4,77 +4,14 @@ package cppn
 
 import (
 	"errors"
-	"fmt"
 	"github.com/yaricom/goNEAT/neat/genetics"
 	"github.com/yaricom/goNEAT/neat/network"
 	"math"
 	"os"
 )
 
-// Defines point with float precision coordinates
-type PointF struct {
-	X, Y float64
-}
-
-func NewPointF(x, y float64) *PointF {
-	return &PointF{X: x, Y: y}
-}
-
-func (p *PointF) String() string {
-	return fmt.Sprintf("(%f, %f)", p.X, p.Y)
-}
-
-// Defines the quad-point in the 4 dimensional hypercube
-type QuadPoint struct {
-	// The associated coordinates
-	X1, X2, Y1, Y2 float64
-	// The value for this point
-	Value float64
-}
-
-func (q *QuadPoint) String() string {
-	return fmt.Sprintf("((%f, %f),(%f, %f)) = %f", q.X1, q.Y1, q.X2, q.Y2, q.Value)
-}
-
-// Creates new quad point
-func NewQuadPoint(x1, y1, x2, y2, value float64) *QuadPoint {
-	return &QuadPoint{X1: x1, Y1: y1, X2: x2, Y2: y2, Value: value}
-}
-
-// Defines quad-tree node to model 4 dimensional hypercube
-type QuadNode struct {
-	// The coordinates of center of this quad-tree node's square
-	X, Y float64
-	// The width of this quad-tree node's square
-	Width float64
-
-	// The CPPN activation level for this node
-	W float64
-	// The level of this node in the quad-tree
-	Level int
-
-	// The children of this node
-	Nodes []*QuadNode
-}
-
-func (q *QuadNode) String() string {
-	return fmt.Sprintf("((%f, %f), %f) = %f at %d", q.X, q.Y, q.Width, q.W, q.Level)
-}
-
-// Creates new quad-node with given parameters
-func NewQuadNode(x, y, width float64, level int) *QuadNode {
-	node := QuadNode{
-		X:     x,
-		Y:     y,
-		Width: width,
-		W:     0.0,
-		Level: level,
-	}
-	return &node
-}
-
 // Reads CPPN from specified genome and creates network solver
-func ReadCPPNfromGenomeFile(genomePath string) (network.NetworkSolver, error) {
+func ReadCPPFromGenomeFile(genomePath string) (network.NetworkSolver, error) {
 	if genomeFile, err := os.Open(genomePath); err != nil {
 		return nil, err
 	} else if r, err := genetics.NewGenomeReader(genomeFile, genetics.YAMLGenomeEncoding); err != nil {
@@ -145,18 +82,18 @@ func nodeVariance(node *QuadNode) float64 {
 		return 0.0
 	}
 
-	cppn_vals := nodeCPPNValues(node)
+	cppnVals := nodeCPPNValues(node)
 	// calculate median and variance
 	m, v := 0.0, 0.0
-	for _, f := range cppn_vals {
+	for _, f := range cppnVals {
 		m += f
 	}
-	m /= float64(len(cppn_vals))
+	m /= float64(len(cppnVals))
 
-	for _, f := range cppn_vals {
+	for _, f := range cppnVals {
 		v += math.Pow(f-m, 2)
 	}
-	v /= float64(len(cppn_vals))
+	v /= float64(len(cppnVals))
 
 	return v
 }
@@ -168,8 +105,8 @@ func nodeCPPNValues(n *QuadNode) []float64 {
 		accumulator := make([]float64, 0)
 		for _, p := range n.Nodes {
 			// go into child nodes
-			p_vals := nodeCPPNValues(p)
-			accumulator = append(accumulator, p_vals...)
+			pVals := nodeCPPNValues(p)
+			accumulator = append(accumulator, pVals...)
 		}
 		return accumulator
 	} else {
