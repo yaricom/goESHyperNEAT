@@ -16,7 +16,7 @@ func TestEvolvableSubstrate_CreateNetworkSolver(t *testing.T) {
 
 	substr := NewEvolvableSubstrate(layout, utils.SigmoidSteepenedActivation)
 
-	cppn, err := ReadCPPNfromGenomeFile(cppn_hyperneat_test_genome_path)
+	cppn, err := ReadCPPFromGenomeFile(cppnHyperNEATTestGenomePath)
 	require.NoError(t, err, "failed to read CPPN")
 	context, err := loadESHyperNeatContext("../data/test_es_hyper.neat.yml")
 	require.NoError(t, err, "failed to read ESHyperNEAT context")
