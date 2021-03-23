@@ -128,4 +128,5 @@ es-hyperneat:
   banding_threshold: 0.3
 
   # ESIterations defines how many times ES-HyperNEAT should iteratively discover new hidden nodes.
+  # TODO BUG WHEN ES_ITERATIONS > 1
   es_iterations: 1
