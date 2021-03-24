@@ -21,7 +21,7 @@ type CPPNNetworkBuilder struct {
 
 	// New Graph Builder generator function.
 	// Note: Graph Builder is used to store graphs in a user-friendly format
-	NewGraphBuilder func() *cppn.GraphBuilder
+	NewGraphBuilder func() *cppn.SubstrateGraphBuilder
 }
 
 //CreateANNFromCPPNOrganism creates a NetworkSolver (ANN) by querying the Organism.Phenotype cppnNetwork by the ESHyperNeat Algorithm

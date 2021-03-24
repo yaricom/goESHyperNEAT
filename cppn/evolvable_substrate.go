@@ -39,7 +39,7 @@ func NewEvolvableSubstrate(layout EvolvableSubstrateLayout, nodesActivation util
 // Creates network solver based on current substrate layout and provided Compositional Pattern Producing Network which
 // used to define connections between network nodes. Optional graph_builder can be provided to collect graph nodes and edges
 // of created network solver. With graph builder it is possible to save/load network configuration as well as visualize it.
-func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, graphBuilder GraphBuilder, context *eshyperneat.ESHyperNEATContext) (network.NetworkSolver, error) {
+func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, graphBuilder SubstrateGraphBuilder, context *eshyperneat.ESHyperNEATContext) (network.NetworkSolver, error) {
 	es.cppn = cppn
 
 	// the network layers will be collected in order: bias, input, output, hidden

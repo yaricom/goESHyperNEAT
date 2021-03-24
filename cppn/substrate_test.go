@@ -36,7 +36,7 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 	context, err := loadHyperNeatContext(hyperNeatTestConfigFile)
 	require.NoError(t, err, "failed to load HyperNEAT context options")
 
-	graph := NewGraphMLBuilder("", false)
+	graph := NewSubstrateGraphMLBuilder("", false)
 
 	solver, err := substr.CreateNetworkSolver(cppn, false, graph, context)
 	require.NoError(t, err, "failed to create network solver")
@@ -79,7 +79,7 @@ func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
 	context, err := loadHyperNeatContext(hyperNeatTestConfigFile)
 	require.NoError(t, err, "failed to load HyperNEAT context options")
 
-	graph := NewGraphMLBuilder("", false)
+	graph := NewSubstrateGraphMLBuilder("", false)
 
 	solver, err := substr.CreateNetworkSolver(cppn, true, graph, context)
 	require.NoError(t, err, "failed to create network solver")
@@ -112,7 +112,7 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 	layout := NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount)
 
 	// create graph builder
-	builder := NewGraphMLBuilder("", false)
+	builder := NewSubstrateGraphMLBuilder("", false).(*graphMLBuilder)
 
 	// create new substrate
 	substr := NewSubstrate(layout, utils.SigmoidSteepenedActivation)

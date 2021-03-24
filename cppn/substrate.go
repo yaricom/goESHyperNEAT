@@ -35,7 +35,7 @@ func NewSubstrate(layout SubstrateLayout, nodesActivation utils.NodeActivationTy
 // If use_leo is True thar Link Expression Output extension to the HyperNEAT will be used instead of standard weight threshold
 // technique of HyperNEAT to determine whether to express link between two nodes or not. With LEO the link expressed based
 // on value of additional output of the CPPN (if > 0 then expressed)
-func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool, graph_builder GraphBuilder, context *hyperneat.HyperNEATContext) (network.NetworkSolver, error) {
+func (s *Substrate) CreateNetworkSolver(cppn network.NetworkSolver, use_leo bool, graph_builder SubstrateGraphBuilder, context *hyperneat.HyperNEATContext) (network.NetworkSolver, error) {
 	// check conditions
 	if s.Layout.BiasCount() > 1 {
 		return nil, errors.New("SUBSTRATE: maximum one BIAS node per network supported")

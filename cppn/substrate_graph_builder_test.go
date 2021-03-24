@@ -13,7 +13,7 @@ import (
 
 func TestNewGraphMLBuilder(t *testing.T) {
 	description := "test graph"
-	builder := NewGraphMLBuilder(description, false)
+	builder := NewSubstrateGraphMLBuilder(description, false).(*graphMLBuilder)
 
 	// check auxiliary components initialized
 	assert.NotNil(t, builder.graphML)
@@ -24,7 +24,7 @@ func TestNewGraphMLBuilder(t *testing.T) {
 
 func TestGraphMLBuilder_AddNode(t *testing.T) {
 	description := "test add node graph"
-	builder := NewGraphMLBuilder(description, false)
+	builder := NewSubstrateGraphMLBuilder(description, false).(*graphMLBuilder)
 
 	// add test nodes
 	nodes := createTestNodes()
@@ -65,7 +65,7 @@ func TestGraphMLBuilder_AddNode(t *testing.T) {
 
 func TestGraphMLBuilder_AddWeightedEdge(t *testing.T) {
 	description := "test add edge graph"
-	builder := NewGraphMLBuilder(description, false)
+	builder := NewSubstrateGraphMLBuilder(description, false).(*graphMLBuilder)
 
 	// add nodes
 	nodes := createTestNodes()
@@ -102,7 +102,7 @@ func TestGraphMLBuilder_AddWeightedEdge(t *testing.T) {
 
 func TestGraphMLBuilder_Marshal(t *testing.T) {
 	description := "test marshal graph"
-	builder := NewGraphMLBuilder(description, true)
+	builder := NewSubstrateGraphMLBuilder(description, true)
 
 	// add nodes
 	nodes := createTestNodes()
@@ -131,7 +131,7 @@ func TestGraphMLBuilder_Marshal(t *testing.T) {
 }
 
 func TestGraphMLBuilder_UnMarshal(t *testing.T) {
-	builder := NewGraphMLBuilder("", true)
+	builder := NewSubstrateGraphMLBuilder("", true).(*graphMLBuilder)
 
 	err := builder.UnMarshal(strings.NewReader(graphXml))
 	require.NoError(t, err, "failed to unmarshal")

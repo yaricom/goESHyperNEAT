@@ -24,7 +24,7 @@ func TestEvolvableSubstrate_CreateNetworkSolver(t *testing.T) {
 	require.NoError(t, err, "failed to read ESHyperNEAT context")
 
 	// test solver creation
-	graph := NewGraphMLBuilder("", false)
+	graph := NewSubstrateGraphMLBuilder("", false)
 	solver, err := substr.CreateNetworkSolver(cppn, graph, context)
 	require.NoError(t, err, "failed to create solver")
 

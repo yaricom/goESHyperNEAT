@@ -1,0 +1,35 @@
+# The CPPN seed genome configuration for substrate generation testing
+genome:
+  id: 1
+  # The traits used in this genome
+  traits:
+    - {id: 1,  params: [0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+    - {id: 2,  params: [0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+    - {id: 3,  params: [0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+    - {id: 4,  params: [0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+    - {id: 5,  params: [0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+    - {id: 6,  params: [0.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+    - {id: 7,  params: [0.7, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+
+  # The neuron nodes for this genome
+  nodes:
+    - {id: 1,  trait_id: 0, type: BIAS, activation: LinearActivation}
+    # The input nodes - sensors
+    - {id: 2,  trait_id: 0, type: INPT, activation: LinearActivation}
+    - {id: 3,  trait_id: 0, type: INPT, activation: LinearActivation}
+    - {id: 4,  trait_id: 0, type: INPT, activation: LinearActivation}
+    - {id: 5,  trait_id: 0, type: INPT, activation: LinearActivation}
+    # The output nodes - actuators
+    - {id: 6,  trait_id: 0, type: OUTP, activation: TanhActivation}
+    # The hidden node
+    - {id: 7,  trait_id: 0, type: HIDN, activation: GaussianBipolarActivation}
+
+  # The genes - connection between neuron nodes within this genome
+  genes:
+    - {src_id: 1,  tgt_id: 6,  weight: 0.1, trait_id: 1, innov_num: 1,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 2,  tgt_id: 6,  weight: 0.3, trait_id: 2, innov_num: 2,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 3,  tgt_id: 7,  weight: 0.2, trait_id: 3, innov_num: 3,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 4,  tgt_id: 7,  weight: 0.3, trait_id: 4, innov_num: 4,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 5,  tgt_id: 6,  weight: 0.5, trait_id: 5, innov_num: 5,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 1,  tgt_id: 7,  weight: 0.4, trait_id: 6, innov_num: 6,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 7,  tgt_id: 6,  weight: 0.8, trait_id: 7, innov_num: 7,  mut_num: 0, recurrent: false, enabled: true}

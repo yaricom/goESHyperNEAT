@@ -2,35 +2,34 @@
 package retina
 
 import (
+	"errors"
 	"fmt"
+	"github.com/yaricom/goESHyperNEAT/cppn"
 	"github.com/yaricom/goNEAT/experiments"
 	"github.com/yaricom/goNEAT/neat"
 	"github.com/yaricom/goNEAT/neat/genetics"
 	"github.com/yaricom/goNEAT/neat/network"
-	"log"
+	"math"
 	"os"
 )
 
 const (
-	// MaxFitness Used as max value which we add error too to get an organism's fitness
-	MaxFitness = 1000.0
-
-	// FitnessThreshold is the fitness value for which an organism is considered to have won the experiment
-	// TODO update to value which beats the environment (not yet determined)
-	FitnessThreshold = 55
+	// maxFitness Used as max value which we add error too to get an organism's fitness
+	maxFitness = 1000.0
+	// fitnessThreshold is the fitness value for which an organism is considered to have won the experiment
+	fitnessThreshold = maxFitness
 )
 
 type generationEvaluator struct {
-	OutputPath         string
-	Environment        *Environment
-	CPPNNetworkBuilder *CPPNNetworkBuilder
+	outDir string
+	env    *Environment
 }
 
 // NewGenerationEvaluator is to create new generations evaluator for retina experiment.
 func NewGenerationEvaluator(outDir string, env *Environment) experiments.GenerationEvaluator {
 	return &generationEvaluator{
-		OutputPath:  outDir,
-		Environment: env,
+		outDir: outDir,
+		env:    env,
 	}
 }
 
@@ -42,7 +41,7 @@ func (e *generationEvaluator) GenerationEvaluate(population *genetics.Population
 		if err != nil {
 			return err
 		}
-		fmt.Printf("organism #%d fitness %f \n", idx, organism.Fitness)
+		neat.InfoLog(fmt.Sprintf("organism #%d fitness %f \n", idx, organism.Fitness))
 
 		if isWinner && (epoch.Best == nil || organism.Fitness > epoch.Best.Fitness) {
 			epoch.Solved = true
@@ -50,9 +49,9 @@ func (e *generationEvaluator) GenerationEvaluate(population *genetics.Population
 			epoch.WinnerGenes = organism.Genotype.Extrons()
 			epoch.WinnerEvals = context.PopSize*epoch.Id + organism.Genotype.Id
 			epoch.Best = organism
-			if epoch.WinnerNodes == 21 {
+			if epoch.WinnerNodes == 9 {
 				// You could dump out optimal genomes here if desired
-				optPath := fmt.Sprintf("%s/%s_%d-%d", experiments.OutDirForTrial(e.OutputPath, epoch.TrialId),
+				optPath := fmt.Sprintf("%s/%s_%d-%d", experiments.OutDirForTrial(e.outDir, epoch.TrialId),
 					"retina_optimal", organism.Phenotype.NodeCount(), organism.Phenotype.LinkCount())
 				file, err := os.Create(optPath)
 				if err != nil {
@@ -71,7 +70,7 @@ func (e *generationEvaluator) GenerationEvaluate(population *genetics.Population
 
 	// Only print to file every print_every generations
 	if epoch.Solved || epoch.Id%context.PrintEvery == 0 {
-		popPath := fmt.Sprintf("%s/gen_%d", experiments.OutDirForTrial(e.OutputPath, epoch.TrialId), epoch.Id)
+		popPath := fmt.Sprintf("%s/gen_%d", experiments.OutDirForTrial(e.outDir, epoch.TrialId), epoch.Id)
 		file, err := os.Create(popPath)
 		if err != nil {
 			neat.ErrorLog(fmt.Sprintf("Failed to dump population, reason: %s\n", err))
@@ -84,16 +83,30 @@ func (e *generationEvaluator) GenerationEvaluate(population *genetics.Population
 		// print winner organism
 		for _, org := range population.Organisms {
 			if org.IsWinner {
-				// Prints the winner organism to file!
-				orgPath := fmt.Sprintf("%s/%s_%d-%d", experiments.OutDirForTrial(e.OutputPath, epoch.TrialId),
-					"retina_optimal", org.Phenotype.NodeCount(), org.Phenotype.LinkCount())
-				file, err := os.Create(orgPath)
-				if err != nil {
-					neat.ErrorLog(fmt.Sprintf("Failed to dump winner organism genome, reason: %s\n", err))
+				// Prints the winner CPPN organism to file!
+				//
+				orgPath := fmt.Sprintf("%s/%s_%d-%d", experiments.OutDirForTrial(e.outDir, epoch.TrialId),
+					"retina_cppn_winner", org.Phenotype.NodeCount(), org.Phenotype.LinkCount())
+				if file, err := os.Create(orgPath); err != nil {
+					neat.ErrorLog(err.Error())
 				} else if err = org.Genotype.Write(file); err != nil {
-					neat.ErrorLog("Failed to save winner genotype")
+					neat.ErrorLog(fmt.Sprintf("Failed to dump winner CPPN genotype, reason: %s\n", err))
 				} else {
-					neat.InfoLog(fmt.Sprintf("Generation #%d winner dumped to: %s\n", epoch.Id, orgPath))
+					neat.InfoLog(fmt.Sprintf("Generation #%d winner CPPN dumped to: %s\n", epoch.Id, orgPath))
+				}
+				// Dump the winner substrate graph
+				//
+				graph := org.Data.Value.(cppn.SubstrateGraphBuilder)
+				nodes, _ := graph.NodesCount()
+				edges, _ := graph.EdgesCount()
+				substrPath := fmt.Sprintf("%s/%s_%d-%d.xml", experiments.OutDirForTrial(e.outDir, epoch.TrialId),
+					"retina_substrate_graph_winner", nodes, edges)
+				if file, err := os.Create(substrPath); err != nil {
+					neat.ErrorLog(err.Error())
+				} else if err = graph.Marshal(file); err != nil {
+					neat.ErrorLog(fmt.Sprintf("Failed to dump winner substrate, reason: %s\n", err))
+				} else {
+					neat.InfoLog(fmt.Sprintf("Generation #%d winner's substrate dumped to: %s\n", epoch.Id, substrPath))
 				}
 				break
 			}
@@ -104,71 +117,67 @@ func (e *generationEvaluator) GenerationEvaluate(population *genetics.Population
 
 // organismEvaluate evaluates an individual phenotype network with retina experiment and returns true if its won
 func (e generationEvaluator) organismEvaluate(organism *genetics.Organism) (bool, error) {
-	// Prepare underlying network properties
-	predictorNetwork, err := e.CPPNNetworkBuilder.CreateANNFromCPPNOrganism(organism)
+	// get CPPN network solver
+	cppnSolver, err := organism.Phenotype.FastNetworkSolver()
 	if err != nil {
 		return false, err
 	}
 
-	// Predict on dataset
-	errorSum := 0.0
-	count := 0.0
-	detectionErrorCount := 0.0
-
-	// TODO fix this function, how to activate a NetworkSolver? only can a Network
-	// use the network by passing in inputs to get outputs
-	networkPredict := func(network network.NetworkSolver, inputs []float64) ([]float64, error) {
-		// Put network into initial state
-		if _, err := network.Flush(); err != nil {
-			return nil, err
-		}
-
-		// Load input array into sensors (inputs) of network
-		err := network.LoadSensors(inputs)
-		if err != nil {
-			log.Fatal(err)
-			return nil, err
-		}
-
-		// TODO Activate the network! Pass the inputs through to the outputs!
-
-		// Get outputs from network
-		outputs := network.ReadOutputs()
-
-		return outputs, nil
+	// create substrate layout
+	inputCount := e.env.inputSize * 2 // left + right pixels of visual object
+	layout, err := cppn.NewMappedEvolvableSubstrateLayout(inputCount, 2)
+	if err != nil {
+		return false, err
+	}
+	// create ES-HyperNEAT solver
+	substr := cppn.NewEvolvableSubstrate(layout, e.env.context.SubstrateActivator)
+	graph := cppn.NewSubstrateGraphMLBuilder("retina ES-HyperNEAT", false)
+	solver, err := substr.CreateNetworkSolver(cppnSolver, graph, e.env.context)
+	if err != nil {
+		return false, err
 	}
 
 	// Evaluate the detector ANN against 256 combinations of the left and the right visual objects
 	// at correct and incorrect sides of retina
-	for _, leftObj := range e.Environment.VisualObjects {
-		for _, rightObj := range e.Environment.VisualObjects {
-			// Create input by joining data from left and right visual objects
-			inputs := append(leftObj.Data, rightObj.Data...)
-			// Get outputs by feeding it through our model
-			outputs, err := networkPredict(predictorNetwork, inputs)
+	errorSum, count, detectionErrorCount := 0.0, 0.0, 0.0
+	for _, leftObj := range e.env.visualObjects {
+		for _, rightObj := range e.env.visualObjects {
+			// Evaluate outputted predictions
+			loss, err := evaluateNetwork(solver, leftObj, rightObj)
 			if err != nil {
 				return false, err
 			}
-			// Evaluate outputted predictions
-			loss := evaluatePredictions(outputs, leftObj, rightObj)
 			errorSum += loss
 			count += 1.0
 			if loss > 0 {
 				detectionErrorCount += 1.0
 			}
+			// flush solver
+			if flushed, err := solver.Flush(); err != nil {
+				return false, err
+			} else if !flushed {
+				return false, errors.New("failed to flush solver after evaluation")
+			}
 		}
 	}
 
 	// Calculate the fitness score
-	fitness := MaxFitness / (1.0 + errorSum)
+	fitness := maxFitness / (1.0 + errorSum)
 	avgError := errorSum / count
 
-	neat.DebugLog(fmt.Sprintf("Average error: %f, errors sum: %f, false detections: %f", avgError, errorSum, detectionErrorCount))
+	neat.InfoLog(fmt.Sprintf("Average error: %f, errors sum: %f, false detections: %f from: %f",
+		avgError, errorSum, detectionErrorCount, count))
+	nodes, _ := graph.NodesCount()
+	edges, _ := graph.EdgesCount()
+	neat.InfoLog(fmt.Sprintf("Substrate: #nodes = %d, #edges = %d | CPPN phenotype: #nodes = %d, #edges = %d",
+		nodes, edges, cppnSolver.NodeCount(), cppnSolver.LinkCount()))
 
 	isWinner := false
-	if organism.Fitness > FitnessThreshold {
+	if organism.Fitness > fitnessThreshold {
 		isWinner = true
 		fmt.Printf("Found a Winner! \n")
+		// save solver graph to the winner organism
+		organism.Data = &genetics.OrganismData{Value: graph}
 	}
 	// Save properties to organism struct
 	organism.IsWinner = isWinner
@@ -176,6 +185,29 @@ func (e generationEvaluator) organismEvaluate(organism *genetics.Organism) (bool
 	organism.Fitness = fitness
 
 	return organism.IsWinner, nil
+}
+
+// evaluateNetwork is to evaluate provided network solver using provided visual objects to test prediction performance.
+// Returns the prediction loss value or error if failed to evaluate.
+func evaluateNetwork(solver network.NetworkSolver, leftObj VisualObject, rightObj VisualObject) (float64, error) {
+	// Create input by joining data from left and right visual objects
+	inputs := append(leftObj.data, rightObj.data...)
+
+	// run evaluation
+	loss := math.MaxFloat64
+	if err := solver.LoadSensors(inputs); err != nil {
+		return loss, err
+	}
+	if relaxed, err := solver.RecursiveSteps(); err != nil {
+		return loss, err
+	} else if !relaxed {
+		return loss, errors.New("failed to relax network solver of the ES substrate")
+	}
+
+	// get outputs and evaluate against ground truth
+	outs := solver.ReadOutputs()
+	loss = evaluatePredictions(outs, leftObj, rightObj)
+	return loss, nil
 }
 
 // evaluatePredictions returns the loss between predictions and ground truth of leftObj and rightObj
@@ -193,7 +225,7 @@ func evaluatePredictions(predictions []float64, leftObj VisualObject, rightObj V
 	// Get ground truth values
 	targets := make([]float64, 2)
 
-	// Set target[0] to 1.0 if it contains a valid LeftObj, 0.0 else
+	// Set target[0] to 1.0 if LeftObj is suitable for Left side, otherwise set to 0.0
 	if leftObj.Side == LeftSide || leftObj.Side == BothSide {
 		targets[0] = 1.0
 	} else {
@@ -207,9 +239,8 @@ func evaluatePredictions(predictions []float64, leftObj VisualObject, rightObj V
 		targets[1] = 0.0
 	}
 
-	// Find loss as a distance between outputs and ground truth
-	loss := (normPreds[0]-targets[0])*(normPreds[0]-targets[0]) +
-		(normPreds[1]-targets[1])*(normPreds[1]-targets[1])
+	// Find loss as an Euclidean distance between outputs and ground truth
+	loss := (normPreds[0]-targets[0])*(normPreds[0]-targets[0]) + (normPreds[1]-targets[1])*(normPreds[1]-targets[1])
 
 	flag := "match"
 	if loss != 0 {

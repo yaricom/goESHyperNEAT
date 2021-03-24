@@ -2,6 +2,8 @@ package retina
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
+	"github.com/yaricom/goESHyperNEAT/eshyperneat"
 	"strings"
 )
 
@@ -20,12 +22,23 @@ func (s DetectionSide) String() string {
 
 // Environment holds the dataset and evaluation methods for the modular retina experiment
 type Environment struct {
-	VisualObjects []VisualObject
+	visualObjects []VisualObject
+	inputSize     int
+	context       *eshyperneat.ESHyperNEATContext
 }
 
-// NewRetinaEnvironment creates a new Retina Environment with a dataset of all possible Visual Object
-func NewRetinaEnvironment(dataSet []VisualObject) *Environment {
-	return &Environment{VisualObjects: dataSet}
+// NewRetinaEnvironment creates a new Retina Environment with a dataset of all possible Visual Object with specified
+// number of inputs to be acquired from provided objects
+func NewRetinaEnvironment(dataSet []VisualObject, inputSize int, context *eshyperneat.ESHyperNEATContext) (*Environment, error) {
+	// check that provided visual objects has data points equal to the inputSize
+	for _, o := range dataSet {
+		if len(o.data) != inputSize {
+			return nil, errors.Errorf(
+				"all viasual objects expected to have %d data points, but found %d at %v",
+				inputSize, len(o.data), o)
+		}
+	}
+	return &Environment{visualObjects: dataSet, inputSize: inputSize, context: context}, nil
 }
 
 // VisualObject represents a left, right, or both, object classified by retina
@@ -34,7 +47,7 @@ type VisualObject struct {
 	Config string        // the configuration string
 
 	// Inner computed values from visual objects configuration parsing
-	Data []float64 // the visual object is rectangular, it can be encoded as 1D array
+	data []float64 // the visual object is rectangular, it can be encoded as 1D array
 }
 
 // NewVisualObject creates a new VisualObject by first parsing the config string into a VisualObject
@@ -43,7 +56,7 @@ func NewVisualObject(side DetectionSide, config string) VisualObject {
 	return VisualObject{
 		Side:   side,
 		Config: config,
-		Data:   parseVisualObjectConfig(config),
+		data:   parseVisualObjectConfig(config),
 	}
 }
 
