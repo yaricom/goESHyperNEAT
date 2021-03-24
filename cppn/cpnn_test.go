@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	cppnHyperNEATTestGenomePath    = "../data/test_cppn_hyperneat_genome.yml"
-	cppnLeoHyperNEATTestGenomePath = "../data/test_cppn_leo_hyperneat_genome.yml"
+	cppnHyperNEATTestGenomePath    = "../data/test/test_cppn_hyperneat_genome.yml"
+	cppnLeoHyperNEATTestGenomePath = "../data/test/test_cppn_leo_hyperneat_genome.yml"
 )
 
 func TestQuadNode_NodeVariance(t *testing.T) {

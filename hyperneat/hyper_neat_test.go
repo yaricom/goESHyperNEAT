@@ -9,7 +9,7 @@ import (
 )
 
 func TestHyperNEATContext_LoadContext(t *testing.T) {
-	r, err := os.Open("../data/test_es_hyper.neat.yml")
+	r, err := os.Open("../data/test/test_es_hyper.neat.yml")
 	require.NoError(t, err, "failed to open config file")
 
 	ctx, err := Load(r)

@@ -10,6 +10,8 @@ import (
 	"testing"
 )
 
+const hyperNeatTestConfigFile = "../data/test/test_hyper.neat.yml"
+
 func TestNewSubstrate(t *testing.T) {
 	biasCount, inputCount, hiddenCount, outputCount := 1, 4, 2, 2
 	layout := NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount)
@@ -31,7 +33,7 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 	cppn, err := ReadCPPFromGenomeFile(cppnHyperNEATTestGenomePath)
 	require.NoError(t, err, "failed to read CPPN")
 
-	context, err := loadHyperNeatContext("../data/test_hyper.neat.yml")
+	context, err := loadHyperNeatContext(hyperNeatTestConfigFile)
 	require.NoError(t, err, "failed to load HyperNEAT context options")
 
 	graph := NewGraphMLBuilder("", false)
@@ -74,7 +76,7 @@ func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
 	cppn, err := ReadCPPFromGenomeFile(cppnLeoHyperNEATTestGenomePath)
 	require.NoError(t, err, "failed to read CPPN")
 
-	context, err := loadHyperNeatContext("../data/test_hyper.neat.yml")
+	context, err := loadHyperNeatContext(hyperNeatTestConfigFile)
 	require.NoError(t, err, "failed to load HyperNEAT context options")
 
 	graph := NewGraphMLBuilder("", false)
@@ -119,7 +121,7 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 	cppn, err := ReadCPPFromGenomeFile(cppnHyperNEATTestGenomePath)
 	require.NoError(t, err, "failed to read CPPN")
 
-	context, err := loadHyperNeatContext("../data/test_hyper.neat.yml")
+	context, err := loadHyperNeatContext(hyperNeatTestConfigFile)
 	require.NoError(t, err, "failed to load HyperNEAT context options")
 
 	solver, err := substr.CreateNetworkSolver(cppn, false, builder, context)

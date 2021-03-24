@@ -9,6 +9,8 @@ import (
 	"testing"
 )
 
+const esHyperNeatTestConfigFile = "../data/test/test_es_hyper.neat.yml"
+
 func TestEvolvableSubstrate_CreateNetworkSolver(t *testing.T) {
 	inputCount, outputCount := 4, 2
 	layout, err := NewMappedEvolvableSubstrateLayout(inputCount, outputCount)
@@ -18,7 +20,7 @@ func TestEvolvableSubstrate_CreateNetworkSolver(t *testing.T) {
 
 	cppn, err := ReadCPPFromGenomeFile(cppnHyperNEATTestGenomePath)
 	require.NoError(t, err, "failed to read CPPN")
-	context, err := loadESHyperNeatContext("../data/test_es_hyper.neat.yml")
+	context, err := loadESHyperNeatContext(esHyperNeatTestConfigFile)
 	require.NoError(t, err, "failed to read ESHyperNEAT context")
 
 	// test solver creation
