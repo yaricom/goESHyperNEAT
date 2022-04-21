@@ -1,3 +1,5 @@
+# goESHyperNEAT
+
 [![Build Status](https://travis-ci.org/yaricom/goESHyperNEAT.svg?branch=master)](https://travis-ci.org/yaricom/goESHyperNEAT) [![GoDoc](https://godoc.org/github.com/yaricom/goESHyperNEAT?status.svg)](https://godoc.org/github.com/yaricom/goESHyperNEAT)
 
 ## Overview
