@@ -4,7 +4,7 @@ import (
 	"errors"
 	"math"
 
-	"github.com/yaricom/goESHyperNEAT/hyperneat"
+	"github.com/yaricom/goESHyperNEAT/v2/hyperneat"
 	"github.com/yaricom/goNEAT/neat/network"
 	"github.com/yaricom/goNEAT/neat/utils"
 )

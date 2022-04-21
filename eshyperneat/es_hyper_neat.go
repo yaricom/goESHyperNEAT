@@ -1,14 +1,15 @@
+// Package eshyperneat holds implementation of Evolvable-Substrate HyperNEAT context
 package eshyperneat
 
 import (
 	"bytes"
 	"errors"
 	"github.com/spf13/viper"
-	"github.com/yaricom/goESHyperNEAT/hyperneat"
+	"github.com/yaricom/goESHyperNEAT/v2/hyperneat"
 	"io"
 )
 
-// ES-HyperNEAT execution context
+// ESHyperNEATContext ES-HyperNEAT execution context
 type ESHyperNEATContext struct {
 	// The included HyperNEAT context
 	*hyperneat.HyperNEATContext
@@ -35,7 +36,7 @@ type ESHyperNEATContext struct {
 	ESIterations int
 }
 
-// Loads ESHyperNEAT context options from provided reader
+// Load loads ESHyperNEAT context options from provided reader
 func Load(r io.Reader) (*ESHyperNEATContext, error) {
 	var buff bytes.Buffer
 	tee := io.TeeReader(r, &buff)

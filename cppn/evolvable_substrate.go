@@ -2,7 +2,7 @@ package cppn
 
 import (
 	"container/list"
-	"github.com/yaricom/goESHyperNEAT/eshyperneat"
+	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
 	"math"
 
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/yaricom/goNEAT/neat/utils"
 )
 
-// The evolvable substrate holds configuration of ANN produced by CPPN within hypecube where each 4-dimensional point
+// EvolvableSubstrate The evolvable substrate holds configuration of ANN produced by CPPN within hypecube where each 4-dimensional point
 // mark connection weight between two ANN units. The topology of ANN is not rigid as in plain substrate and can be evolved
 // by introducing novel nodes to the ANN. This provides extra benefits that the topology of ANN should not be handcrafted
 // by human, but produced during substrate generation from controlling CPPN and nodes locations may be arbitrary that suits
@@ -27,7 +27,7 @@ type EvolvableSubstrate struct {
 	coords []float64
 }
 
-// Creates new instance of evolvable substrate
+// NewEvolvableSubstrate Creates new instance of evolvable substrate
 func NewEvolvableSubstrate(layout EvolvableSubstrateLayout, nodesActivation utils.NodeActivationType) *EvolvableSubstrate {
 	return &EvolvableSubstrate{
 		coords:          make([]float64, 4),
@@ -36,7 +36,7 @@ func NewEvolvableSubstrate(layout EvolvableSubstrateLayout, nodesActivation util
 	}
 }
 
-// Creates network solver based on current substrate layout and provided Compositional Pattern Producing Network which
+// CreateNetworkSolver Creates network solver based on current substrate layout and provided Compositional Pattern Producing Network which
 // used to define connections between network nodes. Optional graph_builder can be provided to collect graph nodes and edges
 // of created network solver. With graph builder it is possible to save/load network configuration as well as visualize it.
 func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, graphBuilder SubstrateGraphBuilder, context *eshyperneat.ESHyperNEATContext) (network.NetworkSolver, error) {
@@ -274,7 +274,7 @@ func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool,
 
 // Decides what regions should have higher neuron density based on variation and express new neurons and connections into
 // these regions.
-// Receives coordinates of source (outgoing = true) or target node (outgoing = false) at (a, b) and initialized quadtree node.
+// Receive coordinates of source (outgoing = true) or target node (outgoing = false) at (a, b) and initialized quadtree node.
 // Adds the connections that are in bands of the two-dimensional cross-section of the  hypercube containing the source
 // or target node to the connections list and return modified list.
 func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections []*QuadPoint, node *QuadNode, outgoing bool, context *eshyperneat.ESHyperNEATContext) ([]*QuadPoint, error) {

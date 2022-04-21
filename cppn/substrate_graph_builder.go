@@ -20,21 +20,21 @@ const (
 	edgeAttrTargetId           = "targetId"
 )
 
-// The graph builder able to build weighted directed graphs representing substrate networks
+// SubstrateGraphBuilder The graph builder able to build weighted directed graphs representing substrate networks
 type SubstrateGraphBuilder interface {
-	// Adds specified node to the graph with provided position
+	// AddNode Adds specified node to the graph with provided position
 	AddNode(nodeId int, nodeNeuronType network.NodeNeuronType, nodeActivation utils.NodeActivationType, position *PointF) error
-	// Adds edge between two graph nodes
+	// AddWeightedEdge Adds edge between two graph nodes
 	AddWeightedEdge(sourceId, targetId int, weight float64) error
 
-	// Returns the number of nodes in the graph
+	// NodesCount Returns the number of nodes in the graph
 	NodesCount() (int, error)
-	// Returns the number of edges in the graph
+	// EdgesCount Returns the number of edges in the graph
 	EdgesCount() (int, error)
 
 	// Marshal graph to the provided writer
 	Marshal(w io.Writer) error
-	// Unmarshal graph from the provided reader
+	// UnMarshal Unmarshal graph from the provided reader
 	UnMarshal(r io.Reader) error
 }
 
@@ -50,8 +50,8 @@ type graphMLBuilder struct {
 	nodesMap map[int]*graphml.Node
 }
 
-// Creates new instance with specified description to be included into serialized graph. If compact is true than graph
-// will be marshaled into compact form
+// NewSubstrateGraphMLBuilder Creates new instance with specified description to be included into serialized graph.
+// If compact is true then graph will be marshaled into compact form
 func NewSubstrateGraphMLBuilder(description string, compact bool) SubstrateGraphBuilder {
 	return &graphMLBuilder{
 		nodesMap: make(map[int]*graphml.Node),

@@ -4,7 +4,7 @@ package retina
 import (
 	"errors"
 	"fmt"
-	"github.com/yaricom/goESHyperNEAT/cppn"
+	"github.com/yaricom/goESHyperNEAT/v2/cppn"
 	"github.com/yaricom/goNEAT/experiments"
 	"github.com/yaricom/goNEAT/neat"
 	"github.com/yaricom/goNEAT/neat/genetics"

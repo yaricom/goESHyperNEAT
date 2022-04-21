@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yaricom/goESHyperNEAT/eshyperneat"
-	"github.com/yaricom/goESHyperNEAT/experiments/retina"
+	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
+	"github.com/yaricom/goESHyperNEAT/v2/experiments/retina"
 	"github.com/yaricom/goNEAT/experiments"
 	"github.com/yaricom/goNEAT/neat"
 	"github.com/yaricom/goNEAT/neat/genetics"

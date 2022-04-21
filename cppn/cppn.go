@@ -1,4 +1,4 @@
-// The package CPPN provides implementation of Compositional Pattern Producing Network
+// Package cppn provides implementation of Compositional Pattern Producing Network
 // which is a part of Hypercube-based NEAT algorithm implementation
 package cppn
 
@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-// Reads CPPN from specified genome and creates network solver
+// ReadCPPFromGenomeFile Reads CPPN from specified genome and creates network solver
 func ReadCPPFromGenomeFile(genomePath string) (network.NetworkSolver, error) {
 	if genomeFile, err := os.Open(genomePath); err != nil {
 		return nil, err

@@ -3,7 +3,7 @@ package retina
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/yaricom/goESHyperNEAT/eshyperneat"
+	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
 	"strings"
 )
 

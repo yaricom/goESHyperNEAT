@@ -7,26 +7,26 @@ import (
 	"github.com/yaricom/goNEAT/neat/network"
 )
 
-// Defines layout of neurons in the substrate
+// EvolvableSubstrateLayout Defines layout of neurons in the substrate
 type EvolvableSubstrateLayout interface {
-	// Returns coordinates of the neuron with specified index [0; count) and type
+	// NodePosition Returns coordinates of the neuron with specified index [0; count) and type
 	NodePosition(index int, nType network.NodeNeuronType) (*PointF, error)
 
-	// Adds new hidden node to the substrate
+	// AddHiddenNode Adds new hidden node to the substrate
 	// Returns the index of added hidden neuron or error if failed.
 	AddHiddenNode(position *PointF) (int, error)
-	// Returns index of hidden node at specified position or -1 if not fund
+	// IndexOfHidden Returns index of hidden node at specified position or -1 if not fund
 	IndexOfHidden(position *PointF) int
 
-	// Returns number of INPUT neurons in the layout
+	// InputCount Returns number of INPUT neurons in the layout
 	InputCount() int
-	// Returns number of HIDDEN neurons in the layout
+	// HiddenCount Returns number of HIDDEN neurons in the layout
 	HiddenCount() int
-	// Returns number of OUTPUT neurons in the layout
+	// OutputCount Returns number of OUTPUT neurons in the layout
 	OutputCount() int
 }
 
-// Creates new instance with given input and output neurons count
+// NewMappedEvolvableSubstrateLayout Creates new instance with given input and output neurons count
 func NewMappedEvolvableSubstrateLayout(inputCount, outputCount int) (*MappedEvolvableSubstrateLayout, error) {
 	if inputCount == 0 {
 		return nil, errors.New("the number of input neurons can not be ZERO")
@@ -46,7 +46,8 @@ func NewMappedEvolvableSubstrateLayout(inputCount, outputCount int) (*MappedEvol
 	return l, nil
 }
 
-// The EvolvableSubstrateLayout implementation using map for binding between hidden node and its index
+// MappedEvolvableSubstrateLayout The EvolvableSubstrateLayout implementation using map for binding between hidden
+// node and its index
 type MappedEvolvableSubstrateLayout struct {
 	// The map to hold binding between hidden node and its index for fast search
 	hNodesMap map[PointF]int

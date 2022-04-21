@@ -3,8 +3,8 @@ package retina
 import (
 	"fmt"
 
-	"github.com/yaricom/goESHyperNEAT/cppn"
-	"github.com/yaricom/goESHyperNEAT/eshyperneat"
+	"github.com/yaricom/goESHyperNEAT/v2/cppn"
+	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
 	"github.com/yaricom/goNEAT/neat/genetics"
 	"github.com/yaricom/goNEAT/neat/network"
 	"github.com/yaricom/goNEAT/neat/utils"

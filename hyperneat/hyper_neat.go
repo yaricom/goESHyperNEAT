@@ -1,4 +1,4 @@
-// The package hyperneat holds implementation of HyperNEAT family of algorithms, including Evolvable-Substrate HyperNEAT
+// Package hyperneat holds implementation of HyperNEAT family of algorithms
 package hyperneat
 
 import (
@@ -11,7 +11,7 @@ import (
 	"github.com/yaricom/goNEAT/neat/utils"
 )
 
-// The HyperNEAT execution context
+// HyperNEATContext The HyperNEAT execution context
 type HyperNEATContext struct {
 	// The NEAT context included
 	*neat.NeatContext

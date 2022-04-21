@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/yaricom/goESHyperNEAT/hyperneat"
+	"github.com/yaricom/goESHyperNEAT/v2/hyperneat"
 	"github.com/yaricom/goNEAT/neat/utils"
 	"os"
 	"testing"
