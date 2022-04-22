@@ -87,23 +87,10 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuil
 		}
 		// iterate over quad points and add nodes/connections
 		for _, qp := range qPoints {
-			nodePoint := NewPointF(qp.X2, qp.Y2)
-			targetIndex := es.Layout.IndexOfHidden(nodePoint)
-			if targetIndex == -1 {
-				// add hidden node to the substrate layout
-				if targetIndex, err = es.Layout.AddHiddenNode(nodePoint); err != nil {
-					return nil, err
-				}
-
-				targetIndex += firstHidden // adjust index to the global indexes space
-				// add a node to the graph
-				if _, err = addNodeToBuilder(graphBuilder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
-					return nil, err
-				}
-
-			} else {
-				// adjust index to the global indexes space
-				targetIndex += firstHidden
+			// add hidden node to the substrate layout if needed
+			targetIndex, err := es.addHiddenNode(qp, firstHidden, graphBuilder)
+			if err != nil {
+				return nil, err
 			}
 			// add connection
 			if link, ok := addConnection(qp.Value, in, targetIndex); ok {
@@ -134,22 +121,10 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuil
 			}
 			// iterate over quad points and add nodes/connections
 			for _, qp := range qPoints {
-				nodePoint := NewPointF(qp.X2, qp.Y2)
-				targetIndex := es.Layout.IndexOfHidden(nodePoint)
-				if targetIndex == -1 {
-					// add hidden node to the substrate layout
-					if targetIndex, err = es.Layout.AddHiddenNode(nodePoint); err != nil {
-						return nil, err
-					}
-
-					targetIndex += firstHidden // adjust index to the global indexes space
-					// add a node to the graph
-					if _, err = addNodeToBuilder(graphBuilder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
-						return nil, err
-					}
-				} else {
-					// adjust index to the global indexes space
-					targetIndex += firstHidden
+				// add hidden node to the substrate layout if needed
+				targetIndex, err := es.addHiddenNode(qp, firstHidden, graphBuilder)
+				if err != nil {
+					return nil, err
 				}
 				// add connection
 				if link, ok := addConnection(qp.Value, hi, targetIndex); ok {
@@ -225,6 +200,27 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuil
 		0, es.Layout.InputCount(), es.Layout.OutputCount(), totalNeuronCount,
 		activations, connections, nil, nil) // No BIAS
 	return solver, nil
+}
+
+func (es *EvolvableSubstrate) addHiddenNode(qp *QuadPoint, firstHidden int, graphBuilder SubstrateGraphBuilder) (targetIndex int, err error) {
+	nodePoint := NewPointF(qp.X2, qp.Y2)
+	targetIndex = es.Layout.IndexOfHidden(nodePoint)
+	if targetIndex == -1 {
+		// add hidden node to the substrate layout
+		if targetIndex, err = es.Layout.AddHiddenNode(nodePoint); err != nil {
+			return -1, err
+		}
+
+		targetIndex += firstHidden // adjust index to the global indexes space
+		// add a node to the graph
+		if _, err = addNodeToBuilder(graphBuilder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
+			return -1, err
+		}
+	} else {
+		// adjust index to the global indexes space
+		targetIndex += firstHidden
+	}
+	return targetIndex, nil
 }
 
 // Divides and initialize the quadtree from provided coordinates of source (outgoing = true) or target node (outgoing = false) at (a, b).

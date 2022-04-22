@@ -266,7 +266,6 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 				} else if !useLeo && math.Abs(outs[0]) > context.LinkThreshold {
 					// add only connections with signal exceeding provided threshold
 					link = createThresholdNormalizedLink(outs[0], in, oi, context.LinkThreshold, context.WeightRange)
-
 				}
 				if link != nil {
 					connections = append(connections, link)
