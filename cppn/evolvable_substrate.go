@@ -74,7 +74,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuil
 			return nil, err
 		}
 		// add input node to graph
-		if _, err := addNodeToBuilder(graphBuilder, in, network.InputNeuron, neatmath.NullActivation, input); err != nil {
+		if _, err = addNodeToBuilder(graphBuilder, in, network.InputNeuron, neatmath.NullActivation, input); err != nil {
 			return nil, err
 		}
 
@@ -97,7 +97,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuil
 
 				targetIndex += firstHidden // adjust index to the global indexes space
 				// add a node to the graph
-				if _, err := addNodeToBuilder(graphBuilder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
+				if _, err = addNodeToBuilder(graphBuilder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
 					return nil, err
 				}
 
@@ -108,7 +108,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuil
 			// add connection
 			if link, ok := addConnection(qp.Value, in, targetIndex); ok {
 				// add an edge to the graph
-				if _, err := addEdgeToBuilder(graphBuilder, in, targetIndex, link.Weight); err != nil {
+				if _, err = addEdgeToBuilder(graphBuilder, in, targetIndex, link.Weight); err != nil {
 					return nil, err
 				}
 			}
@@ -144,7 +144,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuil
 
 					targetIndex += firstHidden // adjust index to the global indexes space
 					// add a node to the graph
-					if _, err := addNodeToBuilder(graphBuilder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
+					if _, err = addNodeToBuilder(graphBuilder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
 						return nil, err
 					}
 				} else {
@@ -154,7 +154,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuil
 				// add connection
 				if link, ok := addConnection(qp.Value, hi, targetIndex); ok {
 					// add an edge to the graph
-					if _, err := addEdgeToBuilder(graphBuilder, hi, targetIndex, link.Weight); err != nil {
+					if _, err = addEdgeToBuilder(graphBuilder, hi, targetIndex, link.Weight); err != nil {
 						return nil, err
 					}
 				}
@@ -174,7 +174,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuil
 			return nil, err
 		}
 		// add output node to graph
-		if _, err := addNodeToBuilder(graphBuilder, oi, network.OutputNeuron, es.NodesActivation, output); err != nil {
+		if _, err = addNodeToBuilder(graphBuilder, oi, network.OutputNeuron, es.NodesActivation, output); err != nil {
 			return nil, err
 		}
 
@@ -197,7 +197,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuil
 				// add connection
 				if link, ok := addConnection(qp.Value, sourceIndex, oi); ok {
 					// add an edge to the graph
-					if _, err := addEdgeToBuilder(graphBuilder, sourceIndex, oi, link.Weight); err != nil {
+					if _, err = addEdgeToBuilder(graphBuilder, sourceIndex, oi, link.Weight); err != nil {
 						return nil, err
 					}
 				}

@@ -46,7 +46,7 @@ func LoadYAMLOptions(r io.Reader) (*Options, error) {
 	// read options
 	var opts Options
 	if err = yaml.Unmarshal(content, &opts); err != nil {
-		return nil, errors.Wrap(err, "Failed to decode ES-HyperNEAT options from YAML.")
+		return nil, errors.Wrap(err, "failed to decode ES-HyperNEAT options from YAML")
 	}
 	return &opts, nil
 }
@@ -55,7 +55,7 @@ func LoadYAMLOptions(r io.Reader) (*Options, error) {
 func LoadYAMLConfigFile(path string) (*Options, error) {
 	configFile, err := os.Open(path)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to open ES-HyperNEAT configuration file.")
+		return nil, errors.Wrap(err, "failed to open ES-HyperNEAT configuration file")
 	}
 	return LoadYAMLOptions(configFile)
 }

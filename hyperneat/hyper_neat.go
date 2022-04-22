@@ -36,7 +36,7 @@ func LoadYAMLOptions(r io.Reader) (*Options, error) {
 	// read options
 	var opts Options
 	if err = yaml.Unmarshal(content, &opts); err != nil {
-		return nil, errors.Wrap(err, "Failed to decode HyperNEAT options from YAML.")
+		return nil, errors.Wrap(err, "failed to decode HyperNEAT options from YAML")
 	}
 	return &opts, nil
 }
@@ -45,14 +45,14 @@ func LoadYAMLOptions(r io.Reader) (*Options, error) {
 func LoadYAMLConfigFile(path string) (*Options, error) {
 	configFile, err := os.Open(path)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to open HyperNEAT configuration file.")
+		return nil, errors.Wrap(err, "failed to open HyperNEAT configuration file")
 	}
 	return LoadYAMLOptions(configFile)
 }
 
 func (s *SubstrateActivatorType) UnmarshalYAML(value *yaml.Node) error {
 	if activationType, err := math.NodeActivators.ActivationTypeFromName(value.Value); err != nil {
-		return errors.Wrap(err, "Failed to decode substrate activator function from HyperNEAT options.")
+		return errors.Wrap(err, "failed to decode substrate activator function from HyperNEAT options")
 	} else {
 		s.SubstrateActivationType = activationType
 	}
