@@ -5,10 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/yaricom/goESHyperNEAT/v2/cppn"
-	"github.com/yaricom/goNEAT/experiments"
-	"github.com/yaricom/goNEAT/neat"
-	"github.com/yaricom/goNEAT/neat/genetics"
-	"github.com/yaricom/goNEAT/neat/network"
+	"github.com/yaricom/goNEAT/v2/experiment"
+	"github.com/yaricom/goNEAT/v2/experiment/utils"
+	"github.com/yaricom/goNEAT/v2/neat"
+	"github.com/yaricom/goNEAT/v2/neat/genetics"
+	"github.com/yaricom/goNEAT/v2/neat/network"
 	"math"
 	"os"
 )
@@ -26,15 +27,31 @@ type generationEvaluator struct {
 }
 
 // NewGenerationEvaluator is to create new generations evaluator for retina experiment.
-func NewGenerationEvaluator(outDir string, env *Environment) experiments.GenerationEvaluator {
-	return &generationEvaluator{
+func NewGenerationEvaluator(outDir string, env *Environment) (experiment.GenerationEvaluator, experiment.TrialRunObserver) {
+	evaluator := &generationEvaluator{
 		outDir: outDir,
 		env:    env,
 	}
+	return evaluator, evaluator
+}
+
+// TrialRunStarted invoked to notify that new trial run just started. Invoked before any epoch evaluation in that trial run
+func (e *generationEvaluator) TrialRunStarted(_ *experiment.Trial) {
+	// just stub
+}
+
+// TrialRunFinished invoked to notify that the trial run just finished. Invoked after all epochs evaluated or successful solver found.
+func (e *generationEvaluator) TrialRunFinished(_ *experiment.Trial) {
+	// just stub
+}
+
+// EpochEvaluated invoked to notify that evaluation of specific epoch completed.
+func (e *generationEvaluator) EpochEvaluated(_ *experiment.Trial, _ *experiment.Generation) {
+	// just stub
 }
 
 // GenerationEvaluate evaluates a population of organisms and prints their performance on the retina experiment
-func (e *generationEvaluator) GenerationEvaluate(population *genetics.Population, epoch *experiments.Generation, context *neat.NeatContext) (err error) {
+func (e *generationEvaluator) GenerationEvaluate(population *genetics.Population, epoch *experiment.Generation, options *neat.Options) (err error) {
 	// Evaluate each organism on a test
 	for idx, organism := range population.Organisms {
 		isWinner, err := e.organismEvaluate(organism)
@@ -47,17 +64,12 @@ func (e *generationEvaluator) GenerationEvaluate(population *genetics.Population
 			epoch.Solved = true
 			epoch.WinnerNodes = len(organism.Genotype.Nodes)
 			epoch.WinnerGenes = organism.Genotype.Extrons()
-			epoch.WinnerEvals = context.PopSize*epoch.Id + organism.Genotype.Id
+			epoch.WinnerEvals = options.PopSize*epoch.Id + organism.Genotype.Id
 			epoch.Best = organism
 			if epoch.WinnerNodes == 9 {
 				// You could dump out optimal genomes here if desired
-				optPath := fmt.Sprintf("%s/%s_%d-%d", experiments.OutDirForTrial(e.outDir, epoch.TrialId),
-					"retina_optimal", organism.Phenotype.NodeCount(), organism.Phenotype.LinkCount())
-				file, err := os.Create(optPath)
-				if err != nil {
+				if optPath, err := utils.WriteGenomePlain("xor_optimal", e.outDir, organism, epoch); err != nil {
 					neat.ErrorLog(fmt.Sprintf("Failed to dump optimal genome, reason: %s\n", err))
-				} else if err = organism.Genotype.Write(file); err != nil {
-					neat.ErrorLog("Failed to save optimal genotype")
 				} else {
 					neat.InfoLog(fmt.Sprintf("Dumped optimal genome to: %s\n", optPath))
 				}
@@ -69,47 +81,41 @@ func (e *generationEvaluator) GenerationEvaluate(population *genetics.Population
 	epoch.FillPopulationStatistics(population)
 
 	// Only print to file every print_every generations
-	if epoch.Solved || epoch.Id%context.PrintEvery == 0 {
-		popPath := fmt.Sprintf("%s/gen_%d", experiments.OutDirForTrial(e.outDir, epoch.TrialId), epoch.Id)
-		file, err := os.Create(popPath)
-		if err != nil {
+	if epoch.Solved || epoch.Id%options.PrintEvery == 0 {
+		if _, err = utils.WritePopulationPlain(e.outDir, population, epoch); err != nil {
 			neat.ErrorLog(fmt.Sprintf("Failed to dump population, reason: %s\n", err))
-		} else {
-			population.WriteBySpecies(file)
+			return err
 		}
 	}
 
 	if epoch.Solved {
 		// print winner organism
-		for _, org := range population.Organisms {
-			if org.IsWinner {
-				// Prints the winner CPPN organism to file!
-				//
-				orgPath := fmt.Sprintf("%s/%s_%d-%d", experiments.OutDirForTrial(e.outDir, epoch.TrialId),
-					"retina_cppn_winner", org.Phenotype.NodeCount(), org.Phenotype.LinkCount())
-				if file, err := os.Create(orgPath); err != nil {
-					neat.ErrorLog(err.Error())
-				} else if err = org.Genotype.Write(file); err != nil {
-					neat.ErrorLog(fmt.Sprintf("Failed to dump winner CPPN genotype, reason: %s\n", err))
-				} else {
-					neat.InfoLog(fmt.Sprintf("Generation #%d winner CPPN dumped to: %s\n", epoch.Id, orgPath))
-				}
-				// Dump the winner substrate graph
-				//
-				graph := org.Data.Value.(cppn.SubstrateGraphBuilder)
-				nodes, _ := graph.NodesCount()
-				edges, _ := graph.EdgesCount()
-				substrPath := fmt.Sprintf("%s/%s_%d-%d.xml", experiments.OutDirForTrial(e.outDir, epoch.TrialId),
-					"retina_substrate_graph_winner", nodes, edges)
-				if file, err := os.Create(substrPath); err != nil {
-					neat.ErrorLog(err.Error())
-				} else if err = graph.Marshal(file); err != nil {
-					neat.ErrorLog(fmt.Sprintf("Failed to dump winner substrate, reason: %s\n", err))
-				} else {
-					neat.InfoLog(fmt.Sprintf("Generation #%d winner's substrate dumped to: %s\n", epoch.Id, substrPath))
-				}
-				break
-			}
+		org := epoch.Best
+		if depth, err := org.Phenotype.MaxActivationDepthFast(0); err == nil {
+			neat.InfoLog(fmt.Sprintf("Activation depth of the winner: %d\n", depth))
+		}
+
+		genomeFile := "retina_cppn_winner"
+		// Prints the winner organism's Genome to the file!
+		if orgPath, err := utils.WriteGenomePlain(genomeFile, e.outDir, org, epoch); err != nil {
+			neat.ErrorLog(fmt.Sprintf("Failed to dump winner organism's genome, reason: %s\n", err))
+		} else {
+			neat.InfoLog(fmt.Sprintf("Generation #%d winner's genome dumped to: %s\n", epoch.Id, orgPath))
+		}
+
+		// Dump the winner substrate graph
+		//
+		graph := org.Data.Value.(cppn.SubstrateGraphBuilder)
+		nodes, _ := graph.NodesCount()
+		edges, _ := graph.EdgesCount()
+		substrPath := fmt.Sprintf("%s/%s_%d-%d.xml", utils.CreateOutDirForTrial(e.outDir, epoch.TrialId),
+			"retina_substrate_graph_winner", nodes, edges)
+		if file, err := os.Create(substrPath); err != nil {
+			neat.ErrorLog(err.Error())
+		} else if err = graph.Marshal(file); err != nil {
+			neat.ErrorLog(fmt.Sprintf("Failed to dump winner substrate, reason: %s\n", err))
+		} else {
+			neat.InfoLog(fmt.Sprintf("Generation #%d winner's substrate dumped to: %s\n", epoch.Id, substrPath))
 		}
 	}
 	return err
@@ -130,7 +136,7 @@ func (e generationEvaluator) organismEvaluate(organism *genetics.Organism) (bool
 		return false, err
 	}
 	// create ES-HyperNEAT solver
-	substr := cppn.NewEvolvableSubstrate(layout, e.env.context.SubstrateActivator)
+	substr := cppn.NewEvolvableSubstrate(layout, e.env.context.SubstrateActivator.SubstrateActivationType)
 	graph := cppn.NewSubstrateGraphMLBuilder("retina ES-HyperNEAT", false)
 	solver, err := substr.CreateNetworkSolver(cppnSolver, graph, e.env.context)
 	if err != nil {
@@ -189,7 +195,7 @@ func (e generationEvaluator) organismEvaluate(organism *genetics.Organism) (bool
 
 // evaluateNetwork is to evaluate provided network solver using provided visual objects to test prediction performance.
 // Returns the prediction loss value or error if failed to evaluate.
-func evaluateNetwork(solver network.NetworkSolver, leftObj VisualObject, rightObj VisualObject) (float64, error) {
+func evaluateNetwork(solver network.Solver, leftObj VisualObject, rightObj VisualObject) (float64, error) {
 	// Create input by joining data from left and right visual objects
 	inputs := append(leftObj.data, rightObj.data...)
 
@@ -213,12 +219,12 @@ func evaluateNetwork(solver network.NetworkSolver, leftObj VisualObject, rightOb
 // evaluatePredictions returns the loss between predictions and ground truth of leftObj and rightObj
 func evaluatePredictions(predictions []float64, leftObj VisualObject, rightObj VisualObject) float64 {
 	// Convert predictions[i] to 1.0 or 0.0 about 0.5 threshold
-	normPreds := make([]float64, len(predictions))
-	for i := 0; i < len(normPreds); i++ {
-		if normPreds[i] >= 0.5 {
-			normPreds[i] = 1.0
+	normPredictions := make([]float64, len(predictions))
+	for i := 0; i < len(normPredictions); i++ {
+		if normPredictions[i] >= 0.5 {
+			normPredictions[i] = 1.0
 		} else {
-			normPreds[i] = 0.0
+			normPredictions[i] = 0.0
 		}
 	}
 
@@ -239,8 +245,8 @@ func evaluatePredictions(predictions []float64, leftObj VisualObject, rightObj V
 		targets[1] = 0.0
 	}
 
-	// Find loss as an Euclidean distance between outputs and ground truth
-	loss := (normPreds[0]-targets[0])*(normPreds[0]-targets[0]) + (normPreds[1]-targets[1])*(normPreds[1]-targets[1])
+	// Find loss as a Euclidean distance between outputs and ground truth
+	loss := (normPredictions[0]-targets[0])*(normPredictions[0]-targets[0]) + (normPredictions[1]-targets[1])*(normPredictions[1]-targets[1])
 
 	flag := "match"
 	if loss != 0 {
@@ -248,7 +254,7 @@ func evaluatePredictions(predictions []float64, leftObj VisualObject, rightObj V
 	}
 
 	neat.DebugLog(fmt.Sprintf("[%.2f, %.2f] -> [%.2f, %.2f] '%s'",
-		targets[0], targets[1], normPreds[0], normPreds[1], flag))
+		targets[0], targets[1], normPredictions[0], normPredictions[1], flag))
 
 	return loss
 

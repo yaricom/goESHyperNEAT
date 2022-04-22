@@ -11,7 +11,7 @@ GORUN = $(GOCMD) run
 # The common parameters
 BINARY_NAME = eshyperneat
 OUT_DIR = out
-LOG_LEVEL = -1
+LOG_LEVEL = info
 
 #
 # The retina experiment parameters

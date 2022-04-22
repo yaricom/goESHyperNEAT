@@ -2,12 +2,11 @@ package retina
 
 import (
 	"fmt"
-
 	"github.com/yaricom/goESHyperNEAT/v2/cppn"
 	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
-	"github.com/yaricom/goNEAT/neat/genetics"
-	"github.com/yaricom/goNEAT/neat/network"
-	"github.com/yaricom/goNEAT/neat/utils"
+	"github.com/yaricom/goNEAT/v2/neat/genetics"
+	"github.com/yaricom/goNEAT/v2/neat/math"
+	"github.com/yaricom/goNEAT/v2/neat/network"
 )
 
 const debug = true
@@ -16,21 +15,21 @@ const debug = true
 type CPPNNetworkBuilder struct {
 	UseLEO          bool
 	SubstrateLayout cppn.EvolvableSubstrateLayout
-	NodesActivation utils.NodeActivationType
-	Context         *eshyperneat.ESHyperNEATContext
+	NodesActivation math.NodeActivationType
+	Context         *eshyperneat.Options
 
 	// New Graph Builder generator function.
 	// Note: Graph Builder is used to store graphs in a user-friendly format
 	NewGraphBuilder func() *cppn.SubstrateGraphBuilder
 }
 
-//CreateANNFromCPPNOrganism creates a NetworkSolver (ANN) by querying the Organism.Phenotype cppnNetwork by the ESHyperNeat Algorithm
-func (builder *CPPNNetworkBuilder) CreateANNFromCPPNOrganism(cppnOrganism *genetics.Organism) (network.NetworkSolver, error) {
+// CreateANNFromCPPNOrganism creates a NetworkSolver (ANN) by querying the Organism.Phenotype cppnNetwork by the ESHyperNeat Algorithm
+func (builder *CPPNNetworkBuilder) CreateANNFromCPPNOrganism(cppnOrganism *genetics.Organism) (network.Solver, error) {
 	return builder.CreateANNFromCPPN(cppnOrganism.Phenotype)
 }
 
-//CreateANNFromCPPN creates a NetworkSolver (ANN) by querying the cppnNetwork by the ESHyperNeat Algorithm
-func (builder *CPPNNetworkBuilder) CreateANNFromCPPN(cppnNetwork *network.Network) (network.NetworkSolver, error) {
+// CreateANNFromCPPN creates a NetworkSolver (ANN) by querying the cppnNetwork by the ESHyperNeat Algorithm
+func (builder *CPPNNetworkBuilder) CreateANNFromCPPN(cppnNetwork *network.Network) (network.Solver, error) {
 	// create substrate which will be connected to form the network
 	substrate := cppn.NewEvolvableSubstrate(builder.SubstrateLayout, builder.NodesActivation)
 	cppnFastNetwork, err := cppnNetwork.FastNetworkSolver()
@@ -42,7 +41,7 @@ func (builder *CPPNNetworkBuilder) CreateANNFromCPPN(cppnNetwork *network.Networ
 	graphBuilder := builder.NewGraphBuilder()
 
 	// unwrap graphBuilder. graphBuilder may not be provided (its nil)
-	var annSolver network.NetworkSolver
+	var annSolver network.Solver
 	if graphBuilder == nil {
 		// create our ann by querying the cppn network and applying the eshypernet quadtree/pruning/banding algorithm
 		annSolver, err = substrate.CreateNetworkSolver(

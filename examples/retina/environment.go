@@ -24,12 +24,12 @@ func (s DetectionSide) String() string {
 type Environment struct {
 	visualObjects []VisualObject
 	inputSize     int
-	context       *eshyperneat.ESHyperNEATContext
+	context       *eshyperneat.Options
 }
 
 // NewRetinaEnvironment creates a new Retina Environment with a dataset of all possible Visual Object with specified
 // number of inputs to be acquired from provided objects
-func NewRetinaEnvironment(dataSet []VisualObject, inputSize int, context *eshyperneat.ESHyperNEATContext) (*Environment, error) {
+func NewRetinaEnvironment(dataSet []VisualObject, inputSize int, context *eshyperneat.Options) (*Environment, error) {
 	// check that provided visual objects has data points equal to the inputSize
 	for _, o := range dataSet {
 		if len(o.data) != inputSize {

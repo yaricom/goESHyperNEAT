@@ -1,19 +1,22 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
+	"github.com/yaricom/goNEAT/v2/experiment"
 	"log"
 	"math/rand"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
-	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
-	"github.com/yaricom/goESHyperNEAT/v2/experiments/retina"
-	"github.com/yaricom/goNEAT/experiments"
-	"github.com/yaricom/goNEAT/neat"
-	"github.com/yaricom/goNEAT/neat/genetics"
+	"github.com/yaricom/goESHyperNEAT/v2/examples/retina"
+	"github.com/yaricom/goNEAT/v2/neat"
+	"github.com/yaricom/goNEAT/v2/neat/genetics"
 )
 
 // The experiment runner boilerplate code
@@ -23,23 +26,24 @@ func main() {
 	var genomePath = flag.String("genome", "./data/retina/cppn_genome.yml", "The seed genome to start with.")
 	var experimentName = flag.String("experiment", "retina", "The name of experiment to run. [retina]")
 
-	var logLevel = flag.Int("log-level", -1, "The logger level to be used. Overrides the one set in configuration.")
+	var logLevel = flag.String("log-level", "", "The logger level to be used. Overrides the one set in configuration.")
 	var trialsCount = flag.Int("trials", 0, "The number of trials for experiment. Overrides the one set in configuration.")
 
 	flag.Parse()
 
 	// Seed the random-number generator with current time so that
 	// the numbers will be different every time we run.
-	rand.Seed(time.Now().Unix())
+	seed := time.Now().Unix()
+	rand.Seed(seed)
 
 	// Load context configuration
 	configFile, err := os.Open(*contextPath)
 	if err != nil {
 		log.Fatal("Failed to open context configuration file: ", err)
 	}
-	context, err := eshyperneat.Load(configFile)
+	neatOptions, err := neat.LoadYAMLOptions(configFile)
 	if err != nil {
-		log.Fatal("Failed to load context from config file: ", err)
+		log.Fatal("Failed to load NEAT options from config file: ", err)
 	}
 
 	// Load Genome
@@ -83,37 +87,76 @@ func main() {
 
 	// Override context configuration parameters with ones set from command line
 	if *trialsCount > 0 {
-		context.NumRuns = *trialsCount
+		neatOptions.NumRuns = *trialsCount
 	}
-	if *logLevel >= 0 {
+	if len(*logLevel) > 0 {
 		neat.LogLevel = neat.LoggerLevel(*logLevel)
 	}
 
-	// Create Retina Experiment
-	experiment := experiments.Experiment{
-		Id:     0,
-		Trials: make(experiments.Trials, context.NumRuns),
+	// Create Experiment
+	experimentContext := neatOptions.NeatContext()
+	exp := experiment.Experiment{
+		Id:       0,
+		Trials:   make(experiment.Trials, neatOptions.NumRuns),
+		RandSeed: seed,
 	}
-	var generationEvaluator experiments.GenerationEvaluator
+	var generationEvaluator experiment.GenerationEvaluator
+	var trialObserver experiment.TrialRunObserver
 	switch *experimentName {
 	case "retina":
-		if env, err := retina.NewRetinaEnvironment(retina.CreateRetinaDataset(), 4, context); err != nil {
+		opts, err := eshyperneat.LoadYAMLConfigFile(*contextPath)
+		if err != nil {
+			log.Fatal("Failed to load ES-HyperNEAT options from config file: ", err)
+		} else {
+			experimentContext = eshyperneat.NewContext(experimentContext, opts)
+		}
+		if env, err := retina.NewRetinaEnvironment(retina.CreateRetinaDataset(), 4, opts); err != nil {
 			log.Fatalf("Failed to create retina environment, reason: %s", err)
 		} else {
-			generationEvaluator = retina.NewGenerationEvaluator(*outDirPath, env)
+			generationEvaluator, trialObserver = retina.NewGenerationEvaluator(*outDirPath, env)
 		}
 	default:
 		log.Fatalf("Unsupported experiment name requested: %s\n", *experimentName)
 	}
 
-	fmt.Println("Done Setup, Starting Experiment!")
+	// prepare to execute
+	errChan := make(chan error)
+	ctx, cancel := context.WithCancel(experimentContext)
 
-	err = experiment.Execute(context.NeatContext, startGenome, generationEvaluator)
+	// run experiment in the separate GO routine
+	go func() {
+		if err = exp.Execute(ctx, startGenome, generationEvaluator, trialObserver); err != nil {
+			errChan <- err
+		} else {
+			errChan <- nil
+		}
+	}()
+
+	// register handler to wait for termination signals
+	//
+	go func(cancel context.CancelFunc) {
+		fmt.Println("\nPress Ctrl+C to stop")
+
+		signals := make(chan os.Signal, 1)
+		signal.Notify(signals, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+		select {
+		case <-signals:
+			// signal to stop test fixture
+			cancel()
+		case err = <-errChan:
+			// stop waiting
+		}
+	}(cancel)
+
+	// Wait for experiment completion
+	//
+	err = <-errChan
 	if err != nil {
-		neat.ErrorLog(fmt.Sprintf("Failed to perform %s experiment! Reason: %s\n", *experimentName, err))
-		os.Exit(1)
+		// error during execution
+		log.Fatalf("Experiment execution failed: %s", err)
 	}
 
-	// Output winner statistics
-	experiment.PrintStatistics()
+	// Print experiment results statistics
+	//
+	exp.PrintStatistics()
 }
