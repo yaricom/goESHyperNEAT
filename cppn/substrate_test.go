@@ -49,7 +49,8 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 	assert.Equal(t, totalLinkCount, solver.LinkCount(), "wrong links number")
 
 	// test outputs
-	checkNetworkSolverOutputs(solver, t)
+	outExpected := []float64{0.6427874813512032, 0.8685335941574246}
+	checkNetworkSolverOutputs(solver, outExpected, t)
 }
 
 func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
@@ -80,19 +81,8 @@ func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
 	assert.Equal(t, totalLinkCount, solver.LinkCount(), "wrong links number")
 
 	// test outputs
-	signals := []float64{0.9, 5.2, 1.2, 0.6}
-	err = solver.LoadSensors(signals)
-	require.NoError(t, err, "failed to load sensors")
-
-	res, err := solver.RecursiveSteps()
-	require.NoError(t, err, "failed to perform recursive activation")
-	require.True(t, res, "failed to relax network")
-
-	outs := solver.ReadOutputs()
 	outExpected := []float64{0.5000001657646664, 0.5000003552761682}
-	for i, out := range outs {
-		assert.Equal(t, outExpected[i], out, "wrong output at: %d", i)
-	}
+	checkNetworkSolverOutputs(solver, outExpected, t)
 }
 
 func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
@@ -133,10 +123,11 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 	assert.Equal(t, 5597, len(strOut), "wrong length of marshalled string")
 
 	// test outputs
-	checkNetworkSolverOutputs(solver, t)
+	outExpected := []float64{0.6427874813512032, 0.8685335941574246}
+	checkNetworkSolverOutputs(solver, outExpected, t)
 }
 
-func checkNetworkSolverOutputs(solver network.Solver, t *testing.T) {
+func checkNetworkSolverOutputs(solver network.Solver, outExpected []float64, t *testing.T) {
 	signals := []float64{0.9, 5.2, 1.2, 0.6}
 	err := solver.LoadSensors(signals)
 	require.NoError(t, err, "failed to load sensors")
@@ -146,7 +137,6 @@ func checkNetworkSolverOutputs(solver network.Solver, t *testing.T) {
 	require.True(t, res, "failed to relax network")
 
 	outs := solver.ReadOutputs()
-	outExpected := []float64{0.6427874813512032, 0.8685335941574246}
 	for i, out := range outs {
 		assert.Equal(t, outExpected[i], out, "wrong output at: %d", i)
 	}
