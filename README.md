@@ -23,7 +23,7 @@ geometrical topology during training, producing regions with varying neural dens
 for situating cognitive structures in the biological brains.
 
 
-## References:
+## References
 
 1. The original C++ NEAT implementation created by Kenneth O. Stanley, see: [NEAT][1]
 2. Other NEAT implementations can be found at [NEAT Software Catalog][2]
