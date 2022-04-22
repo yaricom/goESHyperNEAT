@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/yaricom/goESHyperNEAT/v2/hyperneat"
 	"github.com/yaricom/goNEAT/v2/neat/math"
+	"github.com/yaricom/goNEAT/v2/neat/network"
 	"testing"
 )
 
@@ -48,19 +49,7 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 	assert.Equal(t, totalLinkCount, solver.LinkCount(), "wrong links number")
 
 	// test outputs
-	signals := []float64{0.9, 5.2, 1.2, 0.6}
-	err = solver.LoadSensors(signals)
-	require.NoError(t, err, "failed to load sensors")
-
-	res, err := solver.RecursiveSteps()
-	require.NoError(t, err, "failed to perform recursive activation")
-	require.True(t, res, "failed to relax network")
-
-	outs := solver.ReadOutputs()
-	outExpected := []float64{0.6427874813512032, 0.8685335941574246}
-	for i, out := range outs {
-		assert.Equal(t, outExpected[i], out, "wrong output at: %d", i)
-	}
+	checkNetworkSolverOutputs(solver, t)
 }
 
 func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
@@ -144,8 +133,12 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 	assert.Equal(t, 5597, len(strOut), "wrong length of marshalled string")
 
 	// test outputs
+	checkNetworkSolverOutputs(solver, t)
+}
+
+func checkNetworkSolverOutputs(solver network.Solver, t *testing.T) {
 	signals := []float64{0.9, 5.2, 1.2, 0.6}
-	err = solver.LoadSensors(signals)
+	err := solver.LoadSensors(signals)
 	require.NoError(t, err, "failed to load sensors")
 
 	res, err := solver.RecursiveSteps()
