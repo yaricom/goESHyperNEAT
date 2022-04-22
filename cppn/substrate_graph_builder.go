@@ -5,8 +5,8 @@ import (
 	"io"
 
 	"github.com/yaricom/goGraphML/graphml"
-	"github.com/yaricom/goNEAT/neat/network"
-	"github.com/yaricom/goNEAT/neat/utils"
+	"github.com/yaricom/goNEAT/v2/neat/math"
+	"github.com/yaricom/goNEAT/v2/neat/network"
 )
 
 const (
@@ -23,7 +23,7 @@ const (
 // SubstrateGraphBuilder The graph builder able to build weighted directed graphs representing substrate networks
 type SubstrateGraphBuilder interface {
 	// AddNode Adds specified node to the graph with provided position
-	AddNode(nodeId int, nodeNeuronType network.NodeNeuronType, nodeActivation utils.NodeActivationType, position *PointF) error
+	AddNode(nodeId int, nodeNeuronType network.NodeNeuronType, nodeActivation math.NodeActivationType, position *PointF) error
 	// AddWeightedEdge Adds edge between two graph nodes
 	AddWeightedEdge(sourceId, targetId int, weight float64) error
 
@@ -32,9 +32,9 @@ type SubstrateGraphBuilder interface {
 	// EdgesCount Returns the number of edges in the graph
 	EdgesCount() (int, error)
 
-	// Marshal graph to the provided writer
+	// Marshal the graph to the provided writer
 	Marshal(w io.Writer) error
-	// UnMarshal Unmarshal graph from the provided reader
+	// UnMarshal is to unmarshal graph from the provided reader
 	UnMarshal(r io.Reader) error
 }
 
@@ -60,12 +60,13 @@ func NewSubstrateGraphMLBuilder(description string, compact bool) SubstrateGraph
 	}
 }
 
-func (b *graphMLBuilder) AddNode(nodeId int, nodeNeuronType network.NodeNeuronType, nodeActivation utils.NodeActivationType, position *PointF) (err error) {
+func (b *graphMLBuilder) AddNode(nodeId int, nodeNeuronType network.NodeNeuronType,
+	nodeActivation math.NodeActivationType, position *PointF) (err error) {
 	// create attributes map
 	nodeAttr := make(map[string]interface{})
 	nodeAttr[nodeAttrID] = nodeId
 	nodeAttr[nodeAttrNodeNeuronType] = network.NeuronTypeName(nodeNeuronType)
-	if nodeAttr[nodeAttrNodeActivationType], err = utils.NodeActivators.ActivationNameFromType(nodeActivation); err != nil {
+	if nodeAttr[nodeAttrNodeActivationType], err = math.NodeActivators.ActivationNameFromType(nodeActivation); err != nil {
 		return err
 	}
 	nodeAttr[nodeAttrX] = position.X
@@ -150,7 +151,8 @@ func (b *graphMLBuilder) graph() (*graphml.Graph, error) {
 	return b.graphML.Graphs[0], nil
 }
 
-func addNodeToBuilder(builder SubstrateGraphBuilder, nodeId int, nodeType network.NodeNeuronType, nodeActivation utils.NodeActivationType, position *PointF) (bool, error) {
+func addNodeToBuilder(builder SubstrateGraphBuilder, nodeId int, nodeType network.NodeNeuronType,
+	nodeActivation math.NodeActivationType, position *PointF) (bool, error) {
 	if builder == nil {
 		return false, nil
 	} else if err := builder.AddNode(nodeId, nodeType, nodeActivation, position); err != nil {

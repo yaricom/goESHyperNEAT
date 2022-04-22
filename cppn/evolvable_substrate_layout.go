@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/yaricom/goNEAT/neat/network"
+	"github.com/yaricom/goNEAT/v2/neat/network"
 )
 
 // EvolvableSubstrateLayout Defines layout of neurons in the substrate
@@ -46,7 +46,7 @@ func NewMappedEvolvableSubstrateLayout(inputCount, outputCount int) (*MappedEvol
 	return l, nil
 }
 
-// MappedEvolvableSubstrateLayout The EvolvableSubstrateLayout implementation using map for binding between hidden
+// MappedEvolvableSubstrateLayout the EvolvableSubstrateLayout implementation using map for binding between hidden
 // node and its index
 type MappedEvolvableSubstrateLayout struct {
 	// The map to hold binding between hidden node and its index for fast search

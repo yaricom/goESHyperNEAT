@@ -6,8 +6,8 @@ import (
 	"math"
 
 	"fmt"
-	"github.com/yaricom/goNEAT/neat/network"
-	"github.com/yaricom/goNEAT/neat/utils"
+	neatmath "github.com/yaricom/goNEAT/v2/neat/math"
+	"github.com/yaricom/goNEAT/v2/neat/network"
 )
 
 // EvolvableSubstrate The evolvable substrate holds configuration of ANN produced by CPPN within hypecube where each 4-dimensional point
@@ -19,16 +19,16 @@ type EvolvableSubstrate struct {
 	// The layout of neuron nodes in this substrate
 	Layout EvolvableSubstrateLayout
 	// The activation function's type for neurons encoded
-	NodesActivation utils.NodeActivationType
+	NodesActivation neatmath.NodeActivationType
 
 	// The CPPN network solver to describe geometry of substrate
-	cppn network.NetworkSolver
+	cppn network.Solver
 	// The reusable coordinates buffer
 	coords []float64
 }
 
 // NewEvolvableSubstrate Creates new instance of evolvable substrate
-func NewEvolvableSubstrate(layout EvolvableSubstrateLayout, nodesActivation utils.NodeActivationType) *EvolvableSubstrate {
+func NewEvolvableSubstrate(layout EvolvableSubstrateLayout, nodesActivation neatmath.NodeActivationType) *EvolvableSubstrate {
 	return &EvolvableSubstrate{
 		coords:          make([]float64, 4),
 		Layout:          layout,
@@ -39,7 +39,8 @@ func NewEvolvableSubstrate(layout EvolvableSubstrateLayout, nodesActivation util
 // CreateNetworkSolver Creates network solver based on current substrate layout and provided Compositional Pattern Producing Network which
 // used to define connections between network nodes. Optional graph_builder can be provided to collect graph nodes and edges
 // of created network solver. With graph builder it is possible to save/load network configuration as well as visualize it.
-func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, graphBuilder SubstrateGraphBuilder, context *eshyperneat.ESHyperNEATContext) (network.NetworkSolver, error) {
+func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuilder SubstrateGraphBuilder,
+	context *eshyperneat.Options) (network.Solver, error) {
 	es.cppn = cppn
 
 	// the network layers will be collected in order: bias, input, output, hidden
@@ -73,7 +74,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 			return nil, err
 		}
 		// add input node to graph
-		if _, err := addNodeToBuilder(graphBuilder, in, network.InputNeuron, utils.NullActivation, input); err != nil {
+		if _, err := addNodeToBuilder(graphBuilder, in, network.InputNeuron, neatmath.NullActivation, input); err != nil {
 			return nil, err
 		}
 
@@ -207,11 +208,11 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 	totalNeuronCount := es.Layout.InputCount() + es.Layout.OutputCount() + es.Layout.HiddenCount()
 
 	// build activations
-	activations := make([]utils.NodeActivationType, totalNeuronCount)
+	activations := make([]neatmath.NodeActivationType, totalNeuronCount)
 	for i := 0; i < totalNeuronCount; i++ {
 		if i < firstOutput {
 			// input nodes - NULL activation
-			activations[i] = utils.NullActivation
+			activations[i] = neatmath.NullActivation
 		} else {
 			// hidden/output nodes - defined activation
 			activations[i] = es.NodesActivation
@@ -229,7 +230,8 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.NetworkSolver, gr
 // Divides and initialize the quadtree from provided coordinates of source (outgoing = true) or target node (outgoing = false) at (a, b).
 // Returns quadtree, in which each quadnode at (x,y) stores CPPN activation level for its position. The initialized
 // quadtree is used in the PruningAndExtraction phase to generate the actual ANN connections.
-func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool, context *eshyperneat.ESHyperNEATContext) (root *QuadNode, err error) {
+func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool,
+	context *eshyperneat.Options) (root *QuadNode, err error) {
 	root = NewQuadNode(0.0, 0.0, 1.0, 1)
 
 	queue := list.New()
@@ -239,7 +241,7 @@ func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool,
 		// de-queue
 		p := queue.Remove(queue.Front()).(*QuadNode)
 
-		// Divide into sub-regions and assign children to parent
+		// Divide into subregions and assign children to parent
 		p.Nodes = []*QuadNode{
 			NewQuadNode(p.X-p.Width/2.0, p.Y-p.Width/2.0, p.Width/2.0, p.Level+1),
 			NewQuadNode(p.X-p.Width/2.0, p.Y+p.Width/2.0, p.Width/2.0, p.Level+1),
@@ -277,7 +279,7 @@ func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool,
 // Receive coordinates of source (outgoing = true) or target node (outgoing = false) at (a, b) and initialized quadtree node.
 // Adds the connections that are in bands of the two-dimensional cross-section of the  hypercube containing the source
 // or target node to the connections list and return modified list.
-func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections []*QuadPoint, node *QuadNode, outgoing bool, context *eshyperneat.ESHyperNEATContext) ([]*QuadPoint, error) {
+func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections []*QuadPoint, node *QuadNode, outgoing bool, context *eshyperneat.Options) ([]*QuadPoint, error) {
 	// fast check
 	if len(node.Nodes) == 0 {
 		return connections, nil

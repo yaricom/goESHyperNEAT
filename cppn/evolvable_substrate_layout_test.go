@@ -3,7 +3,7 @@ package cppn
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/yaricom/goNEAT/neat/network"
+	"github.com/yaricom/goNEAT/v2/neat/network"
 	"testing"
 )
 

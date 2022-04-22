@@ -5,8 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/yaricom/goESHyperNEAT/v2/hyperneat"
-	"github.com/yaricom/goNEAT/neat/utils"
-	"os"
+	"github.com/yaricom/goNEAT/v2/neat/math"
 	"testing"
 )
 
@@ -17,8 +16,8 @@ func TestNewSubstrate(t *testing.T) {
 	layout := NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount)
 
 	// create new substrate
-	substr := NewSubstrate(layout, utils.SigmoidSteepenedActivation)
-	assert.Equal(t, utils.SigmoidSteepenedActivation, substr.NodesActivation)
+	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation)
+	assert.Equal(t, math.SigmoidSteepenedActivation, substr.NodesActivation)
 }
 
 func TestSubstrate_CreateNetworkSolver(t *testing.T) {
@@ -26,8 +25,8 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 	layout := NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount)
 
 	// create new substrate
-	substr := NewSubstrate(layout, utils.SigmoidSteepenedActivation)
-	assert.Equal(t, utils.SigmoidSteepenedActivation, substr.NodesActivation)
+	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation)
+	assert.Equal(t, math.SigmoidSteepenedActivation, substr.NodesActivation)
 
 	// create solver from substrate
 	cppn, err := ReadCPPFromGenomeFile(cppnHyperNEATTestGenomePath)
@@ -69,8 +68,8 @@ func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
 	layout := NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount)
 
 	// create new substrate
-	substr := NewSubstrate(layout, utils.SigmoidSteepenedActivation)
-	assert.Equal(t, utils.SigmoidSteepenedActivation, substr.NodesActivation)
+	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation)
+	assert.Equal(t, math.SigmoidSteepenedActivation, substr.NodesActivation)
 
 	// create solver from substrate
 	cppn, err := ReadCPPFromGenomeFile(cppnLeoHyperNEATTestGenomePath)
@@ -115,7 +114,7 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 	builder := NewSubstrateGraphMLBuilder("", false).(*graphMLBuilder)
 
 	// create new substrate
-	substr := NewSubstrate(layout, utils.SigmoidSteepenedActivation)
+	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation)
 
 	// create solver from substrate
 	cppn, err := ReadCPPFromGenomeFile(cppnHyperNEATTestGenomePath)
@@ -161,14 +160,10 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 }
 
 // Loads HyperNeat context from provided config file's path
-func loadHyperNeatContext(configPath string) (*hyperneat.HyperNEATContext, error) {
-	if r, err := os.Open(configPath); err != nil {
+func loadHyperNeatContext(configPath string) (*hyperneat.Options, error) {
+	if context, err := hyperneat.LoadYAMLConfigFile(configPath); err != nil {
 		return nil, err
 	} else {
-		if context, err := hyperneat.Load(r); err != nil {
-			return nil, err
-		} else {
-			return context, nil
-		}
+		return context, nil
 	}
 }

@@ -4,8 +4,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
-	"github.com/yaricom/goNEAT/neat/utils"
-	"os"
+	"github.com/yaricom/goNEAT/v2/neat/math"
 	"testing"
 )
 
@@ -16,7 +15,7 @@ func TestEvolvableSubstrate_CreateNetworkSolver(t *testing.T) {
 	layout, err := NewMappedEvolvableSubstrateLayout(inputCount, outputCount)
 	require.NoError(t, err, "failed to create layout")
 
-	substr := NewEvolvableSubstrate(layout, utils.SigmoidSteepenedActivation)
+	substr := NewEvolvableSubstrate(layout, math.SigmoidSteepenedActivation)
 
 	cppn, err := ReadCPPFromGenomeFile(cppnHyperNEATTestGenomePath)
 	require.NoError(t, err, "failed to read CPPN")
@@ -54,10 +53,8 @@ func TestEvolvableSubstrate_CreateNetworkSolver(t *testing.T) {
 }
 
 // Loads ES-HyperNeat context from provided config file's path
-func loadESHyperNeatContext(configPath string) (*eshyperneat.ESHyperNEATContext, error) {
-	if r, err := os.Open(configPath); err != nil {
-		return nil, err
-	} else if ctx, err := eshyperneat.Load(r); err != nil {
+func loadESHyperNeatContext(configPath string) (*eshyperneat.Options, error) {
+	if ctx, err := eshyperneat.LoadYAMLConfigFile(configPath); err != nil {
 		return nil, err
 	} else {
 		return ctx, nil

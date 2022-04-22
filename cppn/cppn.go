@@ -4,14 +4,14 @@ package cppn
 
 import (
 	"errors"
-	"github.com/yaricom/goNEAT/neat/genetics"
-	"github.com/yaricom/goNEAT/neat/network"
+	"github.com/yaricom/goNEAT/v2/neat/genetics"
+	"github.com/yaricom/goNEAT/v2/neat/network"
 	"math"
 	"os"
 )
 
 // ReadCPPFromGenomeFile Reads CPPN from specified genome and creates network solver
-func ReadCPPFromGenomeFile(genomePath string) (network.NetworkSolver, error) {
+func ReadCPPFromGenomeFile(genomePath string) (network.Solver, error) {
 	if genomeFile, err := os.Open(genomePath); err != nil {
 		return nil, err
 	} else if r, err := genetics.NewGenomeReader(genomeFile, genetics.YAMLGenomeEncoding); err != nil {
@@ -33,9 +33,9 @@ func createThresholdNormalizedLink(cppnOutput float64, srcIndex, dstIndex int, l
 		weight *= -1 // restore sign
 	}
 	link := network.FastNetworkLink{
-		Weight:     weight,
-		SourceIndx: srcIndex,
-		TargetIndx: dstIndex,
+		Weight:      weight,
+		SourceIndex: srcIndex,
+		TargetIndex: dstIndex,
 	}
 	return &link
 }
@@ -45,15 +45,15 @@ func createLink(cppnOutput float64, srcIndex, dstIndex int, weightRange float64)
 	weight := cppnOutput
 	weight *= weightRange // scale to fit given weight range
 	link := network.FastNetworkLink{
-		Weight:     weight,
-		SourceIndx: srcIndex,
-		TargetIndx: dstIndex,
+		Weight:      weight,
+		SourceIndex: srcIndex,
+		TargetIndex: dstIndex,
 	}
 	return &link
 }
 
 // Calculates outputs of provided CPPN network solver with given hypercube coordinates.
-func queryCPPN(coordinates []float64, cppn network.NetworkSolver) ([]float64, error) {
+func queryCPPN(coordinates []float64, cppn network.Solver) ([]float64, error) {
 	// flush networks activation from previous run
 	if res, err := cppn.Flush(); err != nil {
 		return nil, err
@@ -82,18 +82,18 @@ func nodeVariance(node *QuadNode) float64 {
 		return 0.0
 	}
 
-	cppnVals := nodeCPPNValues(node)
+	cppnValues := nodeCPPNValues(node)
 	// calculate median and variance
 	m, v := 0.0, 0.0
-	for _, f := range cppnVals {
+	for _, f := range cppnValues {
 		m += f
 	}
-	m /= float64(len(cppnVals))
+	m /= float64(len(cppnValues))
 
-	for _, f := range cppnVals {
+	for _, f := range cppnValues {
 		v += math.Pow(f-m, 2)
 	}
-	v /= float64(len(cppnVals))
+	v /= float64(len(cppnValues))
 
 	return v
 }
@@ -105,8 +105,8 @@ func nodeCPPNValues(n *QuadNode) []float64 {
 		accumulator := make([]float64, 0)
 		for _, p := range n.Nodes {
 			// go into child nodes
-			pVals := nodeCPPNValues(p)
-			accumulator = append(accumulator, pVals...)
+			cppnValues := nodeCPPNValues(p)
+			accumulator = append(accumulator, cppnValues...)
 		}
 		return accumulator
 	} else {
