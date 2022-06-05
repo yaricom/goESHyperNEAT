@@ -21,12 +21,14 @@ func (s DetectionSide) String() string {
 
 // Environment holds the dataset and evaluation methods for the modular retina experiment
 type Environment struct {
+	// the data set of visual objects to be detected
 	visualObjects []VisualObject
-	inputSize     int
+	// the size of input data array
+	inputSize int
 }
 
 // NewRetinaEnvironment creates a new Retina Environment with a dataset of all possible Visual Object with specified
-// number of inputs to be acquired from provided objects
+// number of inputs to be acquired from provided objects.
 func NewRetinaEnvironment(dataSet []VisualObject, inputSize int) (*Environment, error) {
 	// check that provided visual objects has data points equal to the inputSize
 	for _, o := range dataSet {
@@ -36,7 +38,10 @@ func NewRetinaEnvironment(dataSet []VisualObject, inputSize int) (*Environment, 
 				inputSize, len(o.data), o)
 		}
 	}
-	return &Environment{visualObjects: dataSet, inputSize: inputSize}, nil
+	return &Environment{
+		visualObjects: dataSet,
+		inputSize:     inputSize,
+	}, nil
 }
 
 // VisualObject represents a left, right, or both, object classified by retina
@@ -63,7 +68,7 @@ func (o *VisualObject) String() string {
 }
 
 // parseVisualObjectConfig parses config semantically in the format
-// (config = "x1 x2 \n x3 x4") to [ x1, x2, x3, x4 ]  where if xi == "o" => xi = 1
+// (config = "x1 x2 \n x3 x4") to [ xf1, xf2, xf3, xf4 ]  where if xi == "o" => xfi = 1.0
 func parseVisualObjectConfig(config string) []float64 {
 	data := make([]float64, 0)
 	lines := strings.Split(config, "\n")

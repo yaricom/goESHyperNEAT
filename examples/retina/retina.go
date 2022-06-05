@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/yaricom/goESHyperNEAT/v2/cppn"
 	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
+	"github.com/yaricom/goESHyperNEAT/v2/examples"
 	"github.com/yaricom/goNEAT/v3/experiment"
 	"github.com/yaricom/goNEAT/v3/experiment/utils"
 	"github.com/yaricom/goNEAT/v3/neat"
@@ -21,18 +22,29 @@ const (
 	maxFitness = 1000.0
 	// fitnessThreshold is the fitness value for which an organism is considered to have won the experiment
 	fitnessThreshold = maxFitness
+
+	debug = false
 )
 
 type generationEvaluator struct {
 	outDir string
 	env    *Environment
+
+	// The target number of species to be maintained
+	numSpeciesTarget int
+	// The species compatibility threshold adjustment frequency
+	compatAdjustFreq int
 }
 
-// NewGenerationEvaluator is to create new generation's evaluator for retina experiment.
-func NewGenerationEvaluator(outDir string, env *Environment) (experiment.GenerationEvaluator, experiment.TrialRunObserver) {
+// NewGenerationEvaluator is to create new generation's evaluator for retina experiment.  The numSpeciesTarget specifies the
+// target number of species to maintain in the population. If the number of species differ from the numSpeciesTarget it
+// will be automatically adjusted with compatAdjustFreq frequency, i.e., at each epoch % compatAdjustFreq == 0
+func NewGenerationEvaluator(outDir string, env *Environment, numSpeciesTarget, compatAdjustFreq int) (experiment.GenerationEvaluator, experiment.TrialRunObserver) {
 	evaluator := &generationEvaluator{
-		outDir: outDir,
-		env:    env,
+		outDir:           outDir,
+		env:              env,
+		numSpeciesTarget: numSpeciesTarget,
+		compatAdjustFreq: compatAdjustFreq,
 	}
 	return evaluator, evaluator
 }
@@ -59,12 +71,16 @@ func (e *generationEvaluator) GenerationEvaluate(ctx context.Context, population
 		return neat.ErrNEATOptionsNotFound
 	}
 	// Evaluate each organism on a test
-	for idx, organism := range population.Organisms {
+	maxPopulationFitness := 0.0
+	for _, organism := range population.Organisms {
 		isWinner, err := e.organismEvaluate(ctx, organism)
 		if err != nil {
 			return err
 		}
-		neat.InfoLog(fmt.Sprintf("organism #%d fitness %f \n", idx, organism.Fitness))
+
+		if organism.Fitness > maxPopulationFitness {
+			maxPopulationFitness = organism.Fitness
+		}
 
 		if isWinner && (epoch.Champion == nil || organism.Fitness > epoch.Champion.Fitness) {
 			epoch.Solved = true
@@ -123,6 +139,14 @@ func (e *generationEvaluator) GenerationEvaluate(ctx context.Context, population
 		} else {
 			neat.InfoLog(fmt.Sprintf("Generation #%d winner's substrate dumped to: %s\n", epoch.Id, substrPath))
 		}
+	} else if epoch.Id < options.NumGenerations-1 {
+		speciesCount := len(population.Species)
+
+		// adjust species count by keeping it constant
+		examples.AdjustSpeciesNumber(speciesCount, epoch.Id, e.compatAdjustFreq, e.numSpeciesTarget, options)
+
+		neat.InfoLog(fmt.Sprintf("%d species -> %d organisms [compatibility threshold: %.1f, target: %d], max fitness of population: %.2f\n",
+			speciesCount, len(population.Organisms), options.CompatThreshold, e.numSpeciesTarget, maxPopulationFitness))
 	}
 	return nil
 }
@@ -181,15 +205,8 @@ func (e generationEvaluator) organismEvaluate(ctx context.Context, organism *gen
 	fitness := maxFitness / (1.0 + errorSum)
 	avgError := errorSum / count
 
-	neat.InfoLog(fmt.Sprintf("Average error: %f, errors sum: %f, false detections: %f from: %f",
-		avgError, errorSum, detectionErrorCount, count))
-	nodes, _ := graph.NodesCount()
-	edges, _ := graph.EdgesCount()
-	neat.InfoLog(fmt.Sprintf("Substrate: #nodes = %d, #edges = %d | CPPN phenotype: #nodes = %d, #edges = %d",
-		nodes, edges, cppnSolver.NodeCount(), cppnSolver.LinkCount()))
-
 	isWinner := false
-	if organism.Fitness > fitnessThreshold {
+	if fitness >= fitnessThreshold {
 		isWinner = true
 		fmt.Printf("Found a Winner! \n")
 		// save solver graph to the winner organism
@@ -200,7 +217,16 @@ func (e generationEvaluator) organismEvaluate(ctx context.Context, organism *gen
 	organism.Error = avgError
 	organism.Fitness = fitness
 
-	return organism.IsWinner, nil
+	if debug {
+		neat.InfoLog(fmt.Sprintf("Average error: %f, errors sum: %f, false detections: %f from: %f",
+			avgError, errorSum, detectionErrorCount, count))
+		nodes, _ := graph.NodesCount()
+		edges, _ := graph.EdgesCount()
+		neat.InfoLog(fmt.Sprintf("Substrate: #nodes = %d, #edges = %d | CPPN phenotype: #nodes = %d, #edges = %d",
+			nodes, edges, cppnSolver.NodeCount(), cppnSolver.LinkCount()))
+	}
+
+	return isWinner, nil
 }
 
 // evaluateNetwork is to evaluate provided network solver using provided visual objects to test prediction performance.
