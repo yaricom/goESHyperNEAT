@@ -13,7 +13,6 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 )
@@ -36,32 +35,20 @@ func main() {
 	rand.Seed(seed)
 
 	// Load context configuration
-	configFile, err := os.Open(*contextPath)
+	neatOptions, err := neat.ReadNeatOptionsFromFile(*contextPath)
 	if err != nil {
-		log.Fatal("Failed to open context configuration file: ", err)
-	}
-	neatOptions, err := neat.LoadYAMLOptions(configFile)
-	if err != nil {
-		log.Fatal("Failed to load NEAT options from config file: ", err)
+		log.Fatal("Failed to load NEAT options: ", err)
 	}
 
 	// Load Genome
 	log.Printf("Loading start genome for %s experiment\n", *experimentName)
-	genomeFile, err := os.Open(*genomePath)
+	reader, err := genetics.NewGenomeReaderFromFile(*genomePath)
 	if err != nil {
-		log.Fatal("Failed to open genome file: ", err)
+		log.Fatalf("Failed to open genome file, reason: '%s'", err)
 	}
-	encoding := genetics.PlainGenomeEncoding
-	if strings.HasSuffix(*genomePath, ".yml") {
-		encoding = genetics.YAMLGenomeEncoding
-	}
-	decoder, err := genetics.NewGenomeReader(genomeFile, encoding)
+	startGenome, err := reader.Read()
 	if err != nil {
-		log.Fatal("Failed to create genome decoder: ", err)
-	}
-	startGenome, err := decoder.Read()
-	if err != nil {
-		log.Fatal("Failed to read start genome of CPPN: ", err)
+		log.Fatalf("Failed to read start genome, reason: '%s'", err)
 	}
 	fmt.Println(startGenome)
 
@@ -158,4 +145,22 @@ func main() {
 	// Print experiment results statistics
 	//
 	exp.PrintStatistics()
+
+	// Save experiment data in native format
+	//
+	expResPath := fmt.Sprintf("%s/%s.dat", outDir, *experimentName)
+	if expResFile, err := os.Create(expResPath); err != nil {
+		log.Fatal("Failed to create file for experiment results", err)
+	} else if err = exp.Write(expResFile); err != nil {
+		log.Fatal("Failed to save experiment results", err)
+	}
+
+	// Save experiment data in Numpy NPZ format if requested
+	//
+	npzResPath := fmt.Sprintf("%s/%s.npz", outDir, *experimentName)
+	if npzResFile, err := os.Create(npzResPath); err != nil {
+		log.Fatalf("Failed to create file for experiment results: [%s], reason: %s", npzResPath, err)
+	} else if err = exp.WriteNPZ(npzResFile); err != nil {
+		log.Fatal("Failed to save experiment results as NPZ file", err)
+	}
 }
