@@ -18,9 +18,9 @@ excess_coeff:  1.0
 mutdiff_coeff:  0.4
 
 # This global tells compatibility threshold under which two Genomes are considered the same species
-compat_threshold:  3.0
+compat_threshold:  4.0
 # How much does age matter? Gives a fitness boost up to some young age (niche). If it is 1, then young species get no fitness boost.
-age_significance:  1.0
+age_significance:  1.1
 # Percent of average fitness for survival, how many get to reproduce based on survival_thresh * pop_size
 survival_thresh:  0.2
 
@@ -41,7 +41,7 @@ mutate_gene_reenable_prob:  0.0
 # Probability of adding new node
 mutate_add_node_prob:  0.03
 # Probability of adding new link between nodes
-mutate_add_link_prob:  0.08
+mutate_add_link_prob:  0.1
 # Probability of making connections from disconnected sensors (input, bias type neurons)
 mutate_connect_sensors: 0.5
 
@@ -92,10 +92,12 @@ log_level: info
 
 # The nodes activation functions list to choose from (activation function -> it's selection probability)
 node_activators:
-  - SigmoidBipolarActivation 0.25
-  - GaussianBipolarActivation 0.35
+  - SigmoidBipolarActivation 0.15
+  - SigmoidSteepenedActivation 0.15
+  - GaussianBipolarActivation 0.15
   - LinearAbsActivation 0.15
-  - SineActivation 0.25
+  - SineActivation 0.15
+  - TanhActivation 0.25
 
 ########################################
 # The HyperNEAT specific configuration #
