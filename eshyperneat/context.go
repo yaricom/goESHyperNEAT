@@ -1,6 +1,11 @@
 package eshyperneat
 
-import "context"
+import (
+	"context"
+	"errors"
+)
+
+var ErrESHyperNEATOptionsNotFound = errors.New("ES-HyperNEAT options not found in the context")
 
 // key is an unexported type for keys defined in this package.
 // This prevents collisions with keys defined in other packages.

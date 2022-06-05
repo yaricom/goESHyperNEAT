@@ -56,7 +56,7 @@ func main() {
 
 	// Check if output dir exists
 	outDir := *outDirPath
-	if _, err := os.Stat(outDir); err == nil {
+	if _, err = os.Stat(outDir); err == nil {
 		// backup it
 		backUpDir := fmt.Sprintf("%s-%s", outDir, time.Now().Format("2006-01-02T15_04_05"))
 		// clear it
@@ -96,7 +96,7 @@ func main() {
 		} else {
 			experimentContext = eshyperneat.NewContext(experimentContext, opts)
 		}
-		if env, err := retina.NewRetinaEnvironment(retina.CreateRetinaDataset(), 4, opts); err != nil {
+		if env, err := retina.NewRetinaEnvironment(retina.CreateRetinaDataset(), 4); err != nil {
 			log.Fatalf("Failed to create retina environment, reason: %s", err)
 		} else {
 			generationEvaluator, trialObserver = retina.NewGenerationEvaluator(*outDirPath, env)

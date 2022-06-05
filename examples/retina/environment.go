@@ -3,7 +3,6 @@ package retina
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
 	"strings"
 )
 
@@ -24,12 +23,11 @@ func (s DetectionSide) String() string {
 type Environment struct {
 	visualObjects []VisualObject
 	inputSize     int
-	context       *eshyperneat.Options
 }
 
 // NewRetinaEnvironment creates a new Retina Environment with a dataset of all possible Visual Object with specified
 // number of inputs to be acquired from provided objects
-func NewRetinaEnvironment(dataSet []VisualObject, inputSize int, context *eshyperneat.Options) (*Environment, error) {
+func NewRetinaEnvironment(dataSet []VisualObject, inputSize int) (*Environment, error) {
 	// check that provided visual objects has data points equal to the inputSize
 	for _, o := range dataSet {
 		if len(o.data) != inputSize {
@@ -38,7 +36,7 @@ func NewRetinaEnvironment(dataSet []VisualObject, inputSize int, context *eshype
 				inputSize, len(o.data), o)
 		}
 	}
-	return &Environment{visualObjects: dataSet, inputSize: inputSize, context: context}, nil
+	return &Environment{visualObjects: dataSet, inputSize: inputSize}, nil
 }
 
 // VisualObject represents a left, right, or both, object classified by retina

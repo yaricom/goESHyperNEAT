@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/yaricom/goESHyperNEAT/v2/cppn"
+	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
 	"github.com/yaricom/goNEAT/v3/experiment"
 	"github.com/yaricom/goNEAT/v3/experiment/utils"
 	"github.com/yaricom/goNEAT/v3/neat"
@@ -59,7 +60,7 @@ func (e *generationEvaluator) GenerationEvaluate(ctx context.Context, population
 	}
 	// Evaluate each organism on a test
 	for idx, organism := range population.Organisms {
-		isWinner, err := e.organismEvaluate(organism)
+		isWinner, err := e.organismEvaluate(ctx, organism)
 		if err != nil {
 			return err
 		}
@@ -127,7 +128,11 @@ func (e *generationEvaluator) GenerationEvaluate(ctx context.Context, population
 }
 
 // organismEvaluate evaluates an individual phenotype network with retina experiment and returns true if its won
-func (e generationEvaluator) organismEvaluate(organism *genetics.Organism) (bool, error) {
+func (e generationEvaluator) organismEvaluate(ctx context.Context, organism *genetics.Organism) (bool, error) {
+	options, ok := eshyperneat.FromContext(ctx)
+	if !ok {
+		return false, eshyperneat.ErrESHyperNEATOptionsNotFound
+	}
 	// get CPPN network solver
 	cppnSolver, err := organism.Phenotype.FastNetworkSolver()
 	if err != nil {
@@ -141,9 +146,9 @@ func (e generationEvaluator) organismEvaluate(organism *genetics.Organism) (bool
 		return false, err
 	}
 	// create ES-HyperNEAT solver
-	substr := cppn.NewEvolvableSubstrate(layout, e.env.context.SubstrateActivator.SubstrateActivationType)
+	substr := cppn.NewEvolvableSubstrate(layout, options.SubstrateActivator.SubstrateActivationType)
 	graph := cppn.NewSubstrateGraphMLBuilder("retina ES-HyperNEAT", false)
-	solver, err := substr.CreateNetworkSolver(cppnSolver, graph, e.env.context)
+	solver, err := substr.CreateNetworkSolver(cppnSolver, graph, options)
 	if err != nil {
 		return false, err
 	}
