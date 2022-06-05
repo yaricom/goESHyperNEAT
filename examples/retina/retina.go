@@ -2,14 +2,15 @@
 package retina
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/yaricom/goESHyperNEAT/v2/cppn"
-	"github.com/yaricom/goNEAT/v2/experiment"
-	"github.com/yaricom/goNEAT/v2/experiment/utils"
-	"github.com/yaricom/goNEAT/v2/neat"
-	"github.com/yaricom/goNEAT/v2/neat/genetics"
-	"github.com/yaricom/goNEAT/v2/neat/network"
+	"github.com/yaricom/goNEAT/v3/experiment"
+	"github.com/yaricom/goNEAT/v3/experiment/utils"
+	"github.com/yaricom/goNEAT/v3/neat"
+	"github.com/yaricom/goNEAT/v3/neat/genetics"
+	"github.com/yaricom/goNEAT/v3/neat/network"
 	"math"
 	"os"
 )
@@ -26,7 +27,7 @@ type generationEvaluator struct {
 	env    *Environment
 }
 
-// NewGenerationEvaluator is to create new generations evaluator for retina experiment.
+// NewGenerationEvaluator is to create new generation's evaluator for retina experiment.
 func NewGenerationEvaluator(outDir string, env *Environment) (experiment.GenerationEvaluator, experiment.TrialRunObserver) {
 	evaluator := &generationEvaluator{
 		outDir: outDir,
@@ -51,7 +52,11 @@ func (e *generationEvaluator) EpochEvaluated(_ *experiment.Trial, _ *experiment.
 }
 
 // GenerationEvaluate evaluates a population of organisms and prints their performance on the retina experiment
-func (e *generationEvaluator) GenerationEvaluate(population *genetics.Population, epoch *experiment.Generation, options *neat.Options) (err error) {
+func (e *generationEvaluator) GenerationEvaluate(ctx context.Context, population *genetics.Population, epoch *experiment.Generation) error {
+	options, ok := neat.FromContext(ctx)
+	if !ok {
+		return neat.ErrNEATOptionsNotFound
+	}
 	// Evaluate each organism on a test
 	for idx, organism := range population.Organisms {
 		isWinner, err := e.organismEvaluate(organism)
@@ -60,12 +65,12 @@ func (e *generationEvaluator) GenerationEvaluate(population *genetics.Population
 		}
 		neat.InfoLog(fmt.Sprintf("organism #%d fitness %f \n", idx, organism.Fitness))
 
-		if isWinner && (epoch.Best == nil || organism.Fitness > epoch.Best.Fitness) {
+		if isWinner && (epoch.Champion == nil || organism.Fitness > epoch.Champion.Fitness) {
 			epoch.Solved = true
 			epoch.WinnerNodes = len(organism.Genotype.Nodes)
 			epoch.WinnerGenes = organism.Genotype.Extrons()
 			epoch.WinnerEvals = options.PopSize*epoch.Id + organism.Genotype.Id
-			epoch.Best = organism
+			epoch.Champion = organism
 			if epoch.WinnerNodes == 9 {
 				// You could dump out optimal genomes here if desired
 				if optPath, err := utils.WriteGenomePlain("xor_optimal", e.outDir, organism, epoch); err != nil {
@@ -80,9 +85,9 @@ func (e *generationEvaluator) GenerationEvaluate(population *genetics.Population
 	// Fill statistics about current epoch
 	epoch.FillPopulationStatistics(population)
 
-	// Only print to file every print_every generations
+	// Only print to file every print_every generation
 	if epoch.Solved || epoch.Id%options.PrintEvery == 0 {
-		if _, err = utils.WritePopulationPlain(e.outDir, population, epoch); err != nil {
+		if _, err := utils.WritePopulationPlain(e.outDir, population, epoch); err != nil {
 			neat.ErrorLog(fmt.Sprintf("Failed to dump population, reason: %s\n", err))
 			return err
 		}
@@ -90,7 +95,7 @@ func (e *generationEvaluator) GenerationEvaluate(population *genetics.Population
 
 	if epoch.Solved {
 		// print winner organism
-		org := epoch.Best
+		org := epoch.Champion
 		if depth, err := org.Phenotype.MaxActivationDepthFast(0); err == nil {
 			neat.InfoLog(fmt.Sprintf("Activation depth of the winner: %d\n", depth))
 		}
@@ -118,7 +123,7 @@ func (e *generationEvaluator) GenerationEvaluate(population *genetics.Population
 			neat.InfoLog(fmt.Sprintf("Generation #%d winner's substrate dumped to: %s\n", epoch.Id, substrPath))
 		}
 	}
-	return err
+	return nil
 }
 
 // organismEvaluate evaluates an individual phenotype network with retina experiment and returns true if its won

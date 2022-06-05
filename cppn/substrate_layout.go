@@ -3,7 +3,7 @@ package cppn
 import (
 	"errors"
 	"fmt"
-	"github.com/yaricom/goNEAT/v2/neat/network"
+	"github.com/yaricom/goNEAT/v3/neat/network"
 )
 
 // SubstrateLayout Defines layout of neurons in the substrate

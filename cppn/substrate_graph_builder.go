@@ -2,11 +2,10 @@ package cppn
 
 import (
 	"errors"
-	"io"
-
 	"github.com/yaricom/goGraphML/graphml"
-	"github.com/yaricom/goNEAT/v2/neat/math"
-	"github.com/yaricom/goNEAT/v2/neat/network"
+	"github.com/yaricom/goNEAT/v3/neat/math"
+	"github.com/yaricom/goNEAT/v3/neat/network"
+	"io"
 )
 
 const (

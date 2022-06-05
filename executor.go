@@ -5,7 +5,10 @@ import (
 	"flag"
 	"fmt"
 	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
-	"github.com/yaricom/goNEAT/v2/experiment"
+	"github.com/yaricom/goESHyperNEAT/v2/examples/retina"
+	"github.com/yaricom/goNEAT/v3/experiment"
+	"github.com/yaricom/goNEAT/v3/neat"
+	"github.com/yaricom/goNEAT/v3/neat/genetics"
 	"log"
 	"math/rand"
 	"os"
@@ -13,10 +16,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-
-	"github.com/yaricom/goESHyperNEAT/v2/examples/retina"
-	"github.com/yaricom/goNEAT/v2/neat"
-	"github.com/yaricom/goNEAT/v2/neat/genetics"
 )
 
 // The experiment runner boilerplate code

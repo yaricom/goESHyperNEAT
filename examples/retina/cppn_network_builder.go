@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/yaricom/goESHyperNEAT/v2/cppn"
 	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
-	"github.com/yaricom/goNEAT/v2/neat/genetics"
-	"github.com/yaricom/goNEAT/v2/neat/math"
-	"github.com/yaricom/goNEAT/v2/neat/network"
+	"github.com/yaricom/goNEAT/v3/neat/genetics"
+	"github.com/yaricom/goNEAT/v3/neat/math"
+	"github.com/yaricom/goNEAT/v3/neat/network"
 )
 
 const debug = true

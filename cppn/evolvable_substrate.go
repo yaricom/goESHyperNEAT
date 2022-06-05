@@ -2,12 +2,11 @@ package cppn
 
 import (
 	"container/list"
-	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
-	"math"
-
 	"fmt"
-	neatmath "github.com/yaricom/goNEAT/v2/neat/math"
-	"github.com/yaricom/goNEAT/v2/neat/network"
+	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
+	neatmath "github.com/yaricom/goNEAT/v3/neat/math"
+	"github.com/yaricom/goNEAT/v3/neat/network"
+	"math"
 )
 
 // EvolvableSubstrate The evolvable substrate holds configuration of ANN produced by CPPN within hypecube where each 4-dimensional point

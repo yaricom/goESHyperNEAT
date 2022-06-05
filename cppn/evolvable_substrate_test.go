@@ -4,7 +4,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
-	"github.com/yaricom/goNEAT/v2/neat/math"
+	"github.com/yaricom/goNEAT/v3/neat/math"
 	"testing"
 )
 

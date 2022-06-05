@@ -2,11 +2,10 @@ package cppn
 
 import (
 	"errors"
-	"math"
-
 	"github.com/yaricom/goESHyperNEAT/v2/hyperneat"
-	neatmath "github.com/yaricom/goNEAT/v2/neat/math"
-	"github.com/yaricom/goNEAT/v2/neat/network"
+	neatmath "github.com/yaricom/goNEAT/v3/neat/math"
+	"github.com/yaricom/goNEAT/v3/neat/network"
+	"math"
 )
 
 // Substrate represents substrate holding configuration of ANN with weights produced by CPPN. According to HyperNEAT method

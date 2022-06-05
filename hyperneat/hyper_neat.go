@@ -3,12 +3,11 @@ package hyperneat
 
 import (
 	"github.com/pkg/errors"
+	"github.com/yaricom/goNEAT/v3/neat/math"
 	"gopkg.in/yaml.v3"
 	"io"
 	"io/ioutil"
 	"os"
-
-	"github.com/yaricom/goNEAT/v2/neat/math"
 )
 
 type SubstrateActivatorType struct {
