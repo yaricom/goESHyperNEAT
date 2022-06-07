@@ -3,8 +3,8 @@ package retina
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/yaricom/goESHyperNEAT/v2/cppn"
 	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
 	"github.com/yaricom/goESHyperNEAT/v2/examples"
@@ -220,10 +220,8 @@ func (e generationEvaluator) organismEvaluate(ctx context.Context, organism *gen
 	if debug {
 		neat.InfoLog(fmt.Sprintf("Average error: %f, errors sum: %f, false detections: %f from: %f",
 			avgError, errorSum, detectionErrorCount, count))
-		nodes, _ := graph.NodesCount()
-		edges, _ := graph.EdgesCount()
 		neat.InfoLog(fmt.Sprintf("Substrate: #nodes = %d, #edges = %d | CPPN phenotype: #nodes = %d, #edges = %d",
-			nodes, edges, cppnSolver.NodeCount(), cppnSolver.LinkCount()))
+			solver.NodeCount(), solver.LinkCount(), cppnSolver.NodeCount(), cppnSolver.LinkCount()))
 	}
 
 	return isWinner, nil
@@ -232,6 +230,11 @@ func (e generationEvaluator) organismEvaluate(ctx context.Context, organism *gen
 // evaluateNetwork is to evaluate provided network solver using provided visual objects to test prediction performance.
 // Returns the prediction loss value or error if failed to evaluate.
 func evaluateNetwork(solver network.Solver, leftObj VisualObject, rightObj VisualObject) (float64, error) {
+	// flush current network state
+	if _, err := solver.Flush(); err != nil {
+		return -1, err
+	}
+
 	// Create input by joining data from left and right visual objects
 	inputs := append(leftObj.data, rightObj.data...)
 
@@ -240,6 +243,8 @@ func evaluateNetwork(solver network.Solver, leftObj VisualObject, rightObj Visua
 	if err := solver.LoadSensors(inputs); err != nil {
 		return loss, err
 	}
+
+	// Propagate activation
 	if relaxed, err := solver.RecursiveSteps(); err != nil {
 		return loss, err
 	} else if !relaxed {
@@ -257,10 +262,10 @@ func evaluatePredictions(predictions []float64, leftObj VisualObject, rightObj V
 	// Convert predictions[i] to 1.0 or 0.0 about 0.5 threshold
 	normPredictions := make([]float64, len(predictions))
 	for i := 0; i < len(normPredictions); i++ {
-		if normPredictions[i] >= 0.5 {
+		if predictions[i] >= 0.5 {
 			normPredictions[i] = 1.0
 		} else {
-			normPredictions[i] = 0.0
+			predictions[i] = 0.0
 		}
 	}
 
