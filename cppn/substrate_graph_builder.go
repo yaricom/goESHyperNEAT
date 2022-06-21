@@ -83,7 +83,7 @@ func (b *graphMLBuilder) AddNode(nodeId int, nodeNeuronType network.NodeNeuronTy
 	return nil
 }
 
-func (b *graphMLBuilder) AddWeightedEdge(sourceId, targetId int, weight float64) (err error) {
+func (b *graphMLBuilder) AddWeightedEdge(sourceId, targetId int, weight float64) error {
 	// create attributes map
 	edgeAttr := make(map[string]interface{})
 	edgeAttr[edgeAttrWeight] = weight
@@ -102,10 +102,10 @@ func (b *graphMLBuilder) AddWeightedEdge(sourceId, targetId int, weight float64)
 
 	if graph, err := b.graph(); err != nil {
 		return err
-	} else {
-		_, err = graph.AddEdge(source, target, edgeAttr, graphml.EdgeDirectionDefault, "")
+	} else if _, err = graph.AddEdge(source, target, edgeAttr, graphml.EdgeDirectionDefault, ""); err != nil {
+		return err
 	}
-	return err
+	return nil
 }
 
 func (b *graphMLBuilder) NodesCount() (int, error) {
