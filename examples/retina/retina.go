@@ -34,17 +34,20 @@ type generationEvaluator struct {
 	numSpeciesTarget int
 	// The species compatibility threshold adjustment frequency
 	compatAdjustFreq int
+	// The flag to indicate if Link Expression Output should be enabled in CPPN
+	useLeo bool
 }
 
 // NewGenerationEvaluator is to create new generation's evaluator for retina experiment.  The numSpeciesTarget specifies the
 // target number of species to maintain in the population. If the number of species differ from the numSpeciesTarget it
 // will be automatically adjusted with compatAdjustFreq frequency, i.e., at each epoch % compatAdjustFreq == 0
-func NewGenerationEvaluator(outDir string, env *Environment, numSpeciesTarget, compatAdjustFreq int) (experiment.GenerationEvaluator, experiment.TrialRunObserver) {
+func NewGenerationEvaluator(outDir string, env *Environment, numSpeciesTarget, compatAdjustFreq int, useLeo bool) (experiment.GenerationEvaluator, experiment.TrialRunObserver) {
 	evaluator := &generationEvaluator{
 		outDir:           outDir,
 		env:              env,
 		numSpeciesTarget: numSpeciesTarget,
 		compatAdjustFreq: compatAdjustFreq,
+		useLeo:           useLeo,
 	}
 	return evaluator, evaluator
 }
@@ -71,15 +74,24 @@ func (e *generationEvaluator) GenerationEvaluate(ctx context.Context, population
 		return neat.ErrNEATOptionsNotFound
 	}
 	// Evaluate each organism on a test
-	maxPopulationFitness := 0.0
+	var (
+		maxPopulationFitness = 0.0
+		bestLinkCount        = 0
+		bestNodeCount        = 0
+	)
+	var bestSubstrateSolver network.Solver
+
 	for _, organism := range population.Organisms {
-		isWinner, err := e.organismEvaluate(ctx, organism)
+		isWinner, solver, err := e.organismEvaluate(ctx, organism)
 		if err != nil {
 			return err
 		}
 
 		if organism.Fitness > maxPopulationFitness {
 			maxPopulationFitness = organism.Fitness
+			bestLinkCount = organism.Phenotype.LinkCount()
+			bestNodeCount = organism.Phenotype.NodeCount()
+			bestSubstrateSolver = solver
 		}
 
 		if isWinner && (epoch.Champion == nil || organism.Fitness > epoch.Champion.Fitness) {
@@ -145,36 +157,40 @@ func (e *generationEvaluator) GenerationEvaluate(ctx context.Context, population
 		// adjust species count by keeping it constant
 		examples.AdjustSpeciesNumber(speciesCount, epoch.Id, e.compatAdjustFreq, e.numSpeciesTarget, options)
 
-		neat.InfoLog(fmt.Sprintf("%d species -> %d organisms [compatibility threshold: %.1f, target: %d], max fitness of population: %.2f\n",
-			speciesCount, len(population.Organisms), options.CompatThreshold, e.numSpeciesTarget, maxPopulationFitness))
+		neat.InfoLog(
+			fmt.Sprintf("%d species -> %d organisms [compatibility threshold: %.1f, target: %d]\nbest CPNN organism [fitness: %.2f, links: %d, nodes: %d], best solver [links: %d, nodes: %d]",
+				speciesCount, len(population.Organisms), options.CompatThreshold, e.numSpeciesTarget,
+				maxPopulationFitness, bestLinkCount, bestNodeCount,
+				bestSubstrateSolver.LinkCount(), bestSubstrateSolver.NodeCount()))
 	}
 	return nil
 }
 
 // organismEvaluate evaluates an individual phenotype network with retina experiment and returns true if its won
-func (e generationEvaluator) organismEvaluate(ctx context.Context, organism *genetics.Organism) (bool, error) {
+func (e generationEvaluator) organismEvaluate(ctx context.Context, organism *genetics.Organism) (bool, network.Solver, error) {
 	options, ok := eshyperneat.FromContext(ctx)
 	if !ok {
-		return false, eshyperneat.ErrESHyperNEATOptionsNotFound
+		return false, nil, eshyperneat.ErrESHyperNEATOptionsNotFound
 	}
 	// get CPPN network solver
-	cppnSolver, err := organism.Phenotype.FastNetworkSolver()
-	if err != nil {
-		return false, err
-	}
+	//cppnSolver, err := organism.Phenotype.FastNetworkSolver()
+	//if err != nil {
+	//	return false, err
+	//}
+	cppnSolver := organism.Phenotype
 
 	// create substrate layout
 	inputCount := e.env.inputSize * 2 // left + right pixels of visual object
 	layout, err := cppn.NewMappedEvolvableSubstrateLayout(inputCount, 2)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 	// create ES-HyperNEAT solver
-	substr := cppn.NewEvolvableSubstrate(layout, options.SubstrateActivator.SubstrateActivationType)
+	substr := cppn.NewEvolvableSubstrateWithBias(layout, options.SubstrateActivator.SubstrateActivationType, options.CppnBias)
 	graph := cppn.NewSubstrateGraphMLBuilder("retina ES-HyperNEAT", false)
-	solver, err := substr.CreateNetworkSolver(cppnSolver, graph, options)
+	solver, err := substr.CreateNetworkSolver(cppnSolver, e.useLeo, graph, options)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	// Evaluate the detector ANN against 256 combinations of the left and the right visual objects
@@ -185,7 +201,7 @@ func (e generationEvaluator) organismEvaluate(ctx context.Context, organism *gen
 			// Evaluate outputted predictions
 			loss, err := evaluateNetwork(solver, leftObj, rightObj)
 			if err != nil {
-				return false, err
+				return false, nil, err
 			}
 			errorSum += loss
 			count += 1.0
@@ -194,9 +210,9 @@ func (e generationEvaluator) organismEvaluate(ctx context.Context, organism *gen
 			}
 			// flush solver
 			if flushed, err := solver.Flush(); err != nil {
-				return false, err
+				return false, nil, err
 			} else if !flushed {
-				return false, errors.New("failed to flush solver after evaluation")
+				return false, nil, errors.New("failed to flush solver after evaluation")
 			}
 		}
 	}
@@ -224,7 +240,7 @@ func (e generationEvaluator) organismEvaluate(ctx context.Context, organism *gen
 			solver.NodeCount(), solver.LinkCount(), cppnSolver.NodeCount(), cppnSolver.LinkCount()))
 	}
 
-	return isWinner, nil
+	return isWinner, solver, nil
 }
 
 // evaluateNetwork is to evaluate provided network solver using provided visual objects to test prediction performance.
