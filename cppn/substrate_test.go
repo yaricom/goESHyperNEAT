@@ -30,7 +30,7 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 	assert.Equal(t, math.SigmoidSteepenedActivation, substr.NodesActivation)
 
 	// create solver from substrate
-	cppn, err := ReadCPPFromGenomeFile(cppnHyperNEATTestGenomePath)
+	cppn, err := FastSolverFromGenomeFile(cppnHyperNEATTestGenomePath)
 	require.NoError(t, err, "failed to read CPPN")
 
 	context, err := loadHyperNeatContext(hyperNeatTestConfigFile)
@@ -62,7 +62,7 @@ func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
 	assert.Equal(t, math.SigmoidSteepenedActivation, substr.NodesActivation)
 
 	// create solver from substrate
-	cppn, err := ReadCPPFromGenomeFile(cppnLeoHyperNEATTestGenomePath)
+	cppn, err := FastSolverFromGenomeFile(cppnLeoHyperNEATTestGenomePath)
 	require.NoError(t, err, "failed to read CPPN")
 
 	context, err := loadHyperNeatContext(hyperNeatTestConfigFile)
@@ -96,7 +96,7 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation)
 
 	// create solver from substrate
-	cppn, err := ReadCPPFromGenomeFile(cppnHyperNEATTestGenomePath)
+	cppn, err := FastSolverFromGenomeFile(cppnHyperNEATTestGenomePath)
 	require.NoError(t, err, "failed to read CPPN")
 
 	context, err := loadHyperNeatContext(hyperNeatTestConfigFile)

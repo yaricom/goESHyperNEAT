@@ -2,6 +2,7 @@ package cppn
 
 import (
 	"errors"
+	"fmt"
 	"github.com/yaricom/goESHyperNEAT/v2/hyperneat"
 	neatmath "github.com/yaricom/goNEAT/v3/neat/math"
 	"github.com/yaricom/goNEAT/v3/neat/network"
@@ -49,7 +50,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 
 	totalNeuronCount := lastHidden
 
-	connections := make([]*network.FastNetworkLink, 0)
+	links := make([]*network.FastNetworkLink, 0)
 	biasList := make([]float64, totalNeuronCount)
 
 	// inline function to find activation type for a given neuron
@@ -103,7 +104,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 				// add links only when CPPN LEO output signals to
 				link = createLink(outs[0], bi, hi, options.WeightRange)
 			} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
-				// add only connections with signal exceeding provided threshold
+				// add only links with signal exceeding provided threshold
 				link = createThresholdNormalizedLink(outs[0], bi, hi, options.LinkThreshold, options.WeightRange)
 			}
 			if link != nil {
@@ -137,7 +138,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 				// add links only when CPPN LEO output signals to
 				link = createLink(outs[0], bi, oi, options.WeightRange)
 			} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
-				// add only connections with signal exceeding provided threshold
+				// add only links with signal exceeding provided threshold
 				link = createThresholdNormalizedLink(outs[0], bi, oi, options.LinkThreshold, options.WeightRange)
 			}
 			if link != nil {
@@ -181,12 +182,12 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 					// add links only when CPPN LEO output signals to
 					link = createLink(outs[0], in, hi, options.WeightRange)
 				} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
-					// add only connections with signal exceeding provided threshold
+					// add only links with signal exceeding provided threshold
 					link = createThresholdNormalizedLink(outs[0], in, hi, options.LinkThreshold, options.WeightRange)
 
 				}
 				if link != nil {
-					connections = append(connections, link)
+					links = append(links, link)
 					// add node and edge to graph
 					if _, err := addEdgeToBuilder(graphBuilder, in, hi, link.Weight); err != nil {
 						return nil, err
@@ -219,11 +220,11 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 					// add links only when CPPN LEO output signals to
 					link = createLink(outs[0], hi, oi, options.WeightRange)
 				} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
-					// add only connections with signal exceeding provided threshold
+					// add only links with signal exceeding provided threshold
 					link = createThresholdNormalizedLink(outs[0], hi, oi, options.LinkThreshold, options.WeightRange)
 				}
 				if link != nil {
-					connections = append(connections, link)
+					links = append(links, link)
 					// add node and edge to graph
 					if _, err := addEdgeToBuilder(graphBuilder, hi, oi, link.Weight); err != nil {
 						return nil, err
@@ -262,11 +263,11 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 					// add links only when CPPN LEO output signals to
 					link = createLink(outs[0], in, oi, options.WeightRange)
 				} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
-					// add only connections with signal exceeding provided threshold
+					// add only links with signal exceeding provided threshold
 					link = createThresholdNormalizedLink(outs[0], in, oi, options.LinkThreshold, options.WeightRange)
 				}
 				if link != nil {
-					connections = append(connections, link)
+					links = append(links, link)
 					// add node and edge to graph
 					if _, err := addEdgeToBuilder(graphBuilder, in, oi, link.Weight); err != nil {
 						return nil, err
@@ -282,9 +283,15 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 		activations[i] = activationForNeuron(i)
 	}
 
+	if totalNeuronCount == 0 || len(links) == 0 || len(activations) != totalNeuronCount {
+		message := fmt.Sprintf("failed to create network solver: links [%d], nodes [%d], activations [%d]",
+			len(links), totalNeuronCount, len(activations))
+		return nil, errors.New(message)
+	}
+
 	// create fast network solver
 	solver := network.NewFastModularNetworkSolver(
 		s.Layout.BiasCount(), s.Layout.InputCount(), s.Layout.OutputCount(), totalNeuronCount,
-		activations, connections, biasList, nil)
+		activations, links, biasList, nil)
 	return solver, nil
 }
