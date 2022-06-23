@@ -65,7 +65,6 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 	}
 
 	// give bias inputs to all hidden and output nodes.
-	var link *network.FastNetworkLink
 	coordinates := make([]float64, 4)
 	for bi := firstBias; bi < firstInput; bi++ {
 
@@ -97,17 +96,9 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 				}
 			}
 			// find connection weight
-			link = nil
-			if outs, err := queryCPPN(coordinates, cppn); err != nil {
+			if link, err := fastNetworkLink(coordinates, cppn, useLeo, bi, hi, options); err != nil {
 				return nil, err
-			} else if useLeo && outs[1] > 0 {
-				// add links only when CPPN LEO output signals to
-				link = createLink(outs[0], bi, hi, options.WeightRange)
-			} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
-				// add only links with signal exceeding provided threshold
-				link = createThresholdNormalizedLink(outs[0], bi, hi, options.LinkThreshold, options.WeightRange)
-			}
-			if link != nil {
+			} else if link != nil {
 				biasList[hi] = link.Weight
 				// add node and edge to graph
 				if _, err := addEdgeToBuilder(graphBuilder, bi, hi, link.Weight); err != nil {
@@ -131,17 +122,9 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 				}
 			}
 			// find connection weight
-			link = nil
-			if outs, err := queryCPPN(coordinates, cppn); err != nil {
+			if link, err := fastNetworkLink(coordinates, cppn, useLeo, bi, oi, options); err != nil {
 				return nil, err
-			} else if useLeo && outs[1] > 0 {
-				// add links only when CPPN LEO output signals to
-				link = createLink(outs[0], bi, oi, options.WeightRange)
-			} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
-				// add only links with signal exceeding provided threshold
-				link = createThresholdNormalizedLink(outs[0], bi, oi, options.LinkThreshold, options.WeightRange)
-			}
-			if link != nil {
+			} else if link != nil {
 				biasList[oi] = link.Weight
 				// add node and edge to graph
 				if _, err := addEdgeToBuilder(graphBuilder, bi, oi, link.Weight); err != nil {
@@ -175,18 +158,9 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 					coordinates[3] = hiddenPosition.Y
 				}
 				// find connection weight
-				link = nil
-				if outs, err := queryCPPN(coordinates, cppn); err != nil {
+				if link, err := fastNetworkLink(coordinates, cppn, useLeo, in, hi, options); err != nil {
 					return nil, err
-				} else if useLeo && outs[1] > 0 {
-					// add links only when CPPN LEO output signals to
-					link = createLink(outs[0], in, hi, options.WeightRange)
-				} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
-					// add only links with signal exceeding provided threshold
-					link = createThresholdNormalizedLink(outs[0], in, hi, options.LinkThreshold, options.WeightRange)
-
-				}
-				if link != nil {
+				} else if link != nil {
 					links = append(links, link)
 					// add node and edge to graph
 					if _, err := addEdgeToBuilder(graphBuilder, in, hi, link.Weight); err != nil {
@@ -213,17 +187,9 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 					coordinates[3] = outputPosition.Y
 				}
 				// find connection weight
-				link = nil
-				if outs, err := queryCPPN(coordinates, cppn); err != nil {
+				if link, err := fastNetworkLink(coordinates, cppn, useLeo, hi, oi, options); err != nil {
 					return nil, err
-				} else if useLeo && outs[1] > 0 {
-					// add links only when CPPN LEO output signals to
-					link = createLink(outs[0], hi, oi, options.WeightRange)
-				} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
-					// add only links with signal exceeding provided threshold
-					link = createThresholdNormalizedLink(outs[0], hi, oi, options.LinkThreshold, options.WeightRange)
-				}
-				if link != nil {
+				} else if link != nil {
 					links = append(links, link)
 					// add node and edge to graph
 					if _, err := addEdgeToBuilder(graphBuilder, hi, oi, link.Weight); err != nil {
@@ -256,17 +222,9 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 					coordinates[3] = outputPosition.Y
 				}
 				// find connection weight
-				link = nil
-				if outs, err := queryCPPN(coordinates, cppn); err != nil {
+				if link, err := fastNetworkLink(coordinates, cppn, useLeo, in, oi, options); err != nil {
 					return nil, err
-				} else if useLeo && outs[1] > 0 {
-					// add links only when CPPN LEO output signals to
-					link = createLink(outs[0], in, oi, options.WeightRange)
-				} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
-					// add only links with signal exceeding provided threshold
-					link = createThresholdNormalizedLink(outs[0], in, oi, options.LinkThreshold, options.WeightRange)
-				}
-				if link != nil {
+				} else if link != nil {
 					links = append(links, link)
 					// add node and edge to graph
 					if _, err := addEdgeToBuilder(graphBuilder, in, oi, link.Weight); err != nil {
@@ -294,4 +252,17 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 		s.Layout.BiasCount(), s.Layout.InputCount(), s.Layout.OutputCount(), totalNeuronCount,
 		activations, links, biasList, nil)
 	return solver, nil
+}
+
+func fastNetworkLink(coordinates []float64, cppn network.Solver, useLeo bool, source, target int, options *hyperneat.Options) (*network.FastNetworkLink, error) {
+	if outs, err := queryCPPN(coordinates, cppn); err != nil {
+		return nil, err
+	} else if useLeo && outs[1] > 0 {
+		// add links only when CPPN LEO output signals to
+		return createLink(outs[0], source, target, options.WeightRange), nil
+	} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
+		// add only links with signal exceeding provided threshold
+		return createThresholdNormalizedLink(outs[0], source, target, options.LinkThreshold, options.WeightRange), nil
+	}
+	return nil, nil
 }

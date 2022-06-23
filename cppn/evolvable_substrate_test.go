@@ -17,43 +17,57 @@ func TestEvolvableSubstrate_CreateNetworkSolver(t *testing.T) {
 
 	substr := NewEvolvableSubstrate(layout, math.SigmoidSteepenedActivation)
 
-	cppn, err := ReadCPPFromGenomeFile(cppnHyperNEATTestGenomePath)
+	cppn, err := FastSolverFromGenomeFile(cppnHyperNEATTestGenomePath)
 	require.NoError(t, err, "failed to read CPPN")
-	context, err := loadESHyperNeatContext(esHyperNeatTestConfigFile)
+	context, err := loadESHyperNeatOptions(esHyperNeatTestConfigFile)
 	require.NoError(t, err, "failed to read ESHyperNEAT context")
 
 	// test solver creation
-	graph := NewSubstrateGraphMLBuilder("", false)
-	solver, err := substr.CreateNetworkSolver(cppn, graph, context)
+	graph := NewSubstrateGraphMLBuilder("TestEvolvableSubstrate_CreateNetworkSolver", false)
+	solver, err := substr.CreateNetworkSolver(cppn, false, graph, context)
 	require.NoError(t, err, "failed to create solver")
 
-	//var buf bytes.Buffer
-	//err = graph.Marshal(&buf)
-	//t.Log(buf.String())
+	printGraph(graph, t)
 
 	totalNodeCount := inputCount + outputCount + layout.HiddenCount()
 	assert.Equal(t, totalNodeCount, solver.NodeCount(), "wrong total node count")
-	assert.Equal(t, 10, solver.LinkCount(), "wrong link number")
+	assert.Equal(t, 8, solver.LinkCount(), "wrong link number")
 
-	// test outputs
-	signals := []float64{0.9, 5.2, 1.2, 0.6}
-	err = solver.LoadSensors(signals)
-	assert.NoError(t, err, "failed to load sensors")
-
-	res, err := solver.RecursiveSteps()
-	require.NoError(t, err, "failed to propagate recursive activation")
-	require.True(t, res, "failed to relax network")
-
-	outs := solver.ReadOutputs()
+	// check outputs
 	outExpected := []float64{0.5, 0.5}
-	delta := 0.0000000001
-	for i, out := range outs {
-		assert.InDelta(t, outExpected[i], out, delta, "unexpected output: %v at: %d", out, i)
-	}
+	checkNetworkSolverOutputs(solver, outExpected, 1e-8, t)
 }
 
-// Loads ES-HyperNeat context from provided config file's path
-func loadESHyperNeatContext(configPath string) (*eshyperneat.Options, error) {
+func TestEvolvableSubstrate_CreateNetworkSolver_LEO(t *testing.T) {
+	inputCount, outputCount := 4, 2
+	layout, err := NewMappedEvolvableSubstrateLayout(inputCount, outputCount)
+	require.NoError(t, err, "failed to create layout")
+
+	substr := NewEvolvableSubstrate(layout, math.SigmoidSteepenedActivation)
+
+	cppn, err := FastSolverFromGenomeFile(cppnLeoHyperNEATTestGenomePath)
+	require.NoError(t, err, "failed to read CPPN")
+	context, err := loadESHyperNeatOptions(esHyperNeatTestConfigFile)
+	require.NoError(t, err, "failed to read ESHyperNEAT context")
+
+	// test solver creation
+	graph := NewSubstrateGraphMLBuilder("TestEvolvableSubstrate_CreateNetworkSolver", false)
+	solver, err := substr.CreateNetworkSolver(cppn, true, graph, context)
+	require.NoError(t, err, "failed to create solver")
+
+	printGraph(graph, t)
+
+	totalNodeCount := inputCount + outputCount + layout.HiddenCount()
+	assert.Equal(t, totalNodeCount, solver.NodeCount(), "wrong total node count")
+	assert.Equal(t, 8, solver.LinkCount(), "wrong link number")
+
+	// check outputs
+	outExpected := []float64{0.5, 0.5}
+	checkNetworkSolverOutputs(solver, outExpected, 1e-8, t)
+}
+
+// Loads ES-HyperNeat options from provided config file's path
+func loadESHyperNeatOptions(configPath string) (*eshyperneat.Options, error) {
 	if ctx, err := eshyperneat.LoadYAMLConfigFile(configPath); err != nil {
 		return nil, err
 	} else {

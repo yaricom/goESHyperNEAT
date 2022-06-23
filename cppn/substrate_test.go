@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/yaricom/goESHyperNEAT/v2/hyperneat"
 	"github.com/yaricom/goNEAT/v3/neat/math"
-	"github.com/yaricom/goNEAT/v3/neat/network"
 	"testing"
 )
 
@@ -50,7 +49,7 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 
 	// test outputs
 	outExpected := []float64{0.6427874813512032, 0.8685335941574246}
-	checkNetworkSolverOutputs(solver, outExpected, t)
+	checkNetworkSolverOutputs(solver, outExpected, 0.0, t)
 }
 
 func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
@@ -73,16 +72,18 @@ func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
 	solver, err := substr.CreateNetworkSolver(cppn, true, graph, context)
 	require.NoError(t, err, "failed to create network solver")
 
+	printGraph(graph, t)
+
 	// test solver
 	totalNodeCount := biasCount + inputCount + hiddenCount + outputCount
 	assert.Equal(t, totalNodeCount, solver.NodeCount(), "wrong nodes number")
 
-	totalLinkCount := 14
+	totalLinkCount := 16
 	assert.Equal(t, totalLinkCount, solver.LinkCount(), "wrong links number")
 
 	// test outputs
-	outExpected := []float64{0.5000001657646664, 0.5000003552761682}
-	checkNetworkSolverOutputs(solver, outExpected, t)
+	outExpected := []float64{0.5, 0.5}
+	checkNetworkSolverOutputs(solver, outExpected, 1e-5, t)
 }
 
 func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
@@ -124,22 +125,7 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 
 	// test outputs
 	outExpected := []float64{0.6427874813512032, 0.8685335941574246}
-	checkNetworkSolverOutputs(solver, outExpected, t)
-}
-
-func checkNetworkSolverOutputs(solver network.Solver, outExpected []float64, t *testing.T) {
-	signals := []float64{0.9, 5.2, 1.2, 0.6}
-	err := solver.LoadSensors(signals)
-	require.NoError(t, err, "failed to load sensors")
-
-	res, err := solver.RecursiveSteps()
-	require.NoError(t, err, "failed to perform recursive activation")
-	require.True(t, res, "failed to relax network")
-
-	outs := solver.ReadOutputs()
-	for i, out := range outs {
-		assert.Equal(t, outExpected[i], out, "wrong output at: %d", i)
-	}
+	checkNetworkSolverOutputs(solver, outExpected, 0.0, t)
 }
 
 // Loads HyperNeat context from provided config file's path

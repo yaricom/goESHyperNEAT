@@ -25,6 +25,7 @@ func main() {
 	var experimentName = flag.String("experiment", "retina", "The name of experiment to run. [retina]")
 	var speciesTarget = flag.Int("species_target", 15, "The target number of species to maintain.")
 	var speciesCompatAdjustFreq = flag.Int("species_adjust_freq", 10, "The frequency of species compatibility threshold adjustments when trying to maintain their number.")
+	var useLeo = flag.Bool("use_leo", false, "The flag to indicate if Link Expression Output should be enabled in CPPN")
 
 	var logLevel = flag.String("log-level", "", "The logger level to be used. Overrides the one set in configuration.")
 	var trialsCount = flag.Int("trials", 0, "The number of trials for experiment. Overrides the one set in configuration.")
@@ -101,7 +102,8 @@ func main() {
 		if env, err := retina.NewRetinaEnvironment(retina.CreateRetinaDataset(), 4); err != nil {
 			log.Fatalf("Failed to create retina environment, reason: %s", err)
 		} else {
-			generationEvaluator, trialObserver = retina.NewGenerationEvaluator(*outDirPath, env, *speciesTarget, *speciesCompatAdjustFreq)
+			generationEvaluator, trialObserver = retina.NewGenerationEvaluator(
+				*outDirPath, env, *speciesTarget, *speciesCompatAdjustFreq, *useLeo)
 		}
 	default:
 		log.Fatalf("Unsupported experiment name requested: %s\n", *experimentName)

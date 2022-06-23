@@ -24,6 +24,8 @@ type Options struct {
 
 	// The substrate activation function
 	SubstrateActivator SubstrateActivatorType `yaml:"substrate_activator"`
+	// The BIAS value for CPPN network
+	CppnBias float64 `yaml:"cppn_bias,omitempty"`
 }
 
 // LoadYAMLOptions is to read HyperNEAT options from the provided reader

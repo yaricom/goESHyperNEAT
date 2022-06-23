@@ -30,12 +30,12 @@ func TestQuadNode_nodeCPPNValues(t *testing.T) {
 	assert.ElementsMatch(t, expected, vals)
 }
 
-func TestReadCPPFromGenomeFile(t *testing.T) {
-	cppn, err := ReadCPPFromGenomeFile(cppnHyperNEATTestGenomePath)
+func TestFastSolverFromGenomeFile(t *testing.T) {
+	cppn, err := FastSolverFromGenomeFile(cppnHyperNEATTestGenomePath)
 	require.NoError(t, err, "failed to read genome file")
 	require.NotNil(t, cppn, "CPPN expected")
-	require.Equal(t, cppn.NodeCount(), 7, "wrong nodes number")
-	require.Equal(t, cppn.LinkCount(), 7, "wrong links number")
+	require.Equal(t, 7, cppn.NodeCount(), "wrong nodes number")
+	require.Equal(t, 7, cppn.LinkCount(), "wrong links number")
 
 	// test query
 	coords := []float64{0.0, 0.0, 0.5, 0.5}
@@ -44,6 +44,24 @@ func TestReadCPPFromGenomeFile(t *testing.T) {
 	require.NotNil(t, outs, "output expected")
 	require.Len(t, outs, 1)
 	assert.InDelta(t, 0.4864161653290716, outs[0], 1e-16, "wrong output value")
+}
+
+func TestFastSolverFromGenomeFile_LEO(t *testing.T) {
+	cppn, err := FastSolverFromGenomeFile(cppnLeoHyperNEATTestGenomePath)
+	require.NoError(t, err, "failed to read genome file")
+	require.NotNil(t, cppn, "CPPN expected")
+	require.Equal(t, 9, cppn.NodeCount(), "wrong nodes number")
+	require.Equal(t, 11, cppn.LinkCount(), "wrong links number")
+
+	// test query
+	coords := []float64{0.0, 0.0, 0.5, 0.5}
+	outs, err := queryCPPN(coords, cppn)
+	require.NoError(t, err, "failed to query CPPN")
+	require.NotNil(t, outs, "output expected")
+	require.Len(t, outs, 2)
+	t.Log(outs)
+	assert.InDelta(t, 0.4117980729033359, outs[0], 1e-16, "wrong output value")
+	assert.Equal(t, 1.0, outs[1], "wrong LEO value")
 }
 
 func buildTree() *QuadNode {
@@ -68,6 +86,6 @@ func buildTree() *QuadNode {
 
 func fillW(nodes []*QuadNode, factor float64) {
 	for i, n := range nodes {
-		n.W = float64(i) * factor
+		n.CppnOut = []float64{float64(i) * factor}
 	}
 }

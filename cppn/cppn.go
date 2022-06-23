@@ -7,16 +7,13 @@ import (
 	"github.com/yaricom/goNEAT/v3/neat/genetics"
 	"github.com/yaricom/goNEAT/v3/neat/network"
 	"math"
-	"os"
 )
 
-// ReadCPPFromGenomeFile Reads CPPN from specified genome and creates network solver
-func ReadCPPFromGenomeFile(genomePath string) (network.Solver, error) {
-	if genomeFile, err := os.Open(genomePath); err != nil {
+// FastSolverFromGenomeFile Reads CPPN from specified genome and creates network solver
+func FastSolverFromGenomeFile(genomePath string) (network.Solver, error) {
+	if reader, err := genetics.NewGenomeReaderFromFile(genomePath); err != nil {
 		return nil, err
-	} else if r, err := genetics.NewGenomeReader(genomeFile, genetics.YAMLGenomeEncoding); err != nil {
-		return nil, err
-	} else if genome, err := r.Read(); err != nil {
+	} else if genome, err := reader.Read(); err != nil {
 		return nil, err
 	} else if net, err := genome.Genesis(genome.Id); err != nil {
 		return nil, err
@@ -110,6 +107,6 @@ func nodeCPPNValues(n *QuadNode) []float64 {
 		}
 		return accumulator
 	} else {
-		return []float64{n.W}
+		return []float64{n.Weight()}
 	}
 }
