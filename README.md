@@ -1,3 +1,5 @@
+# goESHyperNEAT 🇺🇦 [![Made in Ukraine](https://img.shields.io/badge/made_in-ukraine-ffd700.svg?labelColor=0057b7)](https://u24.gov.ua)
+
 [![Build Status](https://travis-ci.org/yaricom/goESHyperNEAT.svg?branch=master)](https://travis-ci.org/yaricom/goESHyperNEAT) [![GoDoc](https://godoc.org/github.com/yaricom/goESHyperNEAT?status.svg)](https://godoc.org/github.com/yaricom/goESHyperNEAT)
 
 ## Overview
@@ -21,7 +23,7 @@ geometrical topology during training, producing regions with varying neural dens
 for situating cognitive structures in the biological brains.
 
 
-## References:
+## References
 
 1. The original C++ NEAT implementation created by Kenneth O. Stanley, see: [NEAT][1]
 2. Other NEAT implementations can be found at [NEAT Software Catalog][2]

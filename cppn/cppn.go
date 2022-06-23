@@ -1,22 +1,19 @@
-// The package CPPN provides implementation of Compositional Pattern Producing Network
+// Package cppn provides implementation of Compositional Pattern Producing Network
 // which is a part of Hypercube-based NEAT algorithm implementation
 package cppn
 
 import (
 	"errors"
-	"github.com/yaricom/goNEAT/neat/genetics"
-	"github.com/yaricom/goNEAT/neat/network"
+	"github.com/yaricom/goNEAT/v3/neat/genetics"
+	"github.com/yaricom/goNEAT/v3/neat/network"
 	"math"
-	"os"
 )
 
-// Reads CPPN from specified genome and creates network solver
-func ReadCPPFromGenomeFile(genomePath string) (network.NetworkSolver, error) {
-	if genomeFile, err := os.Open(genomePath); err != nil {
+// FastSolverFromGenomeFile Reads CPPN from specified genome and creates network solver
+func FastSolverFromGenomeFile(genomePath string) (network.Solver, error) {
+	if reader, err := genetics.NewGenomeReaderFromFile(genomePath); err != nil {
 		return nil, err
-	} else if r, err := genetics.NewGenomeReader(genomeFile, genetics.YAMLGenomeEncoding); err != nil {
-		return nil, err
-	} else if genome, err := r.Read(); err != nil {
+	} else if genome, err := reader.Read(); err != nil {
 		return nil, err
 	} else if net, err := genome.Genesis(genome.Id); err != nil {
 		return nil, err
@@ -33,9 +30,9 @@ func createThresholdNormalizedLink(cppnOutput float64, srcIndex, dstIndex int, l
 		weight *= -1 // restore sign
 	}
 	link := network.FastNetworkLink{
-		Weight:     weight,
-		SourceIndx: srcIndex,
-		TargetIndx: dstIndex,
+		Weight:      weight,
+		SourceIndex: srcIndex,
+		TargetIndex: dstIndex,
 	}
 	return &link
 }
@@ -45,15 +42,15 @@ func createLink(cppnOutput float64, srcIndex, dstIndex int, weightRange float64)
 	weight := cppnOutput
 	weight *= weightRange // scale to fit given weight range
 	link := network.FastNetworkLink{
-		Weight:     weight,
-		SourceIndx: srcIndex,
-		TargetIndx: dstIndex,
+		Weight:      weight,
+		SourceIndex: srcIndex,
+		TargetIndex: dstIndex,
 	}
 	return &link
 }
 
 // Calculates outputs of provided CPPN network solver with given hypercube coordinates.
-func queryCPPN(coordinates []float64, cppn network.NetworkSolver) ([]float64, error) {
+func queryCPPN(coordinates []float64, cppn network.Solver) ([]float64, error) {
 	// flush networks activation from previous run
 	if res, err := cppn.Flush(); err != nil {
 		return nil, err
@@ -82,20 +79,20 @@ func nodeVariance(node *QuadNode) float64 {
 		return 0.0
 	}
 
-	cppnVals := nodeCPPNValues(node)
+	cppnValues := nodeCPPNValues(node)
 	// calculate median and variance
-	m, v := 0.0, 0.0
-	for _, f := range cppnVals {
-		m += f
+	meanW, variance := 0.0, 0.0
+	for _, w := range cppnValues {
+		meanW += w
 	}
-	m /= float64(len(cppnVals))
+	meanW /= float64(len(cppnValues))
 
-	for _, f := range cppnVals {
-		v += math.Pow(f-m, 2)
+	for _, w := range cppnValues {
+		variance += math.Pow(w-meanW, 2)
 	}
-	v /= float64(len(cppnVals))
+	variance /= float64(len(cppnValues))
 
-	return v
+	return variance
 }
 
 // Collects the CPPN values stored in a given quadtree node
@@ -105,11 +102,11 @@ func nodeCPPNValues(n *QuadNode) []float64 {
 		accumulator := make([]float64, 0)
 		for _, p := range n.Nodes {
 			// go into child nodes
-			pVals := nodeCPPNValues(p)
-			accumulator = append(accumulator, pVals...)
+			cppnValues := nodeCPPNValues(p)
+			accumulator = append(accumulator, cppnValues...)
 		}
 		return accumulator
 	} else {
-		return []float64{n.W}
+		return []float64{n.Weight()}
 	}
 }

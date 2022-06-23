@@ -2,11 +2,10 @@ package cppn
 
 import (
 	"errors"
-	"io"
-
 	"github.com/yaricom/goGraphML/graphml"
-	"github.com/yaricom/goNEAT/neat/network"
-	"github.com/yaricom/goNEAT/neat/utils"
+	"github.com/yaricom/goNEAT/v3/neat/math"
+	"github.com/yaricom/goNEAT/v3/neat/network"
+	"io"
 )
 
 const (
@@ -20,21 +19,21 @@ const (
 	edgeAttrTargetId           = "targetId"
 )
 
-// The graph builder able to build weighted directed graphs representing substrate networks
+// SubstrateGraphBuilder The graph builder able to build weighted directed graphs representing substrate networks
 type SubstrateGraphBuilder interface {
-	// Adds specified node to the graph with provided position
-	AddNode(nodeId int, nodeNeuronType network.NodeNeuronType, nodeActivation utils.NodeActivationType, position *PointF) error
-	// Adds edge between two graph nodes
+	// AddNode Adds specified node to the graph with provided position
+	AddNode(nodeId int, nodeNeuronType network.NodeNeuronType, nodeActivation math.NodeActivationType, position *PointF) error
+	// AddWeightedEdge Adds edge between two graph nodes
 	AddWeightedEdge(sourceId, targetId int, weight float64) error
 
-	// Returns the number of nodes in the graph
+	// NodesCount Returns the number of nodes in the graph
 	NodesCount() (int, error)
-	// Returns the number of edges in the graph
+	// EdgesCount Returns the number of edges in the graph
 	EdgesCount() (int, error)
 
-	// Marshal graph to the provided writer
+	// Marshal the graph to the provided writer
 	Marshal(w io.Writer) error
-	// Unmarshal graph from the provided reader
+	// UnMarshal is to unmarshal graph from the provided reader
 	UnMarshal(r io.Reader) error
 }
 
@@ -50,8 +49,8 @@ type graphMLBuilder struct {
 	nodesMap map[int]*graphml.Node
 }
 
-// Creates new instance with specified description to be included into serialized graph. If compact is true than graph
-// will be marshaled into compact form
+// NewSubstrateGraphMLBuilder Creates new instance with specified description to be included into serialized graph.
+// If compact is true then graph will be marshaled into compact form
 func NewSubstrateGraphMLBuilder(description string, compact bool) SubstrateGraphBuilder {
 	return &graphMLBuilder{
 		nodesMap: make(map[int]*graphml.Node),
@@ -60,12 +59,13 @@ func NewSubstrateGraphMLBuilder(description string, compact bool) SubstrateGraph
 	}
 }
 
-func (b *graphMLBuilder) AddNode(nodeId int, nodeNeuronType network.NodeNeuronType, nodeActivation utils.NodeActivationType, position *PointF) (err error) {
+func (b *graphMLBuilder) AddNode(nodeId int, nodeNeuronType network.NodeNeuronType,
+	nodeActivation math.NodeActivationType, position *PointF) (err error) {
 	// create attributes map
 	nodeAttr := make(map[string]interface{})
 	nodeAttr[nodeAttrID] = nodeId
 	nodeAttr[nodeAttrNodeNeuronType] = network.NeuronTypeName(nodeNeuronType)
-	if nodeAttr[nodeAttrNodeActivationType], err = utils.NodeActivators.ActivationNameFromType(nodeActivation); err != nil {
+	if nodeAttr[nodeAttrNodeActivationType], err = math.NodeActivators.ActivationNameFromType(nodeActivation); err != nil {
 		return err
 	}
 	nodeAttr[nodeAttrX] = position.X
@@ -83,7 +83,7 @@ func (b *graphMLBuilder) AddNode(nodeId int, nodeNeuronType network.NodeNeuronTy
 	return nil
 }
 
-func (b *graphMLBuilder) AddWeightedEdge(sourceId, targetId int, weight float64) (err error) {
+func (b *graphMLBuilder) AddWeightedEdge(sourceId, targetId int, weight float64) error {
 	// create attributes map
 	edgeAttr := make(map[string]interface{})
 	edgeAttr[edgeAttrWeight] = weight
@@ -102,10 +102,10 @@ func (b *graphMLBuilder) AddWeightedEdge(sourceId, targetId int, weight float64)
 
 	if graph, err := b.graph(); err != nil {
 		return err
-	} else {
-		_, err = graph.AddEdge(source, target, edgeAttr, graphml.EdgeDirectionDefault, "")
+	} else if _, err = graph.AddEdge(source, target, edgeAttr, graphml.EdgeDirectionDefault, ""); err != nil {
+		return err
 	}
-	return err
+	return nil
 }
 
 func (b *graphMLBuilder) NodesCount() (int, error) {
@@ -150,7 +150,8 @@ func (b *graphMLBuilder) graph() (*graphml.Graph, error) {
 	return b.graphML.Graphs[0], nil
 }
 
-func addNodeToBuilder(builder SubstrateGraphBuilder, nodeId int, nodeType network.NodeNeuronType, nodeActivation utils.NodeActivationType, position *PointF) (bool, error) {
+func addNodeToBuilder(builder SubstrateGraphBuilder, nodeId int, nodeType network.NodeNeuronType,
+	nodeActivation math.NodeActivationType, position *PointF) (bool, error) {
 	if builder == nil {
 		return false, nil
 	} else if err := builder.AddNode(nodeId, nodeType, nodeActivation, position); err != nil {

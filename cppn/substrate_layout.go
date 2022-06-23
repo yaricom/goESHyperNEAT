@@ -3,25 +3,25 @@ package cppn
 import (
 	"errors"
 	"fmt"
-	"github.com/yaricom/goNEAT/neat/network"
+	"github.com/yaricom/goNEAT/v3/neat/network"
 )
 
-// Defines layout of neurons in the substrate
+// SubstrateLayout Defines layout of neurons in the substrate
 type SubstrateLayout interface {
-	// Returns coordinates of the neuron with specified index [0; count) and type
+	// NodePosition Returns coordinates of the neuron with specified index [0; count) and type
 	NodePosition(index int, nType network.NodeNeuronType) (*PointF, error)
 
-	// Returns number of BIAS neurons in the layout
+	// BiasCount Returns number of BIAS neurons in the layout
 	BiasCount() int
-	// Returns number of INPUT neurons in the layout
+	// InputCount Returns number of INPUT neurons in the layout
 	InputCount() int
-	// Returns number of HIDDEN neurons in the layout
+	// HiddenCount Returns number of HIDDEN neurons in the layout
 	HiddenCount() int
-	// Returns number of OUTPUT neurons in the layout
+	// OutputCount Returns number of OUTPUT neurons in the layout
 	OutputCount() int
 }
 
-// Defines grid substrate layout
+// GridSubstrateLayout Defines grid substrate layout
 type GridSubstrateLayout struct {
 	// The number of bias nodes encoded in this substrate
 	biasCount int
@@ -40,7 +40,7 @@ type GridSubstrateLayout struct {
 	outputDelta float64
 }
 
-// Creates new instance with specified number of nodes to create layout for
+// NewGridSubstrateLayout Creates new instance with specified number of nodes to create layout for
 func NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount int) *GridSubstrateLayout {
 	s := GridSubstrateLayout{biasCount: biasCount, inputCount: inputCount, outputCount: outputCount, hiddenCount: hiddenCount}
 
