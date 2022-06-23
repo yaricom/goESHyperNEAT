@@ -34,8 +34,7 @@ func NewSubstrate(layout SubstrateLayout, nodesActivation neatmath.NodeActivatio
 // If the useLeo is True thar Link Expression Output extension to the HyperNEAT will be used instead of standard weight threshold
 // technique of HyperNEAT to determine whether to express link between two nodes or not. With LEO the link expressed based
 // on value of additional output of the CPPN (if > 0 then expressed)
-func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphBuilder SubstrateGraphBuilder,
-	context *hyperneat.Options) (network.Solver, error) {
+func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphBuilder SubstrateGraphBuilder, options *hyperneat.Options) (network.Solver, error) {
 	// check conditions
 	if s.Layout.BiasCount() > 1 {
 		return nil, errors.New("SUBSTRATE: maximum one BIAS node per network supported")
@@ -102,10 +101,10 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 				return nil, err
 			} else if useLeo && outs[1] > 0 {
 				// add links only when CPPN LEO output signals to
-				link = createLink(outs[0], bi, hi, context.WeightRange)
-			} else if !useLeo && math.Abs(outs[0]) > context.LinkThreshold {
+				link = createLink(outs[0], bi, hi, options.WeightRange)
+			} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
 				// add only connections with signal exceeding provided threshold
-				link = createThresholdNormalizedLink(outs[0], bi, hi, context.LinkThreshold, context.WeightRange)
+				link = createThresholdNormalizedLink(outs[0], bi, hi, options.LinkThreshold, options.WeightRange)
 			}
 			if link != nil {
 				biasList[hi] = link.Weight
@@ -136,10 +135,10 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 				return nil, err
 			} else if useLeo && outs[1] > 0 {
 				// add links only when CPPN LEO output signals to
-				link = createLink(outs[0], bi, oi, context.WeightRange)
-			} else if !useLeo && math.Abs(outs[0]) > context.LinkThreshold {
+				link = createLink(outs[0], bi, oi, options.WeightRange)
+			} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
 				// add only connections with signal exceeding provided threshold
-				link = createThresholdNormalizedLink(outs[0], bi, oi, context.LinkThreshold, context.WeightRange)
+				link = createThresholdNormalizedLink(outs[0], bi, oi, options.LinkThreshold, options.WeightRange)
 			}
 			if link != nil {
 				biasList[oi] = link.Weight
@@ -180,10 +179,10 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 					return nil, err
 				} else if useLeo && outs[1] > 0 {
 					// add links only when CPPN LEO output signals to
-					link = createLink(outs[0], in, hi, context.WeightRange)
-				} else if !useLeo && math.Abs(outs[0]) > context.LinkThreshold {
+					link = createLink(outs[0], in, hi, options.WeightRange)
+				} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
 					// add only connections with signal exceeding provided threshold
-					link = createThresholdNormalizedLink(outs[0], in, hi, context.LinkThreshold, context.WeightRange)
+					link = createThresholdNormalizedLink(outs[0], in, hi, options.LinkThreshold, options.WeightRange)
 
 				}
 				if link != nil {
@@ -218,10 +217,10 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 					return nil, err
 				} else if useLeo && outs[1] > 0 {
 					// add links only when CPPN LEO output signals to
-					link = createLink(outs[0], hi, oi, context.WeightRange)
-				} else if !useLeo && math.Abs(outs[0]) > context.LinkThreshold {
+					link = createLink(outs[0], hi, oi, options.WeightRange)
+				} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
 					// add only connections with signal exceeding provided threshold
-					link = createThresholdNormalizedLink(outs[0], hi, oi, context.LinkThreshold, context.WeightRange)
+					link = createThresholdNormalizedLink(outs[0], hi, oi, options.LinkThreshold, options.WeightRange)
 				}
 				if link != nil {
 					connections = append(connections, link)
@@ -261,10 +260,10 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 					return nil, err
 				} else if useLeo && outs[1] > 0 {
 					// add links only when CPPN LEO output signals to
-					link = createLink(outs[0], in, oi, context.WeightRange)
-				} else if !useLeo && math.Abs(outs[0]) > context.LinkThreshold {
+					link = createLink(outs[0], in, oi, options.WeightRange)
+				} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
 					// add only connections with signal exceeding provided threshold
-					link = createThresholdNormalizedLink(outs[0], in, oi, context.LinkThreshold, context.WeightRange)
+					link = createThresholdNormalizedLink(outs[0], in, oi, options.LinkThreshold, options.WeightRange)
 				}
 				if link != nil {
 					connections = append(connections, link)

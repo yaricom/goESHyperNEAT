@@ -84,18 +84,18 @@ func nodeVariance(node *QuadNode) float64 {
 
 	cppnValues := nodeCPPNValues(node)
 	// calculate median and variance
-	m, v := 0.0, 0.0
-	for _, f := range cppnValues {
-		m += f
+	meanW, variance := 0.0, 0.0
+	for _, w := range cppnValues {
+		meanW += w
 	}
-	m /= float64(len(cppnValues))
+	meanW /= float64(len(cppnValues))
 
-	for _, f := range cppnValues {
-		v += math.Pow(f-m, 2)
+	for _, w := range cppnValues {
+		variance += math.Pow(w-meanW, 2)
 	}
-	v /= float64(len(cppnValues))
+	variance /= float64(len(cppnValues))
 
-	return v
+	return variance
 }
 
 // Collects the CPPN values stored in a given quadtree node

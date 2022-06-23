@@ -38,8 +38,7 @@ func NewEvolvableSubstrate(layout EvolvableSubstrateLayout, nodesActivation neat
 // CreateNetworkSolver Creates network solver based on current substrate layout and provided Compositional Pattern Producing Network which
 // used to define connections between network nodes. Optional graph_builder can be provided to collect graph nodes and edges
 // of created network solver. With graph builder it is possible to save/load network configuration as well as visualize it.
-func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuilder SubstrateGraphBuilder,
-	context *eshyperneat.Options) (network.Solver, error) {
+func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuilder SubstrateGraphBuilder, context *eshyperneat.Options) (network.Solver, error) {
 	es.cppn = cppn
 
 	// the network layers will be collected in order: bias, input, output, hidden
@@ -225,8 +224,7 @@ func (es *EvolvableSubstrate) addHiddenNode(qp *QuadPoint, firstHidden int, grap
 // Divides and initialize the quadtree from provided coordinates of source (outgoing = true) or target node (outgoing = false) at (a, b).
 // Returns quadtree, in which each quadnode at (x,y) stores CPPN activation level for its position. The initialized
 // quadtree is used in the PruningAndExtraction phase to generate the actual ANN connections.
-func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool,
-	context *eshyperneat.Options) (root *QuadNode, err error) {
+func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool, options *eshyperneat.Options) (root *QuadNode, err error) {
 	root = NewQuadNode(0.0, 0.0, 1.0, 1)
 
 	queue := list.New()
@@ -260,7 +258,7 @@ func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool,
 		}
 
 		// Divide until initial resolution or if variance is still high
-		if p.Level < context.InitialDepth || (p.Level < context.MaximalDepth && nodeVariance(p) > context.DivisionThreshold) {
+		if p.Level < options.InitialDepth || (p.Level < options.MaximalDepth && nodeVariance(p) > options.DivisionThreshold) {
 			for _, c := range p.Nodes {
 				queue.PushBack(c)
 			}
@@ -274,7 +272,7 @@ func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool,
 // Receive coordinates of source (outgoing = true) or target node (outgoing = false) at (a, b) and initialized quadtree node.
 // Adds the connections that are in bands of the two-dimensional cross-section of the  hypercube containing the source
 // or target node to the connections list and return modified list.
-func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections []*QuadPoint, node *QuadNode, outgoing bool, context *eshyperneat.Options) ([]*QuadPoint, error) {
+func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections []*QuadPoint, node *QuadNode, outgoing bool, options *eshyperneat.Options) ([]*QuadPoint, error) {
 	// fast check
 	if len(node.Nodes) == 0 {
 		return connections, nil
@@ -283,11 +281,11 @@ func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections []*QuadP
 	// Traverse quadtree depth-first until the current node’s variance is smaller than the variance threshold or
 	// until the node has no children (which means that the variance is zero).
 	left, right, top, bottom := 0.0, 0.0, 0.0, 0.0
-	for _, c := range node.Nodes {
-		childVariance := nodeVariance(c)
+	for _, quadNode := range node.Nodes {
+		childVariance := nodeVariance(quadNode)
 
-		if childVariance >= context.VarianceThreshold {
-			if conn, err := es.pruneAndExpress(a, b, connections, c, outgoing, context); err != nil {
+		if childVariance >= options.VarianceThreshold {
+			if conn, err := es.pruneAndExpress(a, b, connections, quadNode, outgoing, options); err != nil {
 				return nil, err
 			} else {
 				connections = append(connections, conn...)
@@ -295,56 +293,56 @@ func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections []*QuadP
 		} else {
 			// Determine if point is in a band by checking neighbor CPPN values
 			if outgoing {
-				if l, err := es.queryCPPN(a, b, c.X-node.Width, c.Y); err != nil {
+				if l, err := es.queryCPPN(a, b, quadNode.X-node.Width, quadNode.Y); err != nil {
 					return nil, err
 				} else {
-					left = math.Abs(c.W - l)
+					left = math.Abs(quadNode.W - l)
 				}
-				if r, err := es.queryCPPN(a, b, c.X+node.Width, c.Y); err != nil {
+				if r, err := es.queryCPPN(a, b, quadNode.X+node.Width, quadNode.Y); err != nil {
 					return nil, err
 				} else {
-					right = math.Abs(c.W - r)
+					right = math.Abs(quadNode.W - r)
 				}
-				if t, err := es.queryCPPN(a, b, c.X, c.Y-node.Width); err != nil {
+				if t, err := es.queryCPPN(a, b, quadNode.X, quadNode.Y-node.Width); err != nil {
 					return nil, err
 				} else {
-					top = math.Abs(c.W - t)
+					top = math.Abs(quadNode.W - t)
 				}
-				if b, err := es.queryCPPN(a, b, c.X, c.Y+node.Width); err != nil {
+				if b, err := es.queryCPPN(a, b, quadNode.X, quadNode.Y+node.Width); err != nil {
 					return nil, err
 				} else {
-					bottom = math.Abs(c.W - b)
+					bottom = math.Abs(quadNode.W - b)
 				}
 			} else {
-				if l, err := es.queryCPPN(c.X-node.Width, c.Y, a, b); err != nil {
+				if l, err := es.queryCPPN(quadNode.X-node.Width, quadNode.Y, a, b); err != nil {
 					return nil, err
 				} else {
-					left = math.Abs(c.W - l)
+					left = math.Abs(quadNode.W - l)
 				}
-				if r, err := es.queryCPPN(c.X+node.Width, c.Y, a, b); err != nil {
+				if r, err := es.queryCPPN(quadNode.X+node.Width, quadNode.Y, a, b); err != nil {
 					return nil, err
 				} else {
-					right = math.Abs(c.W - r)
+					right = math.Abs(quadNode.W - r)
 				}
-				if t, err := es.queryCPPN(c.X, c.Y-node.Width, a, b); err != nil {
+				if t, err := es.queryCPPN(quadNode.X, quadNode.Y-node.Width, a, b); err != nil {
 					return nil, err
 				} else {
-					top = math.Abs(c.W - t)
+					top = math.Abs(quadNode.W - t)
 				}
-				if b, err := es.queryCPPN(c.X, c.Y+node.Width, a, b); err != nil {
+				if b, err := es.queryCPPN(quadNode.X, quadNode.Y+node.Width, a, b); err != nil {
 					return nil, err
 				} else {
-					bottom = math.Abs(c.W - b)
+					bottom = math.Abs(quadNode.W - b)
 				}
 			}
 
-			if math.Max(math.Min(top, bottom), math.Min(left, right)) > context.BandingThreshold {
+			if math.Max(math.Min(top, bottom), math.Min(left, right)) > options.BandingThreshold {
 				// Create new connection specified by QuadPoint(x1,y1,x2,y2,weight) in 4D hypercube
 				var conn *QuadPoint
 				if outgoing {
-					conn = NewQuadPoint(a, b, c.X, c.Y, c.W)
+					conn = NewQuadPoint(a, b, quadNode.X, quadNode.Y, quadNode.W)
 				} else {
-					conn = NewQuadPoint(c.X, c.Y, a, b, c.W)
+					conn = NewQuadPoint(quadNode.X, quadNode.Y, a, b, quadNode.W)
 				}
 
 				connections = append(connections, conn)
