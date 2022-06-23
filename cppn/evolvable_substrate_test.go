@@ -59,7 +59,7 @@ func TestEvolvableSubstrate_CreateNetworkSolver_LEO(t *testing.T) {
 
 	totalNodeCount := inputCount + outputCount + layout.HiddenCount()
 	assert.Equal(t, totalNodeCount, solver.NodeCount(), "wrong total node count")
-	assert.Equal(t, 8, solver.LinkCount(), "wrong link number")
+	assert.Equal(t, 19, solver.LinkCount(), "wrong link number")
 
 	// check outputs
 	outExpected := []float64{0.5, 0.5}
