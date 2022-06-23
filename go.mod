@@ -6,7 +6,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.1
 	github.com/yaricom/goGraphML v1.1.0
-	github.com/yaricom/goNEAT/v3 v3.0.1
+	github.com/yaricom/goNEAT/v3 v3.0.3
 	gopkg.in/yaml.v3 v3.0.1
 )
 
