@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
 	"github.com/yaricom/goESHyperNEAT/v2/examples/retina"
-	"github.com/yaricom/goNEAT/v3/experiment"
-	"github.com/yaricom/goNEAT/v3/neat"
-	"github.com/yaricom/goNEAT/v3/neat/genetics"
+	"github.com/yaricom/goNEAT/v4/experiment"
+	"github.com/yaricom/goNEAT/v4/neat"
+	"github.com/yaricom/goNEAT/v4/neat/genetics"
 	"log"
 	"math/rand"
 	"os"
@@ -29,13 +29,16 @@ func main() {
 
 	var logLevel = flag.String("log-level", "", "The logger level to be used. Overrides the one set in configuration.")
 	var trialsCount = flag.Int("trials", 0, "The number of trials for experiment. Overrides the one set in configuration.")
+	var seed = flag.Int64("seed", -1, "The seed for the random number generator [-1 to use current Unix timestamp].")
 
 	flag.Parse()
 
 	// Seed the random-number generator with current time so that
 	// the numbers will be different every time we run.
-	seed := time.Now().Unix()
-	rand.Seed(seed)
+	if *seed < 0 {
+		*seed = time.Now().UnixNano()
+	}
+	rand.Seed(*seed)
 
 	// Load context configuration
 	neatOptions, err := neat.ReadNeatOptionsFromFile(*contextPath)
@@ -87,7 +90,7 @@ func main() {
 	exp := experiment.Experiment{
 		Id:       0,
 		Trials:   make(experiment.Trials, neatOptions.NumRuns),
-		RandSeed: seed,
+		RandSeed: *seed,
 	}
 	var generationEvaluator experiment.GenerationEvaluator
 	var trialObserver experiment.TrialRunObserver

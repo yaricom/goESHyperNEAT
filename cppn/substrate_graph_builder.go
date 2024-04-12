@@ -3,8 +3,8 @@ package cppn
 import (
 	"errors"
 	"github.com/yaricom/goGraphML/graphml"
-	"github.com/yaricom/goNEAT/v3/neat/math"
-	"github.com/yaricom/goNEAT/v3/neat/network"
+	"github.com/yaricom/goNEAT/v4/neat/math"
+	"github.com/yaricom/goNEAT/v4/neat/network"
 	"io"
 )
 

@@ -3,7 +3,7 @@ package hyperneat
 
 import (
 	"github.com/pkg/errors"
-	"github.com/yaricom/goNEAT/v3/neat/math"
+	"github.com/yaricom/goNEAT/v4/neat/math"
 	"gopkg.in/yaml.v3"
 	"io"
 	"io/ioutil"

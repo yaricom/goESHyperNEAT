@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/yaricom/goESHyperNEAT/v2/hyperneat"
-	neatmath "github.com/yaricom/goNEAT/v3/neat/math"
-	"github.com/yaricom/goNEAT/v3/neat/network"
+	neatmath "github.com/yaricom/goNEAT/v4/neat/math"
+	"github.com/yaricom/goNEAT/v4/neat/network"
 	"math"
 )
 

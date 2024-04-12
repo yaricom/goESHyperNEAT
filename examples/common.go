@@ -1,6 +1,6 @@
 package examples
 
-import "github.com/yaricom/goNEAT/v3/neat"
+import "github.com/yaricom/goNEAT/v4/neat"
 
 const (
 	compatibilityThresholdStep     = 0.1

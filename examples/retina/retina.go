@@ -8,11 +8,11 @@ import (
 	"github.com/yaricom/goESHyperNEAT/v2/cppn"
 	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
 	"github.com/yaricom/goESHyperNEAT/v2/examples"
-	"github.com/yaricom/goNEAT/v3/experiment"
-	"github.com/yaricom/goNEAT/v3/experiment/utils"
-	"github.com/yaricom/goNEAT/v3/neat"
-	"github.com/yaricom/goNEAT/v3/neat/genetics"
-	"github.com/yaricom/goNEAT/v3/neat/network"
+	"github.com/yaricom/goNEAT/v4/experiment"
+	"github.com/yaricom/goNEAT/v4/experiment/utils"
+	"github.com/yaricom/goNEAT/v4/neat"
+	"github.com/yaricom/goNEAT/v4/neat/genetics"
+	"github.com/yaricom/goNEAT/v4/neat/network"
 	"math"
 	"os"
 )
@@ -89,8 +89,13 @@ func (e *generationEvaluator) GenerationEvaluate(ctx context.Context, population
 
 		if organism.Fitness > maxPopulationFitness {
 			maxPopulationFitness = organism.Fitness
-			bestLinkCount = organism.Phenotype.LinkCount()
-			bestNodeCount = organism.Phenotype.NodeCount()
+			if phenotype, err := organism.Phenotype(); err == nil {
+				bestLinkCount = phenotype.LinkCount()
+				bestNodeCount = phenotype.NodeCount()
+			} else {
+				neat.ErrorLog(fmt.Sprintf("Failed to get organism Phenotype, reason: %s", err))
+				return err
+			}
 			bestSubstrateSolver = solver
 		}
 
@@ -102,7 +107,7 @@ func (e *generationEvaluator) GenerationEvaluate(ctx context.Context, population
 			epoch.Champion = organism
 			if epoch.WinnerNodes == 9 {
 				// You could dump out optimal genomes here if desired
-				if optPath, err := utils.WriteGenomePlain("xor_optimal", e.outDir, organism, epoch); err != nil {
+				if optPath, err := utils.WriteGenomePlain("retina_optimal", e.outDir, organism, epoch); err != nil {
 					neat.ErrorLog(fmt.Sprintf("Failed to dump optimal genome, reason: %s\n", err))
 				} else {
 					neat.InfoLog(fmt.Sprintf("Dumped optimal genome to: %s\n", optPath))
@@ -125,9 +130,7 @@ func (e *generationEvaluator) GenerationEvaluate(ctx context.Context, population
 	if epoch.Solved {
 		// print winner organism
 		org := epoch.Champion
-		if depth, err := org.Phenotype.MaxActivationDepthFast(0); err == nil {
-			neat.InfoLog(fmt.Sprintf("Activation depth of the winner: %d\n", depth))
-		}
+		utils.PrintActivationDepth(org, true)
 
 		genomeFile := "retina_cppn_winner"
 		// Prints the winner organism's Genome to the file!
@@ -157,17 +160,21 @@ func (e *generationEvaluator) GenerationEvaluate(ctx context.Context, population
 		// adjust species count by keeping it constant
 		examples.AdjustSpeciesNumber(speciesCount, epoch.Id, e.compatAdjustFreq, e.numSpeciesTarget, options)
 
+		bestSolverLinks, bestSolverNodes := -1, -1
+		if bestSubstrateSolver != nil {
+			bestSolverLinks, bestSolverNodes = bestSubstrateSolver.LinkCount(), bestSubstrateSolver.NodeCount()
+		}
+
 		neat.InfoLog(
 			fmt.Sprintf("%d species -> %d organisms [compatibility threshold: %.1f, target: %d]\nbest CPNN organism [fitness: %.2f, links: %d, nodes: %d], best solver [links: %d, nodes: %d]",
 				speciesCount, len(population.Organisms), options.CompatThreshold, e.numSpeciesTarget,
-				maxPopulationFitness, bestLinkCount, bestNodeCount,
-				bestSubstrateSolver.LinkCount(), bestSubstrateSolver.NodeCount()))
+				maxPopulationFitness, bestLinkCount, bestNodeCount, bestSolverLinks, bestSolverNodes))
 	}
 	return nil
 }
 
-// organismEvaluate evaluates an individual phenotype network with retina experiment and returns true if its won
-func (e generationEvaluator) organismEvaluate(ctx context.Context, organism *genetics.Organism) (bool, network.Solver, error) {
+// organismEvaluate evaluates an individual phenotype network with retina experiment and returns true if it's a winner
+func (e *generationEvaluator) organismEvaluate(ctx context.Context, organism *genetics.Organism) (bool, network.Solver, error) {
 	options, ok := eshyperneat.FromContext(ctx)
 	if !ok {
 		return false, nil, eshyperneat.ErrESHyperNEATOptionsNotFound
@@ -177,7 +184,10 @@ func (e generationEvaluator) organismEvaluate(ctx context.Context, organism *gen
 	//if err != nil {
 	//	return false, err
 	//}
-	cppnSolver := organism.Phenotype
+	cppnSolver, err := organism.Phenotype()
+	if err != nil {
+		return false, nil, err
+	}
 
 	// create substrate layout
 	inputCount := e.env.inputSize * 2 // left + right pixels of visual object
@@ -190,7 +200,7 @@ func (e generationEvaluator) organismEvaluate(ctx context.Context, organism *gen
 	graph := cppn.NewSubstrateGraphMLBuilder("retina ES-HyperNEAT", false)
 	solver, err := substr.CreateNetworkSolver(cppnSolver, e.useLeo, graph, options)
 	if err != nil {
-		return false, nil, err
+		return false, nil, errors.Wrap(err, fmt.Sprintf("failed to evaluate organism: %s", organism))
 	}
 
 	// Evaluate the detector ANN against 256 combinations of the left and the right visual objects

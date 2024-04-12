@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
-	neatmath "github.com/yaricom/goNEAT/v3/neat/math"
-	"github.com/yaricom/goNEAT/v3/neat/network"
+	neatmath "github.com/yaricom/goNEAT/v4/neat/math"
+	"github.com/yaricom/goNEAT/v4/neat/network"
 	"math"
 )
 
@@ -217,9 +217,9 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, useLeo bo
 	}
 
 	// create fast network solver
-	if totalNeuronCount == 0 || len(links) == 0 || len(activations) != totalNeuronCount {
-		message := fmt.Sprintf("failed to create network solver: links [%d], nodes [%d], activations [%d]",
-			len(links), totalNeuronCount, len(activations))
+	if totalNeuronCount == 0 || (!useLeo && len(links) == 0) || len(activations) != totalNeuronCount {
+		message := fmt.Sprintf("failed to create network solver: links [%d], nodes [%d], activations [%d], LEO [%t]",
+			len(links), totalNeuronCount, len(activations), useLeo)
 		return nil, errors.New(message)
 	}
 	solver := network.NewFastModularNetworkSolver(
