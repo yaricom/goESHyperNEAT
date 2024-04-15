@@ -257,10 +257,10 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 func fastNetworkLink(coordinates []float64, cppn network.Solver, useLeo bool, source, target int, options *hyperneat.Options) (*network.FastNetworkLink, error) {
 	if outs, err := queryCPPN(coordinates, cppn); err != nil {
 		return nil, err
-	} else if useLeo && outs[1] > 0 {
+	} else if useLeo && outs[1] >= options.LeoThreshold {
 		// add links only when CPPN LEO output signals to
 		return createLink(outs[0], source, target, options.WeightRange), nil
-	} else if !useLeo && math.Abs(outs[0]) > options.LinkThreshold {
+	} else if !useLeo && math.Abs(outs[0]) >= options.LinkThreshold {
 		// add only links with signal exceeding provided threshold
 		return createThresholdNormalizedLink(outs[0], source, target, options.LinkThreshold, options.WeightRange), nil
 	}
