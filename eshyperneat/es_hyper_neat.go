@@ -33,6 +33,11 @@ type Options struct {
 	// The bigger this value the fewer connections/hidden nodes will be added, i.e. wide bands approximation.
 	BandingThreshold float64 `yaml:"banding_threshold"`
 
+	// Quadtree Dimensions
+	// The range of the tree. Typically set to 2.0
+	Width  float64 `yaml:"width"`
+	Height float64 `yaml:"height"`
+
 	// ESIterations defines how many times ES-HyperNEAT should iteratively discover new hidden nodes.
 	ESIterations int `yaml:"es_iterations"`
 }

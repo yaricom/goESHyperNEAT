@@ -22,6 +22,9 @@ type Options struct {
 	// from -WeightRange to +WeightRange, and can be any integer
 	WeightRange float64 `yaml:"weight_range"`
 
+	// LeoThreshold Threshold above which a connection is expressed if Link Expression Output (LEO) enabled
+	LeoThreshold float64 `yaml:"leo_threshold"`
+
 	// The substrate activation function
 	SubstrateActivator SubstrateActivatorType `yaml:"substrate_activator"`
 	// The BIAS value for CPPN network

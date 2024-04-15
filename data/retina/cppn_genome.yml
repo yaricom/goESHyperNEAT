@@ -21,11 +21,11 @@ genome:
     - { id: 4,  trait_id: 0, type: INPT, activation: LinearActivation } # x2
     - { id: 5,  trait_id: 0, type: INPT, activation: LinearActivation } # y2
     # The output nodes - actuators
-    - { id: 6,  trait_id: 0, type: OUTP, activation: TanhActivation }
+    - { id: 6,  trait_id: 0, type: OUTP, activation: LinearActivation }
     - { id: 7,  trait_id: 0, type: OUTP, activation: StepActivation }  # LEO
     # The hidden node
-    - { id: 8,  trait_id: 0, type: HIDN, activation: GaussianBipolarActivation } # G1
-    - { id: 9,  trait_id: 0, type: HIDN, activation: GaussianBipolarActivation } # G2
+    - { id: 8,  trait_id: 0, type: HIDN, activation: SigmoidSteepenedActivation } # G1
+    - { id: 9,  trait_id: 0, type: HIDN, activation: SigmoidSteepenedActivation } # G2
 
   # The genes - connection between neuron nodes within this genome
   genes:

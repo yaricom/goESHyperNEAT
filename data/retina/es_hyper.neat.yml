@@ -18,7 +18,7 @@ excess_coeff:  1.0
 mutdiff_coeff:  0.4
 
 # This global tells compatibility threshold under which two Genomes are considered the same species
-compat_threshold:  3.0
+compat_threshold:  6.0
 # How much does age matter? Gives a fitness boost up to some young age (niche). If it is 1, then young species get no fitness boost.
 age_significance:  1.2
 # Percent of average fitness for survival, how many get to reproduce based on survival_thresh * pop_size
@@ -39,9 +39,9 @@ mutate_toggle_enable_prob:  0.02
 # Probability of finding the first disabled gene and re-enabling it
 mutate_gene_reenable_prob:  0.0
 # Probability of adding new node
-mutate_add_node_prob:  0.03
+mutate_add_node_prob:  0.1
 # Probability of adding new link between nodes
-mutate_add_link_prob:  0.03
+mutate_add_link_prob:  0.5
 # Probability of making connections from disconnected sensors (input, bias type neurons)
 mutate_connect_sensors: 0.5
 
@@ -79,7 +79,7 @@ print_every:  10
 # The number of runs to average over in an experiment
 num_runs:  1
 # The number of epochs (generations) to execute training
-num_generations: 1500
+num_generations: 100 #1500
 
 # The epoch's executor type to apply [sequential, parallel]
 epoch_executor: sequential
@@ -92,18 +92,21 @@ log_level: info
 
 # The nodes activation functions list to choose from (activation function -> it's selection probability)
 node_activators:
-  - GaussianBipolarActivation 0.4
-  - SineActivation 0.3
-  - LinearAbsActivation 0.3
+  - SigmoidSteepenedActivation 1.0
+  - SineActivation 1.0
+  - LinearAbsActivation 1.0
+  - GaussianBipolarActivation 1.0
 
 ########################################
 # The HyperNEAT specific configuration #
 ########################################
 # The threshold value to indicate which links should be included
-link_threshold: 0.2
+link_threshold: 0.1
+# Threshold above which a connection is expressed if Link Expression Output (LEO) enabled
+leo_threshold: 0.5
 
 # The weight range defines the minimum and maximum values for weights on substrate connections
-weight_range: 3
+weight_range: 1
 
 # The substrate activation function, determines which activation function each node in the substrate will have.
 substrate_activator: SigmoidPlainActivation
@@ -115,16 +118,21 @@ cppn_bias: 0.33
 # The ES-HyperNEAT specific configuration #
 ###########################################
 # InitialDepth defines the initial ES-HyperNEAT sample resolution.
-initial_depth: 2
+initial_depth: 1
 # Maximal ES-HyperNEAT sample resolution if the variance is still higher than the given division threshold
 maximal_depth: 3
 
 # DivisionThreshold defines the substrate division threshold.
-division_threshold: 0.3
+division_threshold: 0.5
 # VarianceThreshold defines the variance threshold for the initial sampling.
-variance_threshold: 0.03
+variance_threshold: 0.1
 # BandingThreshold defines the threshold that determines when points are regarded to be in a band.
-banding_threshold: 0.2
+banding_threshold: 0.5
+
+# Quadtree Dimensions
+# The range of the tree. Typically set to 2.0
+width: 2.0
+height: 2.0
 
 # ESIterations defines how many times ES-HyperNEAT should iteratively discover new hidden nodes.
 es_iterations: 1
