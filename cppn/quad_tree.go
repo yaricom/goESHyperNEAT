@@ -4,7 +4,7 @@ import "fmt"
 
 // PointF Defines point with float precision coordinates
 type PointF struct {
-	X, Y float64
+	X, Y, Z float64
 }
 
 func NewPointF(x, y float64) *PointF {
@@ -18,20 +18,18 @@ func (p *PointF) String() string {
 // QuadPoint Defines the quad-point in the 4 dimensional hypercube
 type QuadPoint struct {
 	// The associated coordinates
-	X1, X2, Y1, Y2 float64
-	// The CPPN outputs for this point
-	CppnOut []float64
-}
-
-func (q *QuadPoint) Weight() float64 {
-	return q.CppnOut[0]
+	X1, X2, Y1, Y2, Z1, Z2 float64
+	// Weight
+	Weight float64
+	// Leo
+	Leo float64
 }
 
 func (q *QuadPoint) String() string {
-	str := fmt.Sprintf("((%f, %f),(%f, %f)) = %f", q.X1, q.Y1, q.X2, q.Y2, q.Weight())
-	if len(q.CppnOut) > 1 {
+	str := fmt.Sprintf("((%f, %f),(%f, %f)) = %f", q.X1, q.Y1, q.X2, q.Y2, q.Weight)
+	if q.Leo >= 0 {
 		var status string
-		if q.CppnOut[1] > 0 {
+		if q.Leo > 0 {
 			status = "enabled"
 		} else {
 			status = "disabled"
@@ -43,17 +41,17 @@ func (q *QuadPoint) String() string {
 
 // NewQuadPoint Creates new quad point
 func NewQuadPoint(x1, y1, x2, y2 float64, node *QuadNode) *QuadPoint {
-	outs := make([]float64, len(node.CppnOut))
-	copy(outs, node.CppnOut)
-	return &QuadPoint{X1: x1, Y1: y1, X2: x2, Y2: y2, CppnOut: outs}
+	return &QuadPoint{X1: x1, Y1: y1, X2: x2, Y2: y2, Weight: node.Weight(), Leo: node.Leo()}
 }
 
 // QuadNode Defines quad-tree node to model 4 dimensional hypercube
 type QuadNode struct {
 	// The coordinates of center of this quad-tree node's square
-	X, Y float64
+	X, Y, Z float64
 	// The width of this quad-tree node's square
 	Width float64
+	// The height of this quad-tree node's square
+	Height float64
 
 	// The CPPN outputs for this node
 	CppnOut []float64
@@ -68,16 +66,42 @@ func (q *QuadNode) Weight() float64 {
 	return q.CppnOut[0]
 }
 
+func (q *QuadNode) Leo() float64 {
+	if len(q.CppnOut) > 1 {
+		return q.CppnOut[1]
+	}
+	return -1.0
+}
+
+func (q *QuadNode) HasLeo() bool {
+	return len(q.CppnOut) > 1
+}
+
 func (q *QuadNode) String() string {
-	return fmt.Sprintf("((%f, %f), %f) = %f at %d", q.X, q.Y, q.Width, q.CppnOut, q.Level)
+	return fmt.Sprintf("((%f, %f), %f x %f) = %f at %d", q.X, q.Y, q.Width, q.Height, q.CppnOut, q.Level)
 }
 
 // NewQuadNode Creates new quad-node with given parameters
-func NewQuadNode(x, y, width float64, level int) *QuadNode {
+func NewQuadNode(x, y, width, height float64, level int) *QuadNode {
 	node := QuadNode{
 		X:       x,
 		Y:       y,
 		Width:   width,
+		Height:  height,
+		CppnOut: []float64{0.0},
+		Level:   level,
+	}
+	return &node
+}
+
+// NewQuadNodeZ Creates new quad-node with given parameters with Z coordinate value
+func NewQuadNodeZ(x, y, z, width, height float64, level int) *QuadNode {
+	node := QuadNode{
+		X:       x,
+		Y:       y,
+		Z:       z,
+		Width:   width,
+		Height:  height,
 		CppnOut: []float64{0.0},
 		Level:   level,
 	}
