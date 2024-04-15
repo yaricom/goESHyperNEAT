@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/yaricom/goNEAT/v4/neat/genetics"
 	"github.com/yaricom/goNEAT/v4/neat/network"
+	"gonum.org/v1/gonum/stat"
 	"math"
 )
 
@@ -79,20 +80,9 @@ func nodeVariance(node *QuadNode) float64 {
 		return 0.0
 	}
 
-	cppnValues := nodeCPPNValues(node)
-	// calculate median and variance
-	meanW, variance := 0.0, 0.0
-	for _, w := range cppnValues {
-		meanW += w
-	}
-	meanW /= float64(len(cppnValues))
-
-	for _, w := range cppnValues {
-		variance += math.Pow(w-meanW, 2)
-	}
-	variance /= float64(len(cppnValues))
-
-	return variance
+	// node always has four child nodes if any
+	cppnValues := []float64{node.Nodes[0].Weight(), node.Nodes[1].Weight(), node.Nodes[2].Weight(), node.Nodes[3].Weight()}
+	return stat.Variance(cppnValues, nil)
 }
 
 // Collects the CPPN values stored in a given quadtree node
