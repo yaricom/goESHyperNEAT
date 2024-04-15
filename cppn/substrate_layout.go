@@ -90,8 +90,6 @@ func (g *GridSubstrateLayout) NodePosition(index int, nType network.NodeNeuronTy
 
 	if index >= count {
 		return nil, errors.New("neuron index is out of range")
-	} else if nType == network.BiasNeuron {
-		return &point, nil
 	}
 	// calculate X position
 	point.X = -1.0 + delta/2.0 // the initial position with half delta shift
