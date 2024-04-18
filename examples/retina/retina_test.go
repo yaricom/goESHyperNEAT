@@ -10,8 +10,8 @@ func Test_evaluatePredictions(t *testing.T) {
 	sumLoss := 0.0
 	for _, leftObj := range dataset {
 		for _, rightObj := range dataset {
-			sumLoss += evaluatePredictions([]float64{0, 0, 0, 0}, leftObj, rightObj)
+			sumLoss += evaluatePredictions([]float64{0, 0}, leftObj, rightObj)
 		}
 	}
-	assert.Equal(t, 416.0, sumLoss)
+	assert.Equal(t, 208.0, sumLoss)
 }

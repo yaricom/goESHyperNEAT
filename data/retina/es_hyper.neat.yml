@@ -101,9 +101,10 @@ node_activators:
 # The HyperNEAT specific configuration #
 ########################################
 # The threshold value to indicate which links should be included
-link_threshold: 0.1
-# Threshold above which a connection is expressed if Link Expression Output (LEO) enabled
-leo_threshold: 0.5
+link_threshold: 0.0
+
+# Indicates whether Link Expression Output (LEO) enabled
+leo_enabled: false
 
 # The weight range defines the minimum and maximum values for weights on substrate connections
 weight_range: 1
@@ -118,21 +119,21 @@ cppn_bias: 0.33
 # The ES-HyperNEAT specific configuration #
 ###########################################
 # InitialDepth defines the initial ES-HyperNEAT sample resolution.
-initial_depth: 1
+initial_depth: 2
 # Maximal ES-HyperNEAT sample resolution if the variance is still higher than the given division threshold
 maximal_depth: 3
 
 # DivisionThreshold defines the substrate division threshold.
 division_threshold: 0.5
 # VarianceThreshold defines the variance threshold for the initial sampling.
-variance_threshold: 0.1
+variance_threshold: 0.03
 # BandingThreshold defines the threshold that determines when points are regarded to be in a band.
-banding_threshold: 0.5
+banding_threshold: 0.3
 
 # Quadtree Dimensions
 # The range of the tree. Typically set to 2.0
-width: 2.0
-height: 2.0
+width: 1.0
+height: 1.0
 
 # ESIterations defines how many times ES-HyperNEAT should iteratively discover new hidden nodes.
 es_iterations: 1

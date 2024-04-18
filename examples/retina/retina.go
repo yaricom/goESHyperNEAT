@@ -15,15 +15,16 @@ import (
 	"github.com/yaricom/goNEAT/v4/neat/network"
 	"math"
 	"os"
+	"time"
 )
 
 const (
 	// maxFitness Used as max value which we add error too to get an organism's fitness
-	maxFitness = 1000.0
+	maxFitness = 1.0
 	// fitnessThreshold is the fitness value for which an organism is considered to have won the experiment
 	fitnessThreshold = maxFitness
 
-	debug = false
+	debug = true
 )
 
 type generationEvaluator struct {
@@ -34,20 +35,17 @@ type generationEvaluator struct {
 	numSpeciesTarget int
 	// The species compatibility threshold adjustment frequency
 	compatAdjustFreq int
-	// The flag to indicate if Link Expression Output should be enabled in CPPN
-	useLeo bool
 }
 
 // NewGenerationEvaluator is to create new generation's evaluator for retina experiment.  The numSpeciesTarget specifies the
 // target number of species to maintain in the population. If the number of species differ from the numSpeciesTarget it
 // will be automatically adjusted with compatAdjustFreq frequency, i.e., at each epoch % compatAdjustFreq == 0
-func NewGenerationEvaluator(outDir string, env *Environment, numSpeciesTarget, compatAdjustFreq int, useLeo bool) (experiment.GenerationEvaluator, experiment.TrialRunObserver) {
+func NewGenerationEvaluator(outDir string, env *Environment, numSpeciesTarget, compatAdjustFreq int) (experiment.GenerationEvaluator, experiment.TrialRunObserver) {
 	evaluator := &generationEvaluator{
 		outDir:           outDir,
 		env:              env,
 		numSpeciesTarget: numSpeciesTarget,
 		compatAdjustFreq: compatAdjustFreq,
-		useLeo:           useLeo,
 	}
 	return evaluator, evaluator
 }
@@ -81,6 +79,7 @@ func (e *generationEvaluator) GenerationEvaluate(ctx context.Context, population
 	)
 	var bestSubstrateSolver network.Solver
 
+	startTime := time.Now()
 	for _, organism := range population.Organisms {
 		isWinner, solver, err := e.organismEvaluate(ctx, organism)
 		if err != nil {
@@ -115,6 +114,7 @@ func (e *generationEvaluator) GenerationEvaluate(ctx context.Context, population
 			}
 		}
 	}
+	elapsedTime := time.Now().Sub(startTime)
 
 	// Fill statistics about current epoch
 	epoch.FillPopulationStatistics(population)
@@ -166,9 +166,9 @@ func (e *generationEvaluator) GenerationEvaluate(ctx context.Context, population
 		}
 
 		neat.InfoLog(
-			fmt.Sprintf("%d species -> %d organisms [compatibility threshold: %.1f, target: %d]\nbest CPNN organism [fitness: %.2f, links: %d, nodes: %d], best solver [links: %d, nodes: %d]",
+			fmt.Sprintf("%d species -> %d organisms [compatibility threshold: %.1f, target: %d]\nbest CPNN organism [fitness: %.2f, links: %d, nodes: %d], best solver [links: %d, nodes: %d], population evaluation time: %v",
 				speciesCount, len(population.Organisms), options.CompatThreshold, e.numSpeciesTarget,
-				maxPopulationFitness, bestLinkCount, bestNodeCount, bestSolverLinks, bestSolverNodes))
+				maxPopulationFitness, bestLinkCount, bestNodeCount, bestSolverLinks, bestSolverNodes, elapsedTime))
 	}
 	return nil
 }
@@ -180,13 +180,9 @@ func (e *generationEvaluator) organismEvaluate(ctx context.Context, organism *ge
 		return false, nil, eshyperneat.ErrESHyperNEATOptionsNotFound
 	}
 	// get CPPN network solver
-	//cppnSolver, err := organism.Phenotype.FastNetworkSolver()
-	//if err != nil {
-	//	return false, err
-	//}
 	cppnSolver, err := organism.Phenotype()
 	if err != nil {
-		return false, nil, err
+		return false, nil, errors.Wrap(err, "failed to create CPPN solver")
 	}
 
 	// create substrate layout
@@ -198,13 +194,16 @@ func (e *generationEvaluator) organismEvaluate(ctx context.Context, organism *ge
 	// create ES-HyperNEAT solver
 	substr := cppn.NewEvolvableSubstrateWithBias(layout, options.SubstrateActivator.SubstrateActivationType, options.CppnBias)
 	graph := cppn.NewSubstrateGraphMLBuilder("retina ES-HyperNEAT", false)
-	solver, err := substr.CreateNetworkSolver(cppnSolver, e.useLeo, graph, options)
+	createSolverTime := time.Now()
+	solver, err := substr.CreateNetworkSolver(cppnSolver, graph, options)
 	if err != nil {
 		return false, nil, errors.Wrap(err, fmt.Sprintf("failed to evaluate organism: %s", organism))
 	}
+	createSolverElapsedTime := time.Now().Sub(createSolverTime)
 
 	// Evaluate the detector ANN against 256 combinations of the left and the right visual objects
 	// at correct and incorrect sides of retina
+	startTime := time.Now()
 	errorSum, count, detectionErrorCount := 0.0, 0.0, 0.0
 	for _, leftObj := range e.env.visualObjects {
 		for _, rightObj := range e.env.visualObjects {
@@ -226,6 +225,7 @@ func (e *generationEvaluator) organismEvaluate(ctx context.Context, organism *ge
 			}
 		}
 	}
+	elapsed := time.Since(startTime)
 
 	// Calculate the fitness score
 	fitness := maxFitness / (1.0 + errorSum)
@@ -246,8 +246,9 @@ func (e *generationEvaluator) organismEvaluate(ctx context.Context, organism *ge
 	if debug {
 		neat.InfoLog(fmt.Sprintf("Average error: %f, errors sum: %f, false detections: %f from: %f",
 			avgError, errorSum, detectionErrorCount, count))
-		neat.InfoLog(fmt.Sprintf("Substrate: #nodes = %d, #edges = %d | CPPN phenotype: #nodes = %d, #edges = %d",
+		neat.InfoLog(fmt.Sprintf("Substrate: nodes = %d, edges = %d | CPPN phenotype: nodes = %d, edges = %d",
 			solver.NodeCount(), solver.LinkCount(), cppnSolver.NodeCount(), cppnSolver.LinkCount()))
+		neat.InfoLog(fmt.Sprintf("Substrate: evaluation time = %v, create solver time = %v", elapsed, createSolverElapsedTime))
 	}
 
 	return isWinner, solver, nil
@@ -312,17 +313,29 @@ func evaluatePredictions(predictions []float64, leftObj VisualObject, rightObj V
 		targets[1] = 0.0
 	}
 
-	// Find loss as a Euclidean distance between outputs and ground truth
-	loss := (normPredictions[0]-targets[0])*(normPredictions[0]-targets[0]) + (normPredictions[1]-targets[1])*(normPredictions[1]-targets[1])
-
-	flag := "match"
-	if loss != 0 {
-		flag = "-"
+	// Find normalized loss
+	normLoss := (normPredictions[0]-targets[0])*(normPredictions[0]-targets[0]) + (normPredictions[1]-targets[1])*(normPredictions[1]-targets[1])
+	if normLoss == 0 {
+		return 0.0
 	}
 
-	neat.DebugLog(fmt.Sprintf("[%.2f, %.2f] -> [%.2f, %.2f] '%s'",
-		targets[0], targets[1], normPredictions[0], normPredictions[1], flag))
+	// find loss
+	loss := histDiff(predictions, targets)
+
+	neat.DebugLog(fmt.Sprintf("[%.2f, %.2f] -> [%.2f, %.2f] loss: %.2f",
+		targets[0], targets[1], normPredictions[0], normPredictions[1], normLoss))
 
 	return loss
 
+}
+
+// calculates item-wise difference between two vectors
+func histDiff(left, right []float64) float64 {
+	size := len(left)
+	diffAccum := 0.0
+	for i := 0; i < size; i++ {
+		diff := left[i] - right[i]
+		diffAccum += math.Abs(diff)
+	}
+	return diffAccum / float64(size)
 }
