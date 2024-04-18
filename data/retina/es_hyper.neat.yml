@@ -109,8 +109,10 @@ leo_enabled: false
 # The weight range defines the minimum and maximum values for weights on substrate connections
 weight_range: 1
 
-# The substrate activation function, determines which activation function each node in the substrate will have.
-substrate_activator: SigmoidPlainActivation
+# The activation function for hidden substrate nodes.
+substrate_activator: SigmoidBipolarActivation
+# The activation function for output substrate nodes.
+output_activator: SigmoidPlainActivation
 
 # The BIAS value of the CPPN network if appropriate [default: 1.0]
 cppn_bias: 0.33

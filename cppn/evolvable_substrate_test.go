@@ -15,7 +15,7 @@ func TestEvolvableSubstrate_CreateNetworkSolver(t *testing.T) {
 	layout, err := NewMappedEvolvableSubstrateLayout(inputCount, outputCount)
 	require.NoError(t, err, "failed to create layout")
 
-	substr := NewEvolvableSubstrate(layout, math.SigmoidSteepenedActivation)
+	substr := NewEvolvableSubstrate(layout, math.SigmoidSteepenedActivation, math.LinearActivation)
 
 	cppn, err := FastSolverFromGenomeFile(cppnHyperNEATTestGenomePath)
 	require.NoError(t, err, "failed to read CPPN")
@@ -34,8 +34,8 @@ func TestEvolvableSubstrate_CreateNetworkSolver(t *testing.T) {
 	assert.Equal(t, 30, solver.LinkCount(), "wrong link number")
 
 	// check outputs
-	outExpected := []float64{0.5, 0.5}
-	checkNetworkSolverOutputs(solver, outExpected, 1e-8, t)
+	outExpected := []float64{0, 0}
+	checkNetworkSolverOutputs(solver, outExpected, 0.0, t)
 }
 
 func TestEvolvableSubstrate_CreateNetworkSolver_LEO(t *testing.T) {
@@ -43,7 +43,7 @@ func TestEvolvableSubstrate_CreateNetworkSolver_LEO(t *testing.T) {
 	layout, err := NewMappedEvolvableSubstrateLayout(inputCount, outputCount)
 	require.NoError(t, err, "failed to create layout")
 
-	substr := NewEvolvableSubstrate(layout, math.SigmoidSteepenedActivation)
+	substr := NewEvolvableSubstrate(layout, math.SigmoidSteepenedActivation, math.LinearActivation)
 
 	cppn, err := FastSolverFromGenomeFile(cppnLeoHyperNEATTestGenomePath)
 	require.NoError(t, err, "failed to read CPPN")
@@ -63,8 +63,8 @@ func TestEvolvableSubstrate_CreateNetworkSolver_LEO(t *testing.T) {
 	assert.Equal(t, 12, solver.LinkCount(), "wrong link number")
 
 	// check outputs
-	outExpected := []float64{0.5, 0.5}
-	checkNetworkSolverOutputs(solver, outExpected, 1e-8, t)
+	outExpected := []float64{0, 0}
+	checkNetworkSolverOutputs(solver, outExpected, 0.0, t)
 }
 
 // Loads ES-HyperNeat options from provided config file's path

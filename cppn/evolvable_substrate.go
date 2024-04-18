@@ -16,10 +16,12 @@ import (
 // by human, but produced during substrate generation from controlling CPPN and nodes locations may be arbitrary that suits
 // the best for the task at hand.
 type EvolvableSubstrate struct {
-	// The layout of neuron nodes in this substrate
+	// Layout The layout of neuron nodes in this substrate
 	Layout EvolvableSubstrateLayout
-	// The activation function's type for neurons encoded
-	NodesActivation neatmath.NodeActivationType
+	// HiddenNodesActivation The activation function type for hidden neurons encoded
+	HiddenNodesActivation neatmath.NodeActivationType
+	// OutputNodesActivation The activation function type for output neurons encoded
+	OutputNodesActivation neatmath.NodeActivationType
 
 	// The CPPN network solver to describe geometry of substrate
 	cppn network.Solver
@@ -28,23 +30,25 @@ type EvolvableSubstrate struct {
 }
 
 // NewEvolvableSubstrate Creates new instance of evolvable substrate
-func NewEvolvableSubstrate(layout EvolvableSubstrateLayout, nodesActivation neatmath.NodeActivationType) *EvolvableSubstrate {
+func NewEvolvableSubstrate(layout EvolvableSubstrateLayout, hiddenNodesActivation, outputNodesActivation neatmath.NodeActivationType) *EvolvableSubstrate {
 	return &EvolvableSubstrate{
-		coords:          make([]float64, 6),
-		Layout:          layout,
-		NodesActivation: nodesActivation,
+		coords:                make([]float64, 6),
+		Layout:                layout,
+		HiddenNodesActivation: hiddenNodesActivation,
+		OutputNodesActivation: outputNodesActivation,
 	}
 }
 
 // NewEvolvableSubstrateWithBias creates new instance of evolvable substrate with defined cppnBias value.
 // The cppnBias will be provided as first value of the CPPN inputs array.
-func NewEvolvableSubstrateWithBias(layout EvolvableSubstrateLayout, nodesActivation neatmath.NodeActivationType, cppnBias float64) *EvolvableSubstrate {
+func NewEvolvableSubstrateWithBias(layout EvolvableSubstrateLayout, hiddenNodesActivation, outputNodesActivation neatmath.NodeActivationType, cppnBias float64) *EvolvableSubstrate {
 	coords := make([]float64, 7)
 	coords[0] = cppnBias
 	return &EvolvableSubstrate{
-		coords:          coords,
-		Layout:          layout,
-		NodesActivation: nodesActivation,
+		coords:                coords,
+		Layout:                layout,
+		HiddenNodesActivation: hiddenNodesActivation,
+		OutputNodesActivation: outputNodesActivation,
 	}
 }
 
@@ -170,7 +174,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuil
 			return nil, err
 		}
 		// add output node to graph
-		if _, err = addNodeToBuilder(graphBuilder, oi, network.OutputNeuron, es.NodesActivation, output); err != nil {
+		if _, err = addNodeToBuilder(graphBuilder, oi, network.OutputNeuron, es.HiddenNodesActivation, output); err != nil {
 			return nil, err
 		}
 
@@ -207,13 +211,15 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuil
 	activations := make([]neatmath.NodeActivationType, totalNeuronCount)
 	for i := 0; i < totalNeuronCount; i++ {
 		if i < firstOutput {
-			// input nodes - NULL activation
-			activations[i] = neatmath.NullActivation
+			// input nodes
+			activations[i] = neatmath.LinearActivation
+		} else if i < firstHidden {
+			// output nodes activations
+			activations[i] = es.OutputNodesActivation
 		} else {
-			// hidden/output nodes - defined activation
-			activations[i] = es.NodesActivation
+			// hidden nodes activation
+			activations[i] = es.HiddenNodesActivation
 		}
-
 	}
 
 	// create fast network solver
@@ -239,7 +245,7 @@ func (es *EvolvableSubstrate) addHiddenNode(qp *QuadPoint, firstHidden int, grap
 
 		targetIndex += firstHidden // adjust index to the global indexes space
 		// add a node to the graph
-		if _, err = addNodeToBuilder(graphBuilder, targetIndex, network.HiddenNeuron, es.NodesActivation, nodePoint); err != nil {
+		if _, err = addNodeToBuilder(graphBuilder, targetIndex, network.HiddenNeuron, es.HiddenNodesActivation, nodePoint); err != nil {
 			return -1, err
 		}
 	} else {

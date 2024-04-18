@@ -20,7 +20,7 @@ import (
 
 const (
 	// maxFitness Used as max value which we add error too to get an organism's fitness
-	maxFitness = 1.0
+	maxFitness = 256.0
 	// fitnessThreshold is the fitness value for which an organism is considered to have won the experiment
 	fitnessThreshold = maxFitness
 
@@ -192,7 +192,8 @@ func (e *generationEvaluator) organismEvaluate(ctx context.Context, organism *ge
 		return false, nil, err
 	}
 	// create ES-HyperNEAT solver
-	substr := cppn.NewEvolvableSubstrateWithBias(layout, options.SubstrateActivator.SubstrateActivationType, options.CppnBias)
+	substr := cppn.NewEvolvableSubstrateWithBias(
+		layout, options.SubstrateActivator.SubstrateActivationType, options.OutputActivator.OutputActivationType, options.CppnBias)
 	graph := cppn.NewSubstrateGraphMLBuilder("retina ES-HyperNEAT", false)
 	createSolverTime := time.Now()
 	solver, err := substr.CreateNetworkSolver(cppnSolver, graph, options)
@@ -244,8 +245,8 @@ func (e *generationEvaluator) organismEvaluate(ctx context.Context, organism *ge
 	organism.Fitness = fitness
 
 	if debug {
-		neat.InfoLog(fmt.Sprintf("Average error: %f, errors sum: %f, false detections: %f from: %f",
-			avgError, errorSum, detectionErrorCount, count))
+		neat.InfoLog(fmt.Sprintf("Average error: %f, errors sum: %f, fitness: %f, false detections: %.0f from: %.0f",
+			avgError, errorSum, fitness, detectionErrorCount, count))
 		neat.InfoLog(fmt.Sprintf("Substrate: nodes = %d, edges = %d | CPPN phenotype: nodes = %d, edges = %d",
 			solver.NodeCount(), solver.LinkCount(), cppnSolver.NodeCount(), cppnSolver.LinkCount()))
 		neat.InfoLog(fmt.Sprintf("Substrate: evaluation time = %v, create solver time = %v", elapsed, createSolverElapsedTime))

@@ -14,20 +14,27 @@ type SubstrateActivatorType struct {
 	SubstrateActivationType math.NodeActivationType
 }
 
+type OutputActivatorType struct {
+	OutputActivationType math.NodeActivationType
+}
+
 // Options The HyperNEAT execution options
 type Options struct {
-	// The threshold value to indicate which links should be included
+	// LinkThreshold The threshold value to indicate which links should be included
 	LinkThreshold float64 `yaml:"link_threshold"`
-	// The weight range defines the minimum and maximum values for weights on substrate connections, they go
+	// WeightRange The weight range defines the minimum and maximum values for weights on substrate connections, they go
 	// from -WeightRange to +WeightRange, and can be any integer
 	WeightRange float64 `yaml:"weight_range"`
 
 	// LeoEnabled flag to control if Link Expression Output (LEO) enabled
 	LeoEnabled bool `yaml:"leo_enabled"`
 
-	// The substrate activation function
+	// SubstrateActivator The activation function for the hidden substrate nodes
 	SubstrateActivator SubstrateActivatorType `yaml:"substrate_activator"`
-	// The BIAS value for CPPN network
+	// OutputActivatorType The activation function for the output substrate nodes
+	OutputActivator OutputActivatorType `yaml:"output_activator"`
+
+	// CppnBias The BIAS value for CPPN network
 	CppnBias float64 `yaml:"cppn_bias,omitempty"`
 }
 
@@ -59,6 +66,15 @@ func (s *SubstrateActivatorType) UnmarshalYAML(value *yaml.Node) error {
 		return errors.Wrap(err, "failed to decode substrate activator function from HyperNEAT options")
 	} else {
 		s.SubstrateActivationType = activationType
+	}
+	return nil
+}
+
+func (o *OutputActivatorType) UnmarshalYAML(value *yaml.Node) error {
+	if activationType, err := math.NodeActivators.ActivationTypeFromName(value.Value); err != nil {
+		return errors.Wrap(err, "failed to decode output activator function from HyperNEAT options")
+	} else {
+		o.OutputActivationType = activationType
 	}
 	return nil
 }
