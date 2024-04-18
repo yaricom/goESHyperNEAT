@@ -31,6 +31,7 @@ func TestLoadYAMLConfigFile(t *testing.T) {
 
 func checkHyperNeatOptions(opts *Options, t *testing.T) {
 	assert.Equal(t, math.SigmoidSteepenedActivation, opts.SubstrateActivator.SubstrateActivationType)
+	assert.Equal(t, math.SigmoidPlainActivation, opts.OutputActivator.OutputActivationType)
 	assert.Equal(t, 0.2, opts.LinkThreshold)
 	assert.Equal(t, 3.0, opts.WeightRange)
 }

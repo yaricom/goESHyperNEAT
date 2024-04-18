@@ -13,18 +13,21 @@ import (
 // the ANN neurons are encoded as coordinates in hypercube presented by this substrate.
 // By default, neurons will be placed into substrate within grid layout
 type Substrate struct {
-	// The layout of neuron nodes in this substrate
+	// Layout The layout of neuron nodes in this substrate
 	Layout SubstrateLayout
 
-	// The activation function's type for neurons encoded
-	NodesActivation neatmath.NodeActivationType
+	// HiddenNodesActivation The activation function's type for neurons encoded
+	HiddenNodesActivation neatmath.NodeActivationType
+	// OutputNodesActivation The activation function type for output neurons encoded
+	OutputNodesActivation neatmath.NodeActivationType
 }
 
 // NewSubstrate creates new instance of substrate.
-func NewSubstrate(layout SubstrateLayout, nodesActivation neatmath.NodeActivationType) *Substrate {
+func NewSubstrate(layout SubstrateLayout, hiddenNodesActivation, outputNodesActivation neatmath.NodeActivationType) *Substrate {
 	substr := Substrate{
-		Layout:          layout,
-		NodesActivation: nodesActivation,
+		Layout:                layout,
+		HiddenNodesActivation: hiddenNodesActivation,
+		OutputNodesActivation: outputNodesActivation,
 	}
 	return &substr
 }
@@ -56,11 +59,14 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 	// inline function to find activation type for a given neuron
 	activationForNeuron := func(nodeIndex int) neatmath.NodeActivationType {
 		if nodeIndex < firstOutput {
-			// all bias and input neurons has null activation function associated because they actually have
-			// no inputs to be activated upon
-			return neatmath.NullActivation
+			// input nodes
+			return neatmath.LinearActivation
+		} else if nodeIndex < firstHidden {
+			// output nodes activations
+			return s.OutputNodesActivation
 		} else {
-			return s.NodesActivation
+			// hidden nodes activation
+			return s.HiddenNodesActivation
 		}
 	}
 

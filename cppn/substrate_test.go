@@ -16,8 +16,8 @@ func TestNewSubstrate(t *testing.T) {
 	layout := NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount)
 
 	// create new substrate
-	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation)
-	assert.Equal(t, math.SigmoidSteepenedActivation, substr.NodesActivation)
+	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation, math.LinearActivation)
+	assert.Equal(t, math.SigmoidSteepenedActivation, substr.HiddenNodesActivation)
 }
 
 func TestSubstrate_CreateNetworkSolver(t *testing.T) {
@@ -25,8 +25,8 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 	layout := NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount)
 
 	// create new substrate
-	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation)
-	assert.Equal(t, math.SigmoidSteepenedActivation, substr.NodesActivation)
+	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation, math.LinearActivation)
+	assert.Equal(t, math.SigmoidSteepenedActivation, substr.HiddenNodesActivation)
 
 	// create solver from substrate
 	cppn, err := FastSolverFromGenomeFile(cppnHyperNEATTestGenomePath)
@@ -48,7 +48,7 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 	assert.Equal(t, totalLinkCount, solver.LinkCount(), "wrong links number")
 
 	// test outputs
-	outExpected := []float64{0.6539661965642098, 0.6851172276942393}
+	outExpected := []float64{0.12926155695140656, 0.15786889573150728}
 	checkNetworkSolverOutputs(solver, outExpected, 0.0, t)
 }
 
@@ -57,8 +57,8 @@ func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
 	layout := NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount)
 
 	// create new substrate
-	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation)
-	assert.Equal(t, math.SigmoidSteepenedActivation, substr.NodesActivation)
+	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation, math.LinearActivation)
+	assert.Equal(t, math.SigmoidSteepenedActivation, substr.HiddenNodesActivation)
 
 	// create solver from substrate
 	cppn, err := FastSolverFromGenomeFile(cppnLeoHyperNEATTestGenomePath)
@@ -82,7 +82,7 @@ func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
 	assert.Equal(t, totalLinkCount, solver.LinkCount(), "wrong links number")
 
 	// test outputs
-	outExpected := []float64{0.8409124463118298, 0.4783802890458948}
+	outExpected := []float64{0.33812764749536894, -0.017572705522999554}
 	checkNetworkSolverOutputs(solver, outExpected, 0.0, t)
 }
 
@@ -94,7 +94,7 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 	builder := NewSubstrateGraphMLBuilder("", false).(*graphMLBuilder)
 
 	// create new substrate
-	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation)
+	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation, math.LinearActivation)
 
 	// create solver from substrate
 	cppn, err := FastSolverFromGenomeFile(cppnHyperNEATTestGenomePath)
@@ -121,10 +121,10 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 	require.NoError(t, err, "failed to marshal graph")
 
 	strOut := buf.String()
-	assert.Equal(t, 5799, len(strOut), "wrong length of marshalled string")
+	assert.Equal(t, 5789, len(strOut), "wrong length of marshalled string")
 
 	// test outputs
-	outExpected := []float64{0.6539661965642098, 0.6851172276942393}
+	outExpected := []float64{0.12926155695140656, 0.15786889573150728}
 	checkNetworkSolverOutputs(solver, outExpected, 0.0, t)
 }
 

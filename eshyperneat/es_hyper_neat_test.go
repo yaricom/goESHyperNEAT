@@ -38,4 +38,5 @@ func checkEsHyperNeatOptions(opts *Options, t *testing.T) {
 	assert.Equal(t, 1, opts.ESIterations)
 
 	assert.Equal(t, math.SigmoidSteepenedActivation, opts.SubstrateActivator.SubstrateActivationType)
+	assert.Equal(t, math.SigmoidPlainActivation, opts.OutputActivator.OutputActivationType)
 }

@@ -9,3 +9,5 @@ weight_range: 3
 
 # The substrate activation function, determines which activation function each node in the substrate will have.
 substrate_activator: SigmoidSteepenedActivation
+# The activation function for output substrate nodes.
+output_activator: SigmoidPlainActivation

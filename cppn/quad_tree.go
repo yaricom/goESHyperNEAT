@@ -12,7 +12,7 @@ func NewPointF(x, y float64) *PointF {
 }
 
 func (p *PointF) String() string {
-	return fmt.Sprintf("(%f, %f)", p.X, p.Y)
+	return fmt.Sprintf("(%f, %f, %f)", p.X, p.Y, p.Z)
 }
 
 // QuadPoint Defines the quad-point in the 6 dimensional hypercube

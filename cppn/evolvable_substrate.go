@@ -90,6 +90,20 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuil
 		}
 	}
 
+	// inline function to find activation type for a given neuron
+	activationForNeuron := func(nodeIndex int) neatmath.NodeActivationType {
+		if nodeIndex < firstOutput {
+			// input nodes
+			return neatmath.LinearActivation
+		} else if nodeIndex < firstHidden {
+			// output nodes activations
+			return es.OutputNodesActivation
+		} else {
+			// hidden nodes activation
+			return es.HiddenNodesActivation
+		}
+	}
+
 	// Build links from input nodes to the hidden nodes
 	var root *QuadNode
 	for in := firstInput; in < firstOutput; in++ {
@@ -99,7 +113,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuil
 			return nil, err
 		}
 		// add input node to graph
-		if _, err = addNodeToBuilder(graphBuilder, in, network.InputNeuron, neatmath.NullActivation, input); err != nil {
+		if _, err = addNodeToBuilder(graphBuilder, in, network.InputNeuron, activationForNeuron(in), input); err != nil {
 			return nil, err
 		}
 
@@ -174,7 +188,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuil
 			return nil, err
 		}
 		// add output node to graph
-		if _, err = addNodeToBuilder(graphBuilder, oi, network.OutputNeuron, es.HiddenNodesActivation, output); err != nil {
+		if _, err = addNodeToBuilder(graphBuilder, oi, network.OutputNeuron, activationForNeuron(oi), output); err != nil {
 			return nil, err
 		}
 
@@ -210,16 +224,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuil
 	// build activations
 	activations := make([]neatmath.NodeActivationType, totalNeuronCount)
 	for i := 0; i < totalNeuronCount; i++ {
-		if i < firstOutput {
-			// input nodes
-			activations[i] = neatmath.LinearActivation
-		} else if i < firstHidden {
-			// output nodes activations
-			activations[i] = es.OutputNodesActivation
-		} else {
-			// hidden nodes activation
-			activations[i] = es.HiddenNodesActivation
-		}
+		activations[i] = activationForNeuron(i)
 	}
 
 	// create fast network solver
