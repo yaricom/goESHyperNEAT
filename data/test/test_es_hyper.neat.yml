@@ -2,7 +2,10 @@
 # The HyperNEAT specific configuration #
 ########################################
 # The threshold value to indicate which links should be included
-link_threshold: 0.2
+link_threshold: 0.0
+
+# Indicates whether Link Expression Output (LEO) enabled
+leo_enabled: false
 
 # The weight range defines the minimum and maximum values for weights on substrate connections
 weight_range: 3
@@ -24,6 +27,11 @@ division_threshold: 0.01
 variance_threshold: 0.03
 # BandingThreshold defines the threshold that determines when points are regarded to be in a band.
 banding_threshold: 0.3
+
+# Quadtree Dimensions
+# The range of the tree. Typically set to 2.0
+width: 1.0
+height: 1.0
 
 # ESIterations defines how many times ES-HyperNEAT should iteratively discover new hidden nodes.
 # TODO BUG WHEN ES_ITERATIONS > 1

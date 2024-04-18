@@ -24,14 +24,14 @@ func TestEvolvableSubstrate_CreateNetworkSolver(t *testing.T) {
 
 	// test solver creation
 	graph := NewSubstrateGraphMLBuilder("TestEvolvableSubstrate_CreateNetworkSolver", false)
-	solver, err := substr.CreateNetworkSolver(cppn, false, graph, context)
+	solver, err := substr.CreateNetworkSolver(cppn, graph, context)
 	require.NoError(t, err, "failed to create solver")
 
 	printGraph(graph, t)
 
 	totalNodeCount := inputCount + outputCount + layout.HiddenCount()
 	assert.Equal(t, totalNodeCount, solver.NodeCount(), "wrong total node count")
-	assert.Equal(t, 8, solver.LinkCount(), "wrong link number")
+	assert.Equal(t, 30, solver.LinkCount(), "wrong link number")
 
 	// check outputs
 	outExpected := []float64{0.5, 0.5}
@@ -49,17 +49,18 @@ func TestEvolvableSubstrate_CreateNetworkSolver_LEO(t *testing.T) {
 	require.NoError(t, err, "failed to read CPPN")
 	context, err := loadESHyperNeatOptions(esHyperNeatTestConfigFile)
 	require.NoError(t, err, "failed to read ESHyperNEAT context")
+	context.LeoEnabled = true
 
 	// test solver creation
 	graph := NewSubstrateGraphMLBuilder("TestEvolvableSubstrate_CreateNetworkSolver", false)
-	solver, err := substr.CreateNetworkSolver(cppn, true, graph, context)
+	solver, err := substr.CreateNetworkSolver(cppn, graph, context)
 	require.NoError(t, err, "failed to create solver")
 
 	printGraph(graph, t)
 
 	totalNodeCount := inputCount + outputCount + layout.HiddenCount()
 	assert.Equal(t, totalNodeCount, solver.NodeCount(), "wrong total node count")
-	assert.Equal(t, 19, solver.LinkCount(), "wrong link number")
+	assert.Equal(t, 12, solver.LinkCount(), "wrong link number")
 
 	// check outputs
 	outExpected := []float64{0.5, 0.5}

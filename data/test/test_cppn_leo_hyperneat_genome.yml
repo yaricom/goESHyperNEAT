@@ -17,27 +17,34 @@ genome:
     # The input nodes - sensors
     - {id: 2,  trait_id: 0, type: INPT, activation: NullActivation} # x1
     - {id: 3,  trait_id: 0, type: INPT, activation: NullActivation} # y1
-    - {id: 4,  trait_id: 0, type: INPT, activation: NullActivation} # x2
-    - {id: 5,  trait_id: 0, type: INPT, activation: NullActivation} # y2
+    - {id: 4,  trait_id: 0, type: INPT, activation: NullActivation} # z1
+    - {id: 5,  trait_id: 0, type: INPT, activation: NullActivation} # x2
+    - {id: 6,  trait_id: 0, type: INPT, activation: NullActivation} # y2
+    - {id: 7,  trait_id: 0, type: INPT, activation: NullActivation} # z2
     # The weight output
-    - {id: 6,  trait_id: 0, type: OUTP, activation: TanhActivation}
+    - {id: 8,  trait_id: 0, type: OUTP, activation: TanhActivation}
     # The LEO output
-    - {id: 7,  trait_id: 0, type: OUTP, activation: StepActivation}
+    - {id: 9,  trait_id: 0, type: OUTP, activation: StepActivation}
     # The hidden nodes
-    - {id: 8,  trait_id: 0, type: HIDN, activation: SineActivation}
-    - {id: 9,  trait_id: 0, type: HIDN, activation: GaussianBipolarActivation}
+    - {id: 10,  trait_id: 0, type: HIDN, activation: GaussianBipolarActivation}
+    - {id: 11,  trait_id: 0, type: HIDN, activation: GaussianBipolarActivation}
 
   # The genes - connection between neuron nodes within this genome
   genes:
-    - {src_id: 1,  tgt_id: 6,  weight: 0.1, trait_id: 1, innov_num: 1,  mut_num: 0, recurrent: false, enabled: true}
-    - {src_id: 2,  tgt_id: 6,  weight: 0.3, trait_id: 2, innov_num: 2,  mut_num: 0, recurrent: false, enabled: true}
-    - {src_id: 3,  tgt_id: 8,  weight: 0.2, trait_id: 3, innov_num: 3,  mut_num: 0, recurrent: false, enabled: true}
-    - {src_id: 4,  tgt_id: 8,  weight: 0.3, trait_id: 4, innov_num: 4,  mut_num: 0, recurrent: false, enabled: true}
-    - {src_id: 5,  tgt_id: 6,  weight: 0.5, trait_id: 5, innov_num: 5,  mut_num: 0, recurrent: false, enabled: true}
-    - {src_id: 1,  tgt_id: 8,  weight: 0.4, trait_id: 6, innov_num: 6,  mut_num: 0, recurrent: false, enabled: true}
-    - {src_id: 8,  tgt_id: 6,  weight: 0.8, trait_id: 7, innov_num: 7,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 1,  tgt_id: 10,  weight: 0.1, trait_id: 1, innov_num: 1,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 1,  tgt_id: 11,  weight: 0.1, trait_id: 1, innov_num: 1,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 2,  tgt_id: 10,  weight: 0.3, trait_id: 2, innov_num: 2,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 3,  tgt_id: 10,  weight: 0.2, trait_id: 3, innov_num: 3,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 4,  tgt_id: 10,  weight: 0.3, trait_id: 4, innov_num: 4,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 5,  tgt_id: 11,  weight: 0.5, trait_id: 5, innov_num: 5,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 6,  tgt_id: 11,  weight: 0.4, trait_id: 6, innov_num: 6,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 7,  tgt_id: 11,  weight: 0.8, trait_id: 7, innov_num: 7,  mut_num: 0, recurrent: false, enabled: true}
+
+    - {src_id: 10,  tgt_id: 8,  weight: 0.3, trait_id: 4, innov_num: 8,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 11,  tgt_id: 8,  weight: 0.3, trait_id: 4, innov_num: 9,  mut_num: 0, recurrent: false, enabled: true}
     # The LEO part with local connectivity among X axis
-    - {src_id: 4,  tgt_id: 9,  weight: 0.3, trait_id: 4, innov_num: 4,  mut_num: 0, recurrent: false, enabled: true}
-    - {src_id: 1,  tgt_id: 9,  weight: 0.4, trait_id: 1, innov_num: 1,  mut_num: 0, recurrent: false, enabled: true}
-    - {src_id: 1,  tgt_id: 7,  weight: 0.3, trait_id: 2, innov_num: 2,  mut_num: 0, recurrent: false, enabled: true}
-    - {src_id: 9,  tgt_id: 7,  weight: 0.8, trait_id: 7, innov_num: 7,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 1,  tgt_id: 9,  weight: 0.4, trait_id: 1, innov_num: 10,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 2,  tgt_id: 9,  weight: 0.4, trait_id: 1, innov_num: 11,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 5,  tgt_id: 9,  weight: 0.4, trait_id: 1, innov_num: 12,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 10,  tgt_id: 9,  weight: 0.3, trait_id: 2, innov_num: 13,  mut_num: 0, recurrent: false, enabled: true}
+    - {src_id: 11,  tgt_id: 9,  weight: 0.8, trait_id: 7, innov_num: 14,  mut_num: 0, recurrent: false, enabled: true}

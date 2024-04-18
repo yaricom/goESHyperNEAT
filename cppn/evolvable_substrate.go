@@ -2,8 +2,8 @@ package cppn
 
 import (
 	"container/list"
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
 	neatmath "github.com/yaricom/goNEAT/v4/neat/math"
 	"github.com/yaricom/goNEAT/v4/neat/network"
@@ -30,7 +30,7 @@ type EvolvableSubstrate struct {
 // NewEvolvableSubstrate Creates new instance of evolvable substrate
 func NewEvolvableSubstrate(layout EvolvableSubstrateLayout, nodesActivation neatmath.NodeActivationType) *EvolvableSubstrate {
 	return &EvolvableSubstrate{
-		coords:          make([]float64, 4),
+		coords:          make([]float64, 6),
 		Layout:          layout,
 		NodesActivation: nodesActivation,
 	}
@@ -39,7 +39,7 @@ func NewEvolvableSubstrate(layout EvolvableSubstrateLayout, nodesActivation neat
 // NewEvolvableSubstrateWithBias creates new instance of evolvable substrate with defined cppnBias value.
 // The cppnBias will be provided as first value of the CPPN inputs array.
 func NewEvolvableSubstrateWithBias(layout EvolvableSubstrateLayout, nodesActivation neatmath.NodeActivationType, cppnBias float64) *EvolvableSubstrate {
-	coords := make([]float64, 5)
+	coords := make([]float64, 7)
 	coords[0] = cppnBias
 	return &EvolvableSubstrate{
 		coords:          coords,
@@ -51,7 +51,7 @@ func NewEvolvableSubstrateWithBias(layout EvolvableSubstrateLayout, nodesActivat
 // CreateNetworkSolver Creates network solver based on current substrate layout and provided Compositional Pattern Producing Network which
 // used to define connections between network nodes. Optional graph_builder can be provided to collect graph nodes and edges
 // of created network solver. With graph builder it is possible to save/load network configuration as well as visualize it.
-func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphBuilder SubstrateGraphBuilder, options *eshyperneat.Options) (network.Solver, error) {
+func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuilder SubstrateGraphBuilder, options *eshyperneat.Options) (network.Solver, error) {
 	es.cppn = cppn
 
 	// the network layers will be collected in order: bias, input, output, hidden
@@ -71,11 +71,11 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, useLeo bo
 			return nil, false
 		}
 		var link *network.FastNetworkLink
-		if useLeo && qp.CppnOut[1] > 0 {
-			link = createLink(qp.Weight(), source, target, options.WeightRange)
-		} else if !useLeo && math.Abs(qp.Weight()) > options.LinkThreshold {
+		if options.LeoEnabled && qp.Leo > 0 {
+			link = createLink(qp.Weight, source, target, options.WeightRange)
+		} else if !options.LeoEnabled && math.Abs(qp.Weight) >= options.LinkThreshold {
 			// add only connections with signal exceeding provided threshold
-			link = createThresholdNormalizedLink(qp.Weight(), source, target, options.LinkThreshold, options.WeightRange)
+			link = createThresholdNormalizedLink(qp.Weight, source, target, options.LinkThreshold, options.WeightRange)
 		}
 		if link != nil {
 			links = append(links, link)
@@ -99,11 +99,11 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, useLeo bo
 			return nil, err
 		}
 
-		if root, err = es.quadTreeDivideAndInit(input.X, input.Y, true, options); err != nil {
+		if root, err = es.quadTreeDivideAndInit(input.X, input.Y, input.Z, true, options); err != nil {
 			return nil, err
 		}
 		qPoints := make([]*QuadPoint, 0)
-		if qPoints, err = es.pruneAndExpress(input.X, input.Y, qPoints, root, true, options); err != nil {
+		if qPoints, err = es.pruneAndExpress(input.X, input.Y, input.Z, qPoints, root, true, options); err != nil {
 			return nil, err
 		}
 		// iterate over quad points and add nodes/links
@@ -133,11 +133,11 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, useLeo bo
 			if err != nil {
 				return nil, err
 			}
-			if root, err = es.quadTreeDivideAndInit(hidden.X, hidden.Y, true, options); err != nil {
+			if root, err = es.quadTreeDivideAndInit(hidden.X, hidden.Y, hidden.Z, true, options); err != nil {
 				return nil, err
 			}
 			qPoints := make([]*QuadPoint, 0)
-			if qPoints, err = es.pruneAndExpress(hidden.X, hidden.Y, qPoints, root, true, options); err != nil {
+			if qPoints, err = es.pruneAndExpress(hidden.X, hidden.Y, hidden.Z, qPoints, root, true, options); err != nil {
 				return nil, err
 			}
 			// iterate over quad points and add nodes/links
@@ -174,11 +174,11 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, useLeo bo
 			return nil, err
 		}
 
-		if root, err = es.quadTreeDivideAndInit(output.X, output.Y, false, options); err != nil {
+		if root, err = es.quadTreeDivideAndInit(output.X, output.Y, output.Z, false, options); err != nil {
 			return nil, err
 		}
 		qPoints := make([]*QuadPoint, 0)
-		if qPoints, err = es.pruneAndExpress(output.X, output.Y, qPoints, root, false, options); err != nil {
+		if qPoints, err = es.pruneAndExpress(output.X, output.Y, output.Z, qPoints, root, false, options); err != nil {
 			return nil, err
 		}
 
@@ -217,9 +217,9 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, useLeo bo
 	}
 
 	// create fast network solver
-	if totalNeuronCount == 0 || (!useLeo && len(links) == 0) || len(activations) != totalNeuronCount {
+	if totalNeuronCount == 0 || len(activations) != totalNeuronCount {
 		message := fmt.Sprintf("failed to create network solver: links [%d], nodes [%d], activations [%d], LEO [%t]",
-			len(links), totalNeuronCount, len(activations), useLeo)
+			len(links), totalNeuronCount, len(activations), options.LeoEnabled)
 		return nil, errors.New(message)
 	}
 	solver := network.NewFastModularNetworkSolver(
@@ -249,11 +249,11 @@ func (es *EvolvableSubstrate) addHiddenNode(qp *QuadPoint, firstHidden int, grap
 	return targetIndex, nil
 }
 
-// Divides and initialize the quadtree from provided coordinates of source (outgoing = true) or target node (outgoing = false) at (a, b).
-// Returns quadtree, in which each quadnode at (x,y) stores CPPN activation level for its position. The initialized
+// Divides and initialize the quadtree from provided coordinates of source (outgoing = true) or target node (outgoing = false) at (a,b,c).
+// Returns quadtree, in which each quadnode at (x,y,z) stores CPPN activation level for its position. The initialized
 // quadtree is used in the PruningAndExtraction phase to generate the actual ANN connections.
-func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool, options *eshyperneat.Options) (root *QuadNode, err error) {
-	root = NewQuadNode(0.0, 0.0, 1.0, 1)
+func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b, c float64, outgoing bool, options *eshyperneat.Options) (root *QuadNode, err error) {
+	root = NewQuadNode(0.0, 0.0, options.Width, options.Height, 1)
 
 	queue := list.New()
 	queue.PushBack(root)
@@ -264,21 +264,21 @@ func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool,
 
 		// Divide into subregions and assign children to parent
 		p.Nodes = []*QuadNode{
-			NewQuadNode(p.X-p.Width/2.0, p.Y-p.Width/2.0, p.Width/2.0, p.Level+1),
-			NewQuadNode(p.X-p.Width/2.0, p.Y+p.Width/2.0, p.Width/2.0, p.Level+1),
-			NewQuadNode(p.X+p.Width/2.0, p.Y-p.Width/2.0, p.Width/2.0, p.Level+1),
-			NewQuadNode(p.X+p.Width/2.0, p.Y+p.Width/2.0, p.Width/2.0, p.Level+1),
+			NewQuadNode(p.X-p.Width/2.0, p.Y-p.Height/2.0, p.Width/2.0, p.Height/2.0, p.Level+1),
+			NewQuadNode(p.X-p.Width/2.0, p.Y+p.Height/2.0, p.Width/2.0, p.Height/2.0, p.Level+1),
+			NewQuadNode(p.X+p.Width/2.0, p.Y-p.Height/2.0, p.Width/2.0, p.Height/2.0, p.Level+1),
+			NewQuadNode(p.X+p.Width/2.0, p.Y+p.Height/2.0, p.Width/2.0, p.Height/2.0, p.Level+1),
 		}
 
 		for _, node := range p.Nodes {
 			if outgoing {
 				// Querying connection from input or hidden node (Outgoing connectivity pattern)
-				if node.CppnOut, err = es.queryCPPN(a, b, node.X, node.Y); err != nil {
+				if node.CppnOut, err = es.queryCPPN(a, b, c, node.X, node.Y, node.Z); err != nil {
 					return nil, err
 				}
 			} else {
 				// Querying connection to output node (Incoming connectivity pattern)
-				if node.CppnOut, err = es.queryCPPN(node.X, node.Y, a, b); err != nil {
+				if node.CppnOut, err = es.queryCPPN(node.X, node.Y, node.Z, a, b, c); err != nil {
 					return nil, err
 				}
 			}
@@ -287,8 +287,8 @@ func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool,
 
 		// Divide until initial resolution or if variance is still high
 		if p.Level < options.InitialDepth || (p.Level < options.MaximalDepth && nodeVariance(p) > options.DivisionThreshold) {
-			for _, c := range p.Nodes {
-				queue.PushBack(c)
+			for _, child := range p.Nodes {
+				queue.PushBack(child)
 			}
 		}
 	}
@@ -300,7 +300,7 @@ func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b float64, outgoing bool,
 // Receive coordinates of source (outgoing = true) or target node (outgoing = false) at (a, b) and initialized quadtree node.
 // Adds the connections that are in bands of the two-dimensional cross-section of the  hypercube containing the source
 // or target node to the connections list and return modified list.
-func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections []*QuadPoint, node *QuadNode, outgoing bool, options *eshyperneat.Options) ([]*QuadPoint, error) {
+func (es *EvolvableSubstrate) pruneAndExpress(a, b, c float64, connections []*QuadPoint, node *QuadNode, outgoing bool, options *eshyperneat.Options) ([]*QuadPoint, error) {
 	// fast check
 	if len(node.Nodes) == 0 {
 		return connections, nil
@@ -313,64 +313,66 @@ func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections []*QuadP
 		childVariance := nodeVariance(quadNode)
 
 		if childVariance >= options.VarianceThreshold {
-			if conn, err := es.pruneAndExpress(a, b, connections, quadNode, outgoing, options); err != nil {
+			if conn, err := es.pruneAndExpress(a, b, c, connections, quadNode, outgoing, options); err != nil {
 				return nil, err
 			} else {
 				connections = append(connections, conn...)
 			}
-		} else {
-			// Determine if point is in a band by checking neighbor CPPN values
+		} else if !options.LeoEnabled || (quadNode.Leo() > 0) {
+			// Band Pruning phase.
+			// If LEO is turned off this should always happen.
+			// If it is not it should only happen if the LEO output is greater than zero
 			if outgoing {
-				if l, err := es.queryCPPN(a, b, quadNode.X-node.Width, quadNode.Y); err != nil {
+				if l, err := es.queryCPPN(a, b, c, quadNode.X-node.Width, quadNode.Y, quadNode.Z); err != nil {
 					return nil, err
 				} else {
 					left = math.Abs(quadNode.Weight() - l[0])
 				}
-				if r, err := es.queryCPPN(a, b, quadNode.X+node.Width, quadNode.Y); err != nil {
+				if r, err := es.queryCPPN(a, b, c, quadNode.X+node.Width, quadNode.Y, quadNode.Z); err != nil {
 					return nil, err
 				} else {
 					right = math.Abs(quadNode.Weight() - r[0])
 				}
-				if t, err := es.queryCPPN(a, b, quadNode.X, quadNode.Y-node.Width); err != nil {
+				if t, err := es.queryCPPN(a, b, c, quadNode.X, quadNode.Y-node.Height, quadNode.Z); err != nil {
 					return nil, err
 				} else {
 					top = math.Abs(quadNode.Weight() - t[0])
 				}
-				if b, err := es.queryCPPN(a, b, quadNode.X, quadNode.Y+node.Width); err != nil {
+				if bot, err := es.queryCPPN(a, b, c, quadNode.X, quadNode.Y+node.Height, quadNode.Z); err != nil {
 					return nil, err
 				} else {
-					bottom = math.Abs(quadNode.Weight() - b[0])
+					bottom = math.Abs(quadNode.Weight() - bot[0])
 				}
 			} else {
-				if l, err := es.queryCPPN(quadNode.X-node.Width, quadNode.Y, a, b); err != nil {
+				if l, err := es.queryCPPN(quadNode.X-node.Width, quadNode.Y, quadNode.Z, a, b, c); err != nil {
 					return nil, err
 				} else {
 					left = math.Abs(quadNode.Weight() - l[0])
 				}
-				if r, err := es.queryCPPN(quadNode.X+node.Width, quadNode.Y, a, b); err != nil {
+				if r, err := es.queryCPPN(quadNode.X+node.Width, quadNode.Y, quadNode.Z, a, b, c); err != nil {
 					return nil, err
 				} else {
 					right = math.Abs(quadNode.Weight() - r[0])
 				}
-				if t, err := es.queryCPPN(quadNode.X, quadNode.Y-node.Width, a, b); err != nil {
+				if t, err := es.queryCPPN(quadNode.X, quadNode.Y-node.Height, quadNode.Z, a, b, c); err != nil {
 					return nil, err
 				} else {
 					top = math.Abs(quadNode.Weight() - t[0])
 				}
-				if b, err := es.queryCPPN(quadNode.X, quadNode.Y+node.Width, a, b); err != nil {
+				if bot, err := es.queryCPPN(quadNode.X, quadNode.Y+node.Height, quadNode.Z, a, b, c); err != nil {
 					return nil, err
 				} else {
-					bottom = math.Abs(quadNode.Weight() - b[0])
+					bottom = math.Abs(quadNode.Weight() - bot[0])
 				}
 			}
 
 			if math.Max(math.Min(top, bottom), math.Min(left, right)) > options.BandingThreshold {
-				// Create new connection specified by QuadPoint(x1,y1,x2,y2,weight) in 4D hypercube
+				// Create new connection specified by QuadPoint(x1,y1,z1,x2,y2,z2,weight) in 4D hypercube
 				var conn *QuadPoint
 				if outgoing {
-					conn = NewQuadPoint(a, b, quadNode.X, quadNode.Y, quadNode)
+					conn = NewQuadPoint(a, b, c, quadNode.X, quadNode.Y, quadNode.Z, quadNode)
 				} else {
-					conn = NewQuadPoint(quadNode.X, quadNode.Y, a, b, quadNode)
+					conn = NewQuadPoint(quadNode.X, quadNode.Y, quadNode.Z, a, b, c, quadNode)
 				}
 
 				connections = append(connections, conn)
@@ -383,19 +385,21 @@ func (es *EvolvableSubstrate) pruneAndExpress(a, b float64, connections []*QuadP
 
 // Query CPPN associated with this substrate for specified Hypercube coordinate and returns value produced or error if
 // operation failed
-func (es *EvolvableSubstrate) queryCPPN(x1, y1, x2, y2 float64) ([]float64, error) {
+func (es *EvolvableSubstrate) queryCPPN(x1, y1, z1, x2, y2, z2 float64) ([]float64, error) {
 	offset := 0
-	if len(es.coords) == 5 {
+	if len(es.coords) == 7 {
 		// CPPN bias defined
 		offset = 1
 	}
 	es.coords[offset] = x1
 	es.coords[offset+1] = y1
-	es.coords[offset+2] = x2
-	es.coords[offset+3] = y2
+	es.coords[offset+2] = z1
+	es.coords[offset+3] = x2
+	es.coords[offset+4] = y2
+	es.coords[offset+5] = z2
 
 	if outs, err := queryCPPN(es.coords, es.cppn); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to query CPPN")
 	} else {
 		return outs, nil
 	}

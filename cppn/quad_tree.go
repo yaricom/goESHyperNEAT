@@ -15,7 +15,7 @@ func (p *PointF) String() string {
 	return fmt.Sprintf("(%f, %f)", p.X, p.Y)
 }
 
-// QuadPoint Defines the quad-point in the 4 dimensional hypercube
+// QuadPoint Defines the quad-point in the 6 dimensional hypercube
 type QuadPoint struct {
 	// The associated coordinates
 	X1, X2, Y1, Y2, Z1, Z2 float64
@@ -26,7 +26,7 @@ type QuadPoint struct {
 }
 
 func (q *QuadPoint) String() string {
-	str := fmt.Sprintf("((%f, %f),(%f, %f)) = %f", q.X1, q.Y1, q.X2, q.Y2, q.Weight)
+	str := fmt.Sprintf("((%f, %f, %f),(%f, %f, %f)) = %f", q.X1, q.Y1, q.Z1, q.X2, q.Y2, q.Z2, q.Weight)
 	if q.Leo >= 0 {
 		var status string
 		if q.Leo > 0 {
@@ -40,8 +40,8 @@ func (q *QuadPoint) String() string {
 }
 
 // NewQuadPoint Creates new quad point
-func NewQuadPoint(x1, y1, x2, y2 float64, node *QuadNode) *QuadPoint {
-	return &QuadPoint{X1: x1, Y1: y1, X2: x2, Y2: y2, Weight: node.Weight(), Leo: node.Leo()}
+func NewQuadPoint(x1, y1, z1, x2, y2, z2 float64, node *QuadNode) *QuadPoint {
+	return &QuadPoint{X1: x1, Y1: y1, Z1: z1, X2: x2, Y2: y2, Z2: z2, Weight: node.Weight(), Leo: node.Leo()}
 }
 
 // QuadNode Defines quad-tree node to model 4 dimensional hypercube
@@ -78,7 +78,7 @@ func (q *QuadNode) HasLeo() bool {
 }
 
 func (q *QuadNode) String() string {
-	return fmt.Sprintf("((%f, %f), %f x %f) = %f at %d", q.X, q.Y, q.Width, q.Height, q.CppnOut, q.Level)
+	return fmt.Sprintf("((%f, %f, %f), %f x %f) = %f at %d", q.X, q.Y, q.Z, q.Width, q.Height, q.CppnOut, q.Level)
 }
 
 // NewQuadNode Creates new quad-node with given parameters
