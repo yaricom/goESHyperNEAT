@@ -44,11 +44,11 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 	totalNodeCount := biasCount + inputCount + hiddenCount + outputCount
 	assert.Equal(t, totalNodeCount, solver.NodeCount(), "wrong nodes number")
 
-	totalLinkCount := 12 //biasCount * (hiddenCount + outputCount)
+	totalLinkCount := 13
 	assert.Equal(t, totalLinkCount, solver.LinkCount(), "wrong links number")
 
 	// test outputs
-	outExpected := []float64{0.6427874813512032, 0.8685335941574246}
+	outExpected := []float64{0.6539661965642098, 0.6851172276942393}
 	checkNetworkSolverOutputs(solver, outExpected, 0.0, t)
 }
 
@@ -78,12 +78,12 @@ func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
 	totalNodeCount := biasCount + inputCount + hiddenCount + outputCount
 	assert.Equal(t, totalNodeCount, solver.NodeCount(), "wrong nodes number")
 
-	totalLinkCount := 16
+	totalLinkCount := 15
 	assert.Equal(t, totalLinkCount, solver.LinkCount(), "wrong links number")
 
 	// test outputs
-	outExpected := []float64{0.5, 0.5}
-	checkNetworkSolverOutputs(solver, outExpected, 1e-5, t)
+	outExpected := []float64{0.8409124463118298, 0.4783802890458948}
+	checkNetworkSolverOutputs(solver, outExpected, 0.0, t)
 }
 
 func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
@@ -113,7 +113,7 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 	totalNodes := biasCount + inputCount + hiddenCount + outputCount
 	assert.Len(t, graph.Nodes, totalNodes, "wrong nodes number")
 
-	totalEdges := 12
+	totalEdges := 13
 	assert.Len(t, graph.Edges, totalEdges, "wrong edges number")
 
 	var buf bytes.Buffer
@@ -121,10 +121,10 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 	require.NoError(t, err, "failed to marshal graph")
 
 	strOut := buf.String()
-	assert.Equal(t, 5597, len(strOut), "wrong length of marshalled string")
+	assert.Equal(t, 5799, len(strOut), "wrong length of marshalled string")
 
 	// test outputs
-	outExpected := []float64{0.6427874813512032, 0.8685335941574246}
+	outExpected := []float64{0.6539661965642098, 0.6851172276942393}
 	checkNetworkSolverOutputs(solver, outExpected, 0.0, t)
 }
 

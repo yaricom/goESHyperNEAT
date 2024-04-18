@@ -65,7 +65,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 	}
 
 	// give bias inputs to all hidden and output nodes.
-	coordinates := make([]float64, 4)
+	coordinates := make([]float64, 6)
 	for bi := firstBias; bi < firstInput; bi++ {
 
 		// the bias coordinates
@@ -74,6 +74,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 		} else {
 			coordinates[0] = biasPosition.X
 			coordinates[1] = biasPosition.Y
+			coordinates[2] = biasPosition.Z
 
 			// add bias node to builder
 			if _, err = addNodeToBuilder(graphBuilder, bi, network.BiasNeuron, activationForNeuron(bi), biasPosition); err != nil {
@@ -89,6 +90,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 			} else {
 				coordinates[2] = hiddenPosition.X
 				coordinates[3] = hiddenPosition.Y
+				coordinates[4] = hiddenPosition.Z
 
 				// add node to graph
 				if _, err = addNodeToBuilder(graphBuilder, hi, network.HiddenNeuron, activationForNeuron(hi), hiddenPosition); err != nil {
@@ -115,6 +117,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 			} else {
 				coordinates[2] = outputPosition.X
 				coordinates[3] = outputPosition.Y
+				coordinates[4] = outputPosition.Z
 
 				// add node to graph
 				if _, err = addNodeToBuilder(graphBuilder, oi, network.OutputNeuron, activationForNeuron(oi), outputPosition); err != nil {
@@ -143,6 +146,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 			} else {
 				coordinates[0] = inputPosition.X
 				coordinates[1] = inputPosition.Y
+				coordinates[2] = inputPosition.Z
 
 				// add node to graph
 				if _, err = addNodeToBuilder(graphBuilder, in, network.InputNeuron, activationForNeuron(in), inputPosition); err != nil {
@@ -156,6 +160,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 				} else {
 					coordinates[2] = hiddenPosition.X
 					coordinates[3] = hiddenPosition.Y
+					coordinates[4] = hiddenPosition.Z
 				}
 				// find connection weight
 				if link, err := fastNetworkLink(coordinates, cppn, useLeo, in, hi, options); err != nil {
@@ -177,6 +182,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 			} else {
 				coordinates[0] = hiddenPosition.X
 				coordinates[1] = hiddenPosition.Y
+				coordinates[2] = hiddenPosition.Z
 			}
 			for oi := firstOutput; oi < firstHidden; oi++ {
 				// get output neuron coordinates
@@ -185,6 +191,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 				} else {
 					coordinates[2] = outputPosition.X
 					coordinates[3] = outputPosition.Y
+					coordinates[4] = outputPosition.Z
 				}
 				// find connection weight
 				if link, err := fastNetworkLink(coordinates, cppn, useLeo, hi, oi, options); err != nil {
@@ -207,6 +214,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 			} else {
 				coordinates[0] = inputPosition.X
 				coordinates[1] = inputPosition.Y
+				coordinates[2] = inputPosition.Z
 
 				// add node to graph
 				if _, err = addNodeToBuilder(graphBuilder, in, network.InputNeuron, activationForNeuron(in), inputPosition); err != nil {
@@ -220,6 +228,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 				} else {
 					coordinates[2] = outputPosition.X
 					coordinates[3] = outputPosition.Y
+					coordinates[4] = outputPosition.Z
 				}
 				// find connection weight
 				if link, err := fastNetworkLink(coordinates, cppn, useLeo, in, oi, options); err != nil {
@@ -257,7 +266,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 func fastNetworkLink(coordinates []float64, cppn network.Solver, useLeo bool, source, target int, options *hyperneat.Options) (*network.FastNetworkLink, error) {
 	if outs, err := queryCPPN(coordinates, cppn); err != nil {
 		return nil, err
-	} else if useLeo && outs[1] >= options.LeoThreshold {
+	} else if useLeo && outs[1] > 0 {
 		// add links only when CPPN LEO output signals to
 		return createLink(outs[0], source, target, options.WeightRange), nil
 	} else if !useLeo && math.Abs(outs[0]) >= options.LinkThreshold {
