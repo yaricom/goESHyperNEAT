@@ -320,23 +320,11 @@ func evaluatePredictions(predictions []float64, leftObj VisualObject, rightObj V
 		return 0.0
 	}
 
-	// find loss
-	loss := histDiff(predictions, targets)
+	// find loss as item-wise difference between two vectors
+	loss := (math.Abs(predictions[0]-targets[0]) + math.Abs(predictions[1]-targets[1])) / 2.0
 
 	neat.DebugLog(fmt.Sprintf("[%.2f, %.2f] -> [%.2f, %.2f] loss: %.2f",
 		targets[0], targets[1], normPredictions[0], normPredictions[1], normLoss))
 
 	return loss
-
-}
-
-// calculates item-wise difference between two vectors
-func histDiff(left, right []float64) float64 {
-	size := len(left)
-	diffAccum := 0.0
-	for i := 0; i < size; i++ {
-		diff := left[i] - right[i]
-		diffAccum += math.Abs(diff)
-	}
-	return diffAccum / float64(size)
 }
