@@ -4,6 +4,7 @@ package cppn
 
 import (
 	"errors"
+	"github.com/yaricom/goNEAT/v4/neat"
 	"github.com/yaricom/goNEAT/v4/neat/genetics"
 	"github.com/yaricom/goNEAT/v4/neat/network"
 	"gonum.org/v1/gonum/stat"
@@ -12,6 +13,15 @@ import (
 
 // FastSolverFromGenomeFile Reads CPPN from specified genome and creates network solver
 func FastSolverFromGenomeFile(genomePath string) (network.Solver, error) {
+	if net, err := NetworkFromGenomeFile(genomePath); err != nil {
+		return nil, err
+	} else {
+		return net, nil
+	}
+}
+
+// NetworkFromGenomeFile Reads CPPN from specified genome and creates phenotype network
+func NetworkFromGenomeFile(genomePath string) (*network.Network, error) {
 	if reader, err := genetics.NewGenomeReaderFromFile(genomePath); err != nil {
 		return nil, err
 	} else if genome, err := reader.Read(); err != nil {
@@ -19,7 +29,7 @@ func FastSolverFromGenomeFile(genomePath string) (network.Solver, error) {
 	} else if net, err := genome.Genesis(genome.Id); err != nil {
 		return nil, err
 	} else {
-		return net.FastNetworkSolver()
+		return net, nil
 	}
 }
 
@@ -64,6 +74,36 @@ func queryCPPN(coordinates []float64, cppn network.Solver) ([]float64, error) {
 	}
 	// do activations
 	if res, err := cppn.RecursiveSteps(); err != nil {
+		return nil, err
+	} else if !res {
+		return nil, errors.New("failed to relax CPPN network recursively")
+	}
+
+	return cppn.ReadOutputs(), nil
+}
+
+func queryCPPNNetwork(coordinates []float64, cppn *network.Network) ([]float64, error) {
+	if res, err := cppn.Flush(); err != nil {
+		return nil, err
+	} else if !res {
+		return nil, errors.New("failed to flush CPPN network")
+	}
+
+	// load inputs
+	if err := cppn.LoadSensors(coordinates); err != nil {
+		return nil, err
+	}
+
+	// do activations
+	maxDepth, err := cppn.MaxActivationDepth()
+	if err != nil {
+		neat.WarnLog("Failed to calculate max activation depth for CPPN network")
+	}
+	if maxDepth == 0 {
+		neat.WarnLog("Max activation depth for CPPN network is zero, setting default value")
+		maxDepth = 100
+	}
+	if res, err := cppn.ForwardSteps(maxDepth); err != nil {
 		return nil, err
 	} else if !res {
 		return nil, errors.New("failed to relax CPPN network recursively")

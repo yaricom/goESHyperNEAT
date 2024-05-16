@@ -24,7 +24,7 @@ type EvolvableSubstrate struct {
 	OutputNodesActivation neatmath.NodeActivationType
 
 	// The CPPN network solver to describe geometry of substrate
-	cppn network.Solver
+	cppn *network.Network
 	// The reusable coordinates buffer
 	coords []float64
 }
@@ -55,7 +55,7 @@ func NewEvolvableSubstrateWithBias(layout EvolvableSubstrateLayout, hiddenNodesA
 // CreateNetworkSolver Creates network solver based on current substrate layout and provided Compositional Pattern Producing Network which
 // used to define connections between network nodes. Optional graph_builder can be provided to collect graph nodes and edges
 // of created network solver. With graph builder it is possible to save/load network configuration as well as visualize it.
-func (es *EvolvableSubstrate) CreateNetworkSolver(cppn network.Solver, graphBuilder SubstrateGraphBuilder, options *eshyperneat.Options) (network.Solver, error) {
+func (es *EvolvableSubstrate) CreateNetworkSolver(cppn *network.Network, graphBuilder SubstrateGraphBuilder, options *eshyperneat.Options) (network.Solver, error) {
 	es.cppn = cppn
 
 	// the network layers will be collected in order: bias, input, output, hidden
