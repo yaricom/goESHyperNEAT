@@ -179,7 +179,7 @@ func (e *generationEvaluator) organismEvaluate(ctx context.Context, organism *ge
 	if !ok {
 		return false, nil, eshyperneat.ErrESHyperNEATOptionsNotFound
 	}
-	// get CPPN network solver
+	// get CPPN phenotype network
 	cppnSolver, err := organism.Phenotype()
 	if err != nil {
 		return false, nil, errors.Wrap(err, "failed to create CPPN solver")
@@ -267,16 +267,18 @@ func evaluateNetwork(solver network.Solver, leftObj VisualObject, rightObj Visua
 	inputs := append(leftObj.data, rightObj.data...)
 
 	// run evaluation
-	loss := math.MaxFloat64
+	loss := math.MaxFloat32
 	if err := solver.LoadSensors(inputs); err != nil {
 		return loss, err
 	}
 
 	// Propagate activation
-	if relaxed, err := solver.RecursiveSteps(); err != nil {
+	activationSteps := 1000
+	if relaxed, err := solver.Relax(activationSteps, 0.1); err != nil {
 		return loss, err
 	} else if !relaxed {
-		return loss, errors.New("failed to relax network solver of the ES substrate")
+		neat.DebugLog("failed to relax network solver of the ES substrate")
+		return loss, nil
 	}
 
 	// get outputs and evaluate against ground truth
