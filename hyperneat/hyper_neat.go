@@ -6,7 +6,6 @@ import (
 	"github.com/yaricom/goNEAT/v4/neat/math"
 	"gopkg.in/yaml.v3"
 	"io"
-	"io/ioutil"
 	"os"
 )
 
@@ -40,7 +39,7 @@ type Options struct {
 
 // LoadYAMLOptions is to read HyperNEAT options from the provided reader
 func LoadYAMLOptions(r io.Reader) (*Options, error) {
-	content, err := ioutil.ReadAll(r)
+	content, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
