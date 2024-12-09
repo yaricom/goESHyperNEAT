@@ -6,7 +6,6 @@ import (
 	"github.com/yaricom/goESHyperNEAT/v2/hyperneat"
 	"gopkg.in/yaml.v3"
 	"io"
-	"io/ioutil"
 	"os"
 )
 
@@ -44,7 +43,7 @@ type Options struct {
 
 // LoadYAMLOptions is to load ES-HyperNEAT options from provided reader
 func LoadYAMLOptions(r io.Reader) (*Options, error) {
-	content, err := ioutil.ReadAll(r)
+	content, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
