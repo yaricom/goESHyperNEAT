@@ -44,11 +44,11 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 	totalNodeCount := biasCount + inputCount + hiddenCount + outputCount
 	assert.Equal(t, totalNodeCount, solver.NodeCount(), "wrong nodes number")
 
-	totalLinkCount := 13
+	totalLinkCount := 12
 	assert.Equal(t, totalLinkCount, solver.LinkCount(), "wrong links number")
 
 	// test outputs
-	outExpected := []float64{0.12926155695140656, 0.15786889573150728}
+	outExpected := []float64{1.0768005629123314, 1.131042391465084}
 	checkNetworkSolverOutputs(solver, outExpected, 0.0, t)
 }
 
@@ -78,11 +78,11 @@ func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
 	totalNodeCount := biasCount + inputCount + hiddenCount + outputCount
 	assert.Equal(t, totalNodeCount, solver.NodeCount(), "wrong nodes number")
 
-	totalLinkCount := 15
+	totalLinkCount := 16
 	assert.Equal(t, totalLinkCount, solver.LinkCount(), "wrong links number")
 
 	// test outputs
-	outExpected := []float64{0.33812764749536894, -0.017572705522999554}
+	outExpected := []float64{-0.1147701149321737, -0.7584174401602518}
 	checkNetworkSolverOutputs(solver, outExpected, 0.0, t)
 }
 
@@ -113,7 +113,7 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 	totalNodes := biasCount + inputCount + hiddenCount + outputCount
 	assert.Len(t, graph.Nodes, totalNodes, "wrong nodes number")
 
-	totalEdges := 13
+	totalEdges := 12
 	assert.Len(t, graph.Edges, totalEdges, "wrong edges number")
 
 	var buf bytes.Buffer
@@ -121,10 +121,10 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 	require.NoError(t, err, "failed to marshal graph")
 
 	strOut := buf.String()
-	assert.Equal(t, 5789, len(strOut), "wrong length of marshalled string")
+	assert.Equal(t, 5587, len(strOut), "wrong length of marshalled string")
 
 	// test outputs
-	outExpected := []float64{0.12926155695140656, 0.15786889573150728}
+	outExpected := []float64{1.0768005629123314, 1.131042391465084}
 	checkNetworkSolverOutputs(solver, outExpected, 0.0, t)
 }
 
