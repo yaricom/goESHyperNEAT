@@ -4,10 +4,10 @@ go 1.21
 
 require (
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/yaricom/goGraphML v1.4.3
-	github.com/yaricom/goNEAT/v4 v4.1.0
-	gonum.org/v1/gonum v0.15.0
+	github.com/yaricom/goNEAT/v4 v4.2.0
+	gonum.org/v1/gonum v0.14.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
