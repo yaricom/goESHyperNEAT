@@ -79,7 +79,7 @@ print_every:  10
 # The number of runs to average over in an experiment
 num_runs:  1
 # The number of epochs (generations) to execute training
-num_generations: 100 #1500
+num_generations: 1500
 
 # The epoch's executor type to apply [sequential, parallel]
 epoch_executor: sequential
@@ -104,7 +104,7 @@ node_activators:
 link_threshold: 0.0
 
 # Indicates whether Link Expression Output (LEO) enabled
-leo_enabled: false
+leo_enabled: true
 
 # The weight range defines the minimum and maximum values for weights on substrate connections
 weight_range: 1

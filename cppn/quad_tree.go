@@ -70,7 +70,8 @@ func (q *QuadNode) Leo() float64 {
 	if len(q.CppnOut) > 1 {
 		return q.CppnOut[1]
 	}
-	return -1.0
+	// if no LEO output - enable link unconditionally
+	return 1.0
 }
 
 func (q *QuadNode) HasLeo() bool {

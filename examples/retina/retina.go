@@ -20,7 +20,7 @@ import (
 
 const (
 	// maxFitness Used as max value which we add error too to get an organism's fitness
-	maxFitness = 256.0
+	maxFitness = 1000.0
 	// fitnessThreshold is the fitness value for which an organism is considered to have won the experiment
 	fitnessThreshold = maxFitness
 
@@ -267,7 +267,7 @@ func evaluateNetwork(solver network.Solver, leftObj VisualObject, rightObj Visua
 	inputs := append(leftObj.data, rightObj.data...)
 
 	// run evaluation
-	loss := math.MaxFloat32
+	loss := maxFitness
 	if err := solver.LoadSensors(inputs); err != nil {
 		return loss, err
 	}
