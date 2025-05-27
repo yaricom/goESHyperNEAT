@@ -115,7 +115,7 @@ func queryCPPN(coordinates []float64, cppn network.Solver) ([]float64, error) {
 // This variance is a heuristic indicator of a region's heterogeneity (i.e., presence of information).
 func nodeVariance(node *QuadNode) float64 {
 	// quick check
-	if len(node.Nodes) == 0 {
+	if len(node.Nodes) < 4 {
 		return 0.0
 	}
 
