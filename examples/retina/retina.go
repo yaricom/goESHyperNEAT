@@ -114,7 +114,7 @@ func (e *generationEvaluator) GenerationEvaluate(ctx context.Context, population
 			}
 		}
 	}
-	elapsedTime := time.Now().Sub(startTime)
+	elapsedTime := time.Since(startTime)
 
 	// Fill statistics about the current epoch
 	epoch.FillPopulationStatistics(population)
@@ -200,7 +200,7 @@ func (e *generationEvaluator) organismEvaluate(ctx context.Context, organism *ge
 	if err != nil {
 		return false, nil, errors.Wrap(err, fmt.Sprintf("failed to evaluate organism: %s", organism))
 	}
-	createSolverElapsedTime := time.Now().Sub(createSolverTime)
+	createSolverElapsedTime := time.Since(createSolverTime)
 
 	// Evaluate the detector ANN against 256 combinations of the left and the right visual objects
 	// at correct and incorrect sides of retina
