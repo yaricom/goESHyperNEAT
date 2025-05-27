@@ -1,70 +1,79 @@
-// The package hyperneat holds implementation of HyperNEAT family of algorithms, including Evolvable-Substrate HyperNEAT
+// Package hyperneat holds the implementation of HyperNEAT algorithms family
 package hyperneat
 
 import (
-	"bytes"
-	"errors"
+	"github.com/pkg/errors"
+	"github.com/yaricom/goNEAT/v4/neat/math"
+	"gopkg.in/yaml.v3"
 	"io"
-
-	"github.com/spf13/viper"
-	"github.com/yaricom/goNEAT/neat"
-	"github.com/yaricom/goNEAT/neat/utils"
+	"os"
 )
 
-// The HyperNEAT execution context
-type HyperNEATContext struct {
-	// The NEAT context included
-	*neat.NeatContext
+type SubstrateActivatorType struct {
+	SubstrateActivationType math.NodeActivationType
+}
 
-	// The threshold value to indicate which links should be included
-	LinkThreshold float64
-	// The weight range defines the minimum and maximum values for weights on substrate connections, they go
+type OutputActivatorType struct {
+	OutputActivationType math.NodeActivationType
+}
+
+// Options The HyperNEAT execution options
+type Options struct {
+	// LinkThreshold The threshold value to indicate which links should be included
+	LinkThreshold float64 `yaml:"link_threshold"`
+	// WeightRange The weight range defines the minimum and maximum values for weights on substrate connections, they go
 	// from -WeightRange to +WeightRange, and can be any integer
-	WeightRange float64
+	WeightRange float64 `yaml:"weight_range"`
 
-	// The substrate activation function
-	SubstrateActivator utils.NodeActivationType
+	// LeoEnabled flag to control if Link Expression Output (LEO) enabled
+	LeoEnabled bool `yaml:"leo_enabled"`
+
+	// SubstrateActivator The activation function for the hidden substrate nodes
+	SubstrateActivator SubstrateActivatorType `yaml:"substrate_activator"`
+	// OutputActivatorType The activation function for the output substrate nodes
+	OutputActivator OutputActivatorType `yaml:"output_activator"`
+
+	// CppnBias The BIAS value for CPPN network
+	CppnBias float64 `yaml:"cppn_bias,omitempty"`
 }
 
-// Load is to read HyperNEAT context options from the provided reader
-func Load(r io.Reader) (*HyperNEATContext, error) {
-	var buff bytes.Buffer
-	tee := io.TeeReader(r, &buff)
-
-	// NEAT context loading
-	nCtx := &neat.NeatContext{}
-	if err := nCtx.LoadContext(tee); err != nil {
-		return nil, err
-	}
-
-	// Load HyperNEAT options
-	ctx := &HyperNEATContext{NeatContext: nCtx}
-	if err := ctx.load(&buff); err != nil {
-		return nil, err
-	}
-	return ctx, nil
-}
-
-// Loads only HyperNEAT context from provided configuration data
-func (h *HyperNEATContext) load(r io.Reader) error {
-	viper.SetConfigType("YAML")
-	err := viper.ReadConfig(r)
+// LoadYAMLOptions is to read HyperNEAT options from the provided reader
+func LoadYAMLOptions(r io.Reader) (*Options, error) {
+	content, err := io.ReadAll(r)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	v := viper.Sub("hyperneat")
-	if v == nil {
-		return errors.New("hyperneat subsection not found in configuration")
+	// read options
+	var opts Options
+	if err = yaml.Unmarshal(content, &opts); err != nil {
+		return nil, errors.Wrap(err, "failed to decode HyperNEAT options from YAML")
 	}
+	return &opts, nil
+}
 
-	h.LinkThreshold = v.GetFloat64("link_threshold")
-	h.WeightRange = v.GetFloat64("weight_range")
-
-	// read substrate activator
-	subAct := v.GetString("substrate_activator")
-	if h.SubstrateActivator, err = utils.NodeActivators.ActivationTypeFromName(subAct); err != nil {
-		return err
+// LoadYAMLConfigFile is to load ES-HyperNEAT options from a provided configuration file
+func LoadYAMLConfigFile(path string) (*Options, error) {
+	configFile, err := os.Open(path)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to open HyperNEAT configuration file")
 	}
+	return LoadYAMLOptions(configFile)
+}
 
+func (s *SubstrateActivatorType) UnmarshalYAML(value *yaml.Node) error {
+	if activationType, err := math.NodeActivators.ActivationTypeFromName(value.Value); err != nil {
+		return errors.Wrap(err, "failed to decode substrate activator function from HyperNEAT options")
+	} else {
+		s.SubstrateActivationType = activationType
+	}
+	return nil
+}
+
+func (o *OutputActivatorType) UnmarshalYAML(value *yaml.Node) error {
+	if activationType, err := math.NodeActivators.ActivationTypeFromName(value.Value); err != nil {
+		return errors.Wrap(err, "failed to decode output activator function from HyperNEAT options")
+	} else {
+		o.OutputActivationType = activationType
+	}
 	return nil
 }

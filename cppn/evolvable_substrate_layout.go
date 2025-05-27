@@ -2,31 +2,30 @@ package cppn
 
 import (
 	"fmt"
-
 	"github.com/pkg/errors"
-	"github.com/yaricom/goNEAT/neat/network"
+	"github.com/yaricom/goNEAT/v4/neat/network"
 )
 
-// Defines layout of neurons in the substrate
+// EvolvableSubstrateLayout Defines the layout of neurons in the substrate
 type EvolvableSubstrateLayout interface {
-	// Returns coordinates of the neuron with specified index [0; count) and type
+	// NodePosition Returns coordinates of the neuron with specified index [0; count) and type
 	NodePosition(index int, nType network.NodeNeuronType) (*PointF, error)
 
-	// Adds new hidden node to the substrate
+	// AddHiddenNode Adds a new hidden node to the substrate
 	// Returns the index of added hidden neuron or error if failed.
 	AddHiddenNode(position *PointF) (int, error)
-	// Returns index of hidden node at specified position or -1 if not fund
+	// IndexOfHidden Returns index of hidden node at a specified position or -1 if not fund
 	IndexOfHidden(position *PointF) int
 
-	// Returns number of INPUT neurons in the layout
+	// InputCount Returns the number of INPUT neurons in the layout
 	InputCount() int
-	// Returns number of HIDDEN neurons in the layout
+	// HiddenCount Returns the number of HIDDEN neurons in the layout
 	HiddenCount() int
-	// Returns number of OUTPUT neurons in the layout
+	// OutputCount Returns the number of OUTPUT neurons in the layout
 	OutputCount() int
 }
 
-// Creates new instance with given input and output neurons count
+// NewMappedEvolvableSubstrateLayout Creates new instance with given input and output neurons count
 func NewMappedEvolvableSubstrateLayout(inputCount, outputCount int) (*MappedEvolvableSubstrateLayout, error) {
 	if inputCount == 0 {
 		return nil, errors.New("the number of input neurons can not be ZERO")
@@ -46,11 +45,12 @@ func NewMappedEvolvableSubstrateLayout(inputCount, outputCount int) (*MappedEvol
 	return l, nil
 }
 
-// The EvolvableSubstrateLayout implementation using map for binding between hidden node and its index
+// MappedEvolvableSubstrateLayout the EvolvableSubstrateLayout implementation using a map for binding between a hidden
+// node and its index
 type MappedEvolvableSubstrateLayout struct {
-	// The map to hold binding between hidden node and its index for fast search
+	// The map to hold binding between the hidden node and its index for fast search
 	hNodesMap map[PointF]int
-	// The list of all known hidden nodes in specific order
+	// The list of all known hidden nodes in a specific order
 	hNodesList []*PointF
 
 	// The number of input nodes encoded in this substrate
@@ -97,14 +97,14 @@ func (m *MappedEvolvableSubstrateLayout) NodePosition(index int, nType network.N
 	}
 
 	// calculate X position
-	point.X = -1.0 + delta/2.0 // the initial position with half delta shift
+	point.X = -1.0 + delta/2.0 // the initial position with a half-delta shift
 	point.X += float64(index) * delta
 
 	return &point, nil
 }
 
 func (m *MappedEvolvableSubstrateLayout) AddHiddenNode(position *PointF) (int, error) {
-	// check if given hidden node already exists
+	// check if the given hidden node already exists
 	if m.IndexOfHidden(position) != -1 {
 		return -1, errors.Errorf("hidden node already exists at the position: %s", position)
 	}

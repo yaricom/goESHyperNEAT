@@ -1,79 +1,65 @@
+// Package eshyperneat holds implementation of Evolvable-Substrate HyperNEAT context
 package eshyperneat
 
 import (
-	"bytes"
-	"errors"
-	"github.com/spf13/viper"
-	"github.com/yaricom/goESHyperNEAT/hyperneat"
+	"github.com/pkg/errors"
+	"github.com/yaricom/goESHyperNEAT/v2/hyperneat"
+	"gopkg.in/yaml.v3"
 	"io"
+	"os"
 )
 
-// ES-HyperNEAT execution context
-type ESHyperNEATContext struct {
-	// The included HyperNEAT context
-	*hyperneat.HyperNEATContext
+// Options ES-HyperNEAT execution options
+type Options struct {
+	// The included HyperNEAT options
+	*hyperneat.Options `yaml:",inline"`
 
 	// InitialDepth defines the initial ES-HyperNEAT sample resolution.
-	InitialDepth int
+	InitialDepth int `yaml:"initial_depth"`
 	// Maximal ES-HyperNEAT sample resolution if the variance is still higher than the given division threshold
-	MaximalDepth int
+	MaximalDepth int `yaml:"maximal_depth"`
 
 	// DivisionThreshold defines the division threshold. If the variance in a region is greater than this value, after
 	// the initial resolution is reached, ES-HyperNEAT will sample down further (values greater than 1.0 will disable
 	// this feature). Note that sampling at really high resolutions can become computationally expensive.
-	DivisionThreshold float64
+	DivisionThreshold float64 `yaml:"division_threshold"`
 	// VarianceThreshold defines the variance threshold for the initial sampling. The bigger this value the less new
 	// connections will be added directly and the more chances that the new collection will be included in bands
 	// (see BandingThreshold)
-	VarianceThreshold float64
+	VarianceThreshold float64 `yaml:"variance_threshold"`
 	// BandingThreshold defines the threshold that determines when points are regarded to be in a band. If the point
 	// is in the band then no new connection will be added and as result no new hidden node will be introduced.
-	// The bigger this value the less connections/hidden nodes will be added, i.e. wide bands approximation.
-	BandingThreshold float64
+	// The bigger this value the fewer connections/hidden nodes will be added, i.e. wide bands approximation.
+	BandingThreshold float64 `yaml:"banding_threshold"`
+
+	// Quadtree Dimensions
+	// The range of the tree. Typically set to 2.0
+	Width  float64 `yaml:"width"`
+	Height float64 `yaml:"height"`
 
 	// ESIterations defines how many times ES-HyperNEAT should iteratively discover new hidden nodes.
-	ESIterations int
+	ESIterations int `yaml:"es_iterations"`
 }
 
-// Loads ESHyperNEAT context options from provided reader
-func Load(r io.Reader) (*ESHyperNEATContext, error) {
-	var buff bytes.Buffer
-	tee := io.TeeReader(r, &buff)
-
-	// load HyperNEAT options
-	hCtx, err := hyperneat.Load(tee)
+// LoadYAMLOptions is to load ES-HyperNEAT options from provided reader
+func LoadYAMLOptions(r io.Reader) (*Options, error) {
+	content, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
-
-	// load ES options
-	ctx := &ESHyperNEATContext{HyperNEATContext: hCtx}
-	if err := ctx.load(&buff); err != nil {
-		return nil, err
+	// read options
+	var opts Options
+	if err = yaml.Unmarshal(content, &opts); err != nil {
+		return nil, errors.Wrap(err, "failed to decode ES-HyperNEAT options from YAML")
 	}
-
-	return ctx, nil
+	return &opts, nil
 }
 
-func (e *ESHyperNEATContext) load(r io.Reader) error {
-	viper.SetConfigType("YAML")
-	err := viper.ReadConfig(r)
+// LoadYAMLConfigFile is to load ES-HyperNEAT options from provided configuration file
+func LoadYAMLConfigFile(path string) (*Options, error) {
+	configFile, err := os.Open(path)
 	if err != nil {
-		return err
+		return nil, errors.Wrap(err, "failed to open ES-HyperNEAT configuration file")
 	}
-	v := viper.Sub("es-hyperneat")
-	if v == nil {
-		return errors.New("es-hyperneat subsection not found in configuration")
-	}
-
-	e.InitialDepth = v.GetInt("initial_depth")
-	e.MaximalDepth = v.GetInt("maximal_depth")
-
-	e.DivisionThreshold = v.GetFloat64("division_threshold")
-	e.VarianceThreshold = v.GetFloat64("variance_threshold")
-	e.BandingThreshold = v.GetFloat64("banding_threshold")
-
-	e.ESIterations = v.GetInt("es_iterations")
-
-	return nil
+	return LoadYAMLOptions(configFile)
 }

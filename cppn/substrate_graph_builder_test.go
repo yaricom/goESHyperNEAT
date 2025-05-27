@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/yaricom/goNEAT/v4/neat/math"
+	"github.com/yaricom/goNEAT/v4/neat/network"
 	"strings"
 	"testing"
-
-	"github.com/yaricom/goNEAT/neat/network"
-	"github.com/yaricom/goNEAT/neat/utils"
 )
 
 func TestNewGraphMLBuilder(t *testing.T) {
@@ -33,7 +32,7 @@ func TestGraphMLBuilder_AddNode(t *testing.T) {
 		err := builder.AddNode(
 			node[nodeAttrID].(int),
 			node[nodeAttrNodeNeuronType].(network.NodeNeuronType),
-			node[nodeAttrNodeActivationType].(utils.NodeActivationType),
+			node[nodeAttrNodeActivationType].(math.NodeActivationType),
 			position)
 		require.NoError(t, err, "failed to add node")
 	}
@@ -53,7 +52,7 @@ func TestGraphMLBuilder_AddNode(t *testing.T) {
 				nnt := network.NeuronTypeName(v.(network.NodeNeuronType))
 				assert.Equal(t, nnt, gnAttr[k], "wrong neuron type")
 			} else if k == nodeAttrNodeActivationType {
-				nat, err := utils.NodeActivators.ActivationNameFromType(v.(utils.NodeActivationType))
+				nat, err := math.NodeActivators.ActivationNameFromType(v.(math.NodeActivationType))
 				assert.NoError(t, err, "failed to get activation name from type: %v", v)
 				assert.Equal(t, nat, gnAttr[k], "wrong activation type")
 			} else if gnAttr[k] != v {
@@ -74,7 +73,7 @@ func TestGraphMLBuilder_AddWeightedEdge(t *testing.T) {
 		err := builder.AddNode(
 			node[nodeAttrID].(int),
 			node[nodeAttrNodeNeuronType].(network.NodeNeuronType),
-			node[nodeAttrNodeActivationType].(utils.NodeActivationType),
+			node[nodeAttrNodeActivationType].(math.NodeActivationType),
 			position)
 		require.NoError(t, err, "failed to add node: %v", node)
 	}
@@ -111,7 +110,7 @@ func TestGraphMLBuilder_Marshal(t *testing.T) {
 		err := builder.AddNode(
 			node[nodeAttrID].(int),
 			node[nodeAttrNodeNeuronType].(network.NodeNeuronType),
-			node[nodeAttrNodeActivationType].(utils.NodeActivationType),
+			node[nodeAttrNodeActivationType].(math.NodeActivationType),
 			position)
 		require.NoError(t, err, "failed to add node: %v", node)
 	}
@@ -156,11 +155,11 @@ func createTestEdges() []map[string]interface{} {
 
 func createTestNodes() []map[string]interface{} {
 	return []map[string]interface{}{
-		{"id": 1, "X": -0.5, "Y": -1.0, "NodeNeuronType": network.InputNeuron, "NodeActivationType": utils.NullActivation},
-		{"id": 2, "X": 0.5, "Y": -1.0, "NodeNeuronType": network.InputNeuron, "NodeActivationType": utils.NullActivation},
-		{"id": 3, "X": 0.0, "Y": 0.0, "NodeNeuronType": network.HiddenNeuron, "NodeActivationType": utils.SigmoidSteepenedActivation},
-		{"id": 4, "X": 0.0, "Y": 0.0, "NodeNeuronType": network.HiddenNeuron, "NodeActivationType": utils.SigmoidSteepenedActivation},
-		{"id": 5, "X": 0.0, "Y": 1.0, "NodeNeuronType": network.OutputNeuron, "NodeActivationType": utils.LinearActivation},
+		{"id": 1, "X": -0.5, "Y": -1.0, "NodeNeuronType": network.InputNeuron, "NodeActivationType": math.NullActivation},
+		{"id": 2, "X": 0.5, "Y": -1.0, "NodeNeuronType": network.InputNeuron, "NodeActivationType": math.NullActivation},
+		{"id": 3, "X": 0.0, "Y": 0.0, "NodeNeuronType": network.HiddenNeuron, "NodeActivationType": math.SigmoidSteepenedActivation},
+		{"id": 4, "X": 0.0, "Y": 0.0, "NodeNeuronType": network.HiddenNeuron, "NodeActivationType": math.SigmoidSteepenedActivation},
+		{"id": 5, "X": 0.0, "Y": 1.0, "NodeNeuronType": network.OutputNeuron, "NodeActivationType": math.LinearActivation},
 	}
 }
 

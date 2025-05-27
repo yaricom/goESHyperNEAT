@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/yaricom/goESHyperNEAT/hyperneat"
-	"github.com/yaricom/goNEAT/neat/utils"
-	"os"
+	"github.com/yaricom/goESHyperNEAT/v2/hyperneat"
+	"github.com/yaricom/goNEAT/v4/neat/math"
 	"testing"
 )
 
@@ -17,8 +16,8 @@ func TestNewSubstrate(t *testing.T) {
 	layout := NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount)
 
 	// create new substrate
-	substr := NewSubstrate(layout, utils.SigmoidSteepenedActivation)
-	assert.Equal(t, utils.SigmoidSteepenedActivation, substr.NodesActivation)
+	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation, math.LinearActivation)
+	assert.Equal(t, math.SigmoidSteepenedActivation, substr.HiddenNodesActivation)
 }
 
 func TestSubstrate_CreateNetworkSolver(t *testing.T) {
@@ -26,11 +25,11 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 	layout := NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount)
 
 	// create new substrate
-	substr := NewSubstrate(layout, utils.SigmoidSteepenedActivation)
-	assert.Equal(t, utils.SigmoidSteepenedActivation, substr.NodesActivation)
+	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation, math.LinearActivation)
+	assert.Equal(t, math.SigmoidSteepenedActivation, substr.HiddenNodesActivation)
 
 	// create solver from substrate
-	cppn, err := ReadCPPFromGenomeFile(cppnHyperNEATTestGenomePath)
+	cppn, err := FastSolverFromGenomeFile(cppnHyperNEATTestGenomePath)
 	require.NoError(t, err, "failed to read CPPN")
 
 	context, err := loadHyperNeatContext(hyperNeatTestConfigFile)
@@ -45,23 +44,12 @@ func TestSubstrate_CreateNetworkSolver(t *testing.T) {
 	totalNodeCount := biasCount + inputCount + hiddenCount + outputCount
 	assert.Equal(t, totalNodeCount, solver.NodeCount(), "wrong nodes number")
 
-	totalLinkCount := 12 //biasCount * (hiddenCount + outputCount)
+	totalLinkCount := 12
 	assert.Equal(t, totalLinkCount, solver.LinkCount(), "wrong links number")
 
 	// test outputs
-	signals := []float64{0.9, 5.2, 1.2, 0.6}
-	err = solver.LoadSensors(signals)
-	require.NoError(t, err, "failed to load sensors")
-
-	res, err := solver.RecursiveSteps()
-	require.NoError(t, err, "failed to perform recursive activation")
-	require.True(t, res, "failed to relax network")
-
-	outs := solver.ReadOutputs()
-	outExpected := []float64{0.6427874813512032, 0.8685335941574246}
-	for i, out := range outs {
-		assert.Equal(t, outExpected[i], out, "wrong output at: %d", i)
-	}
+	outExpected := []float64{1.0768005629123314, 1.131042391465084}
+	checkNetworkSolverOutputs(solver, outExpected, 0.0, t)
 }
 
 func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
@@ -69,11 +57,11 @@ func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
 	layout := NewGridSubstrateLayout(biasCount, inputCount, outputCount, hiddenCount)
 
 	// create new substrate
-	substr := NewSubstrate(layout, utils.SigmoidSteepenedActivation)
-	assert.Equal(t, utils.SigmoidSteepenedActivation, substr.NodesActivation)
+	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation, math.LinearActivation)
+	assert.Equal(t, math.SigmoidSteepenedActivation, substr.HiddenNodesActivation)
 
 	// create solver from substrate
-	cppn, err := ReadCPPFromGenomeFile(cppnLeoHyperNEATTestGenomePath)
+	cppn, err := FastSolverFromGenomeFile(cppnLeoHyperNEATTestGenomePath)
 	require.NoError(t, err, "failed to read CPPN")
 
 	context, err := loadHyperNeatContext(hyperNeatTestConfigFile)
@@ -84,27 +72,18 @@ func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
 	solver, err := substr.CreateNetworkSolver(cppn, true, graph, context)
 	require.NoError(t, err, "failed to create network solver")
 
+	printGraph(graph, t)
+
 	// test solver
 	totalNodeCount := biasCount + inputCount + hiddenCount + outputCount
 	assert.Equal(t, totalNodeCount, solver.NodeCount(), "wrong nodes number")
 
-	totalLinkCount := 14
+	totalLinkCount := 16
 	assert.Equal(t, totalLinkCount, solver.LinkCount(), "wrong links number")
 
 	// test outputs
-	signals := []float64{0.9, 5.2, 1.2, 0.6}
-	err = solver.LoadSensors(signals)
-	require.NoError(t, err, "failed to load sensors")
-
-	res, err := solver.RecursiveSteps()
-	require.NoError(t, err, "failed to perform recursive activation")
-	require.True(t, res, "failed to relax network")
-
-	outs := solver.ReadOutputs()
-	outExpected := []float64{0.5000001657646664, 0.5000003552761682}
-	for i, out := range outs {
-		assert.Equal(t, outExpected[i], out, "wrong output at: %d", i)
-	}
+	outExpected := []float64{-0.1147701149321737, -0.7584174401602518}
+	checkNetworkSolverOutputs(solver, outExpected, 1e-5, t)
 }
 
 func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
@@ -115,10 +94,10 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 	builder := NewSubstrateGraphMLBuilder("", false).(*graphMLBuilder)
 
 	// create new substrate
-	substr := NewSubstrate(layout, utils.SigmoidSteepenedActivation)
+	substr := NewSubstrate(layout, math.SigmoidSteepenedActivation, math.LinearActivation)
 
 	// create solver from substrate
-	cppn, err := ReadCPPFromGenomeFile(cppnHyperNEATTestGenomePath)
+	cppn, err := FastSolverFromGenomeFile(cppnHyperNEATTestGenomePath)
 	require.NoError(t, err, "failed to read CPPN")
 
 	context, err := loadHyperNeatContext(hyperNeatTestConfigFile)
@@ -142,33 +121,18 @@ func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
 	require.NoError(t, err, "failed to marshal graph")
 
 	strOut := buf.String()
-	assert.Equal(t, 5597, len(strOut), "wrong length of marshalled string")
+	assert.Equal(t, 5587, len(strOut), "wrong length of marshalled string")
 
 	// test outputs
-	signals := []float64{0.9, 5.2, 1.2, 0.6}
-	err = solver.LoadSensors(signals)
-	require.NoError(t, err, "failed to load sensors")
-
-	res, err := solver.RecursiveSteps()
-	require.NoError(t, err, "failed to perform recursive activation")
-	require.True(t, res, "failed to relax network")
-
-	outs := solver.ReadOutputs()
-	outExpected := []float64{0.6427874813512032, 0.8685335941574246}
-	for i, out := range outs {
-		assert.Equal(t, outExpected[i], out, "wrong output at: %d", i)
-	}
+	outExpected := []float64{1.0768005629123314, 1.131042391465084}
+	checkNetworkSolverOutputs(solver, outExpected, 0.0, t)
 }
 
 // Loads HyperNeat context from provided config file's path
-func loadHyperNeatContext(configPath string) (*hyperneat.HyperNEATContext, error) {
-	if r, err := os.Open(configPath); err != nil {
+func loadHyperNeatContext(configPath string) (*hyperneat.Options, error) {
+	if context, err := hyperneat.LoadYAMLConfigFile(configPath); err != nil {
 		return nil, err
 	} else {
-		if context, err := hyperneat.Load(r); err != nil {
-			return nil, err
-		} else {
-			return context, nil
-		}
+		return context, nil
 	}
 }

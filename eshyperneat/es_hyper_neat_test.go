@@ -3,25 +3,40 @@ package eshyperneat
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/yaricom/goNEAT/neat/utils"
+	"github.com/yaricom/goNEAT/v4/neat/math"
 	"os"
 	"testing"
 )
 
-func TestESHyperNEATContext_LoadFullContext(t *testing.T) {
-	r, err := os.Open("../data/test/test_es_hyper.neat.yml")
-	require.NoError(t, err, "failed to open config file")
+const EsHyperNeatCfgPath = "../data/test/test_es_hyper.neat.yml"
 
-	esCtx, err := Load(r)
-	require.NoError(t, err, "failed to load context")
+func TestLoadYAMLConfigFile(t *testing.T) {
+	opts, err := LoadYAMLConfigFile(EsHyperNeatCfgPath)
+	require.NoError(t, err, "failed to load options from config file")
 
 	// check loaded values
-	assert.Equal(t, 3, esCtx.InitialDepth)
-	assert.Equal(t, 5, esCtx.MaximalDepth)
-	assert.Equal(t, 0.01, esCtx.DivisionThreshold)
-	assert.Equal(t, 0.03, esCtx.VarianceThreshold)
-	assert.Equal(t, 0.3, esCtx.BandingThreshold)
-	assert.Equal(t, 1, esCtx.ESIterations)
+	checkEsHyperNeatOptions(opts, t)
+}
 
-	assert.Equal(t, utils.SigmoidSteepenedActivation, esCtx.HyperNEATContext.SubstrateActivator)
+func TestLoadYAMLOptions(t *testing.T) {
+	configFile, err := os.Open(EsHyperNeatCfgPath)
+	assert.NoError(t, err, "Failed to open ES-HyperNEAT configuration file.")
+
+	opts, err := LoadYAMLOptions(configFile)
+	assert.NoError(t, err, "failed to load options from config file")
+
+	// check loaded values
+	checkEsHyperNeatOptions(opts, t)
+}
+
+func checkEsHyperNeatOptions(opts *Options, t *testing.T) {
+	assert.Equal(t, 3, opts.InitialDepth)
+	assert.Equal(t, 5, opts.MaximalDepth)
+	assert.Equal(t, 0.01, opts.DivisionThreshold)
+	assert.Equal(t, 0.03, opts.VarianceThreshold)
+	assert.Equal(t, 0.3, opts.BandingThreshold)
+	assert.Equal(t, 1, opts.ESIterations)
+
+	assert.Equal(t, math.SigmoidSteepenedActivation, opts.SubstrateActivator.SubstrateActivationType)
+	assert.Equal(t, math.SigmoidPlainActivation, opts.OutputActivator.OutputActivationType)
 }
