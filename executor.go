@@ -37,7 +37,7 @@ func main() {
 	if *seed < 0 {
 		*seed = time.Now().UnixNano()
 	}
-	rand.Seed(*seed)
+	rand.Seed(*seed) //nolint:all
 
 	// Load context configuration
 	neatOptions, err := neat.ReadNeatOptionsFromFile(*contextPath)
