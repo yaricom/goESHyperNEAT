@@ -76,7 +76,7 @@ func main() {
 		log.Fatal("Failed to create output directory: ", err)
 	}
 
-	// Override context configuration parameters with ones set from command line
+	// Override context configuration parameters with ones set from the command line
 	if *trialsCount > 0 {
 		neatOptions.NumRuns = *trialsCount
 	}

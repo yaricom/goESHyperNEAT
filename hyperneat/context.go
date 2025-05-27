@@ -11,7 +11,7 @@ type key int
 // instead of using this key directly.
 var hyperNeatOptionsKey key
 
-// NewContext returns a new Context that carries value of HyperNEAT options.
+// NewContext returns a new Context that carries the value of HyperNEAT options.
 func NewContext(ctx context.Context, opts *Options) context.Context {
 	return context.WithValue(ctx, hyperNeatOptionsKey, opts)
 }

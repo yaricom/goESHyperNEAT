@@ -23,11 +23,11 @@ func (s DetectionSide) String() string {
 type Environment struct {
 	// the data set of visual objects to be detected
 	visualObjects []VisualObject
-	// the size of input data array
+	// the size of an input data array
 	inputSize int
 }
 
-// NewRetinaEnvironment creates a new Retina Environment with a dataset of all possible Visual Object with specified
+// NewRetinaEnvironment creates a new Retina Environment with a dataset of all possible Visual Object with a specified
 // number of inputs to be acquired from provided objects.
 func NewRetinaEnvironment(dataSet []VisualObject, inputSize int) (*Environment, error) {
 	// check that provided visual objects has data points equal to the inputSize
@@ -50,7 +50,7 @@ type VisualObject struct {
 	Config string        // the configuration string
 
 	// Inner computed values from visual objects configuration parsing
-	data []float64 // the visual object is rectangular, it can be encoded as 1D array
+	data []float64 // the visual object is rectangular, it can be encoded as a 1D array
 }
 
 // NewVisualObject creates a new VisualObject by first parsing the config string into a VisualObject

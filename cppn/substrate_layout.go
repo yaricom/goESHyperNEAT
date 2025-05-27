@@ -6,18 +6,18 @@ import (
 	"github.com/yaricom/goNEAT/v4/neat/network"
 )
 
-// SubstrateLayout Defines layout of neurons in the substrate
+// SubstrateLayout Defines the layout of neurons in the substrate
 type SubstrateLayout interface {
 	// NodePosition Returns coordinates of the neuron with specified index [0; count) and type
 	NodePosition(index int, nType network.NodeNeuronType) (*PointF, error)
 
-	// BiasCount Returns number of BIAS neurons in the layout
+	// BiasCount Returns the number of BIAS neurons in the layout
 	BiasCount() int
-	// InputCount Returns number of INPUT neurons in the layout
+	// InputCount Returns the number of INPUT neurons in the layout
 	InputCount() int
-	// HiddenCount Returns number of HIDDEN neurons in the layout
+	// HiddenCount Returns the number of HIDDEN neurons in the layout
 	HiddenCount() int
-	// OutputCount Returns number of OUTPUT neurons in the layout
+	// OutputCount Returns the number of OUTPUT neurons in the layout
 	OutputCount() int
 }
 
@@ -92,7 +92,7 @@ func (g *GridSubstrateLayout) NodePosition(index int, nType network.NodeNeuronTy
 		return nil, errors.New("neuron index is out of range")
 	}
 	// calculate X position
-	point.X = -1.0 + delta/2.0 // the initial position with half delta shift
+	point.X = -1.0 + delta/2.0 // the initial position with a half-delta shift
 	point.X += float64(index) * delta
 
 	return &point, nil

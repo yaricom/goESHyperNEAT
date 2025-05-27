@@ -37,8 +37,8 @@ type generationEvaluator struct {
 	compatAdjustFreq int
 }
 
-// NewGenerationEvaluator is to create new generation's evaluator for retina experiment.  The numSpeciesTarget specifies the
-// target number of species to maintain in the population. If the number of species differ from the numSpeciesTarget it
+// NewGenerationEvaluator is to create a new generation's evaluator for retina experiment.  The numSpeciesTarget specifies the
+// target number of species to maintain in the population. If the number of species differs from the numSpeciesTarget it
 // will be automatically adjusted with compatAdjustFreq frequency, i.e., at each epoch % compatAdjustFreq == 0
 func NewGenerationEvaluator(outDir string, env *Environment, numSpeciesTarget, compatAdjustFreq int) (experiment.GenerationEvaluator, experiment.TrialRunObserver) {
 	evaluator := &generationEvaluator{
@@ -50,12 +50,12 @@ func NewGenerationEvaluator(outDir string, env *Environment, numSpeciesTarget, c
 	return evaluator, evaluator
 }
 
-// TrialRunStarted invoked to notify that new trial run just started. Invoked before any epoch evaluation in that trial run
+// TrialRunStarted invoked to notify that a new trial run just started. Invoked before any epoch evaluation in that trial run
 func (e *generationEvaluator) TrialRunStarted(_ *experiment.Trial) {
 	// just stub
 }
 
-// TrialRunFinished invoked to notify that the trial run just finished. Invoked after all epochs evaluated or successful solver found.
+// TrialRunFinished invoked to notify that the trial run just finished. Invoked after all epochs are evaluated or successful solver found.
 func (e *generationEvaluator) TrialRunFinished(_ *experiment.Trial) {
 	// just stub
 }
@@ -116,7 +116,7 @@ func (e *generationEvaluator) GenerationEvaluate(ctx context.Context, population
 	}
 	elapsedTime := time.Now().Sub(startTime)
 
-	// Fill statistics about current epoch
+	// Fill statistics about the current epoch
 	epoch.FillPopulationStatistics(population)
 
 	// Only print to file every print_every generation
@@ -186,7 +186,7 @@ func (e *generationEvaluator) organismEvaluate(ctx context.Context, organism *ge
 	}
 
 	// create substrate layout
-	inputCount := e.env.inputSize * 2 // left + right pixels of visual object
+	inputCount := e.env.inputSize * 2 // left and right pixels of a visual object
 	layout, err := cppn.NewMappedEvolvableSubstrateLayout(inputCount, 2)
 	if err != nil {
 		return false, nil, err
@@ -236,7 +236,7 @@ func (e *generationEvaluator) organismEvaluate(ctx context.Context, organism *ge
 	if fitness >= fitnessThreshold {
 		isWinner = true
 		fmt.Printf("Found a Winner! \n")
-		// save solver graph to the winner organism
+		// save the solver graph to the winner organism
 		organism.Data = &genetics.OrganismData{Value: graph}
 	}
 	// Save properties to organism struct
@@ -322,7 +322,7 @@ func evaluatePredictions(predictions []float64, leftObj VisualObject, rightObj V
 		return 0.0
 	}
 
-	// find loss as item-wise difference between two vectors
+	// find loss as an item-wise difference between two vectors
 	loss := (math.Abs(predictions[0]-targets[0]) + math.Abs(predictions[1]-targets[1])) / 2.0
 
 	neat.DebugLog(fmt.Sprintf("[%.2f, %.2f] -> [%.2f, %.2f] loss: %.2f",

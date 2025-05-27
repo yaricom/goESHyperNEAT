@@ -15,7 +15,7 @@ func (p *PointF) String() string {
 	return fmt.Sprintf("(%f, %f, %f)", p.X, p.Y, p.Z)
 }
 
-// QuadPoint Defines the quad-point in the 6 dimensional hypercube
+// QuadPoint Defines the quad-point in the 6-dimensional hypercube
 type QuadPoint struct {
 	// The associated coordinates
 	X1, X2, Y1, Y2, Z1, Z2 float64
@@ -46,7 +46,7 @@ func NewQuadPoint(x1, y1, z1, x2, y2, z2 float64, node *QuadNode) *QuadPoint {
 
 // QuadNode Defines quad-tree node to model 4 dimensional hypercube
 type QuadNode struct {
-	// The coordinates of center of this quad-tree node's square
+	// The coordinates of the center of this quad-tree node's square
 	X, Y, Z float64
 	// The width of this quad-tree node's square
 	Width float64
@@ -82,7 +82,7 @@ func (q *QuadNode) String() string {
 	return fmt.Sprintf("((%f, %f, %f), %f x %f) = %f at %d", q.X, q.Y, q.Z, q.Width, q.Height, q.CppnOut, q.Level)
 }
 
-// NewQuadNode Creates new quad-node with given parameters
+// NewQuadNode Creates a new quad-node with given parameters
 func NewQuadNode(x, y, width, height float64, level int) *QuadNode {
 	node := QuadNode{
 		X:       x,
@@ -95,7 +95,7 @@ func NewQuadNode(x, y, width, height float64, level int) *QuadNode {
 	return &node
 }
 
-// NewQuadNodeZ Creates new quad-node with given parameters with Z coordinate value
+// NewQuadNodeZ Creates a new quad-node with given parameters with Z coordinate value
 func NewQuadNodeZ(x, y, z, width, height float64, level int) *QuadNode {
 	node := QuadNode{
 		X:       x,

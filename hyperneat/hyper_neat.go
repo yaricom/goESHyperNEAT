@@ -1,4 +1,4 @@
-// Package hyperneat holds implementation of HyperNEAT family of algorithms
+// Package hyperneat holds the implementation of HyperNEAT algorithms family
 package hyperneat
 
 import (
@@ -51,7 +51,7 @@ func LoadYAMLOptions(r io.Reader) (*Options, error) {
 	return &opts, nil
 }
 
-// LoadYAMLConfigFile is to load ES-HyperNEAT options from provided configuration file
+// LoadYAMLConfigFile is to load ES-HyperNEAT options from a provided configuration file
 func LoadYAMLConfigFile(path string) (*Options, error) {
 	configFile, err := os.Open(path)
 	if err != nil {

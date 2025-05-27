@@ -10,11 +10,11 @@ import (
 	"math"
 )
 
-// EvolvableSubstrate The evolvable substrate holds configuration of ANN produced by CPPN within hypecube where each 4-dimensional point
-// mark connection weight between two ANN units. The topology of ANN is not rigid as in plain substrate and can be evolved
-// by introducing novel nodes to the ANN. This provides extra benefits that the topology of ANN should not be handcrafted
-// by human, but produced during substrate generation from controlling CPPN and nodes locations may be arbitrary that suits
-// the best for the task at hand.
+// EvolvableSubstrate The evolvable substrate holds configuration of ANN produced by CPPN within the hypercube where
+// each 4-dimensional point mark connection weight between two ANN units. The topology of ANN is not rigid as in plain
+// substrate and can be evolved by introducing novel nodes to the ANN. This provides extra benefits that the topology
+// of ANN should not be handcrafted by human, but produced during substrate generation from controlling CPPN, and node
+// locations may be arbitrary that suits the best for the task at hand.
 type EvolvableSubstrate struct {
 	// Layout The layout of neuron nodes in this substrate
 	Layout EvolvableSubstrateLayout
@@ -23,7 +23,7 @@ type EvolvableSubstrate struct {
 	// OutputNodesActivation The activation function type for output neurons encoded
 	OutputNodesActivation neatmath.NodeActivationType
 
-	// The CPPN network solver to describe geometry of substrate
+	// The CPPN network solver to describe the geometry of substrate
 	cppn *network.Network
 	// The reusable coordinates buffer
 	coords []float64
@@ -40,7 +40,7 @@ func NewEvolvableSubstrate(layout EvolvableSubstrateLayout, hiddenNodesActivatio
 }
 
 // NewEvolvableSubstrateWithBias creates new instance of evolvable substrate with defined cppnBias value.
-// The cppnBias will be provided as first value of the CPPN inputs array.
+// The cppnBias will be provided as the first value of the CPPN inputs array.
 func NewEvolvableSubstrateWithBias(layout EvolvableSubstrateLayout, hiddenNodesActivation, outputNodesActivation neatmath.NodeActivationType, cppnBias float64) *EvolvableSubstrate {
 	coords := make([]float64, 7)
 	coords[0] = cppnBias
@@ -52,9 +52,10 @@ func NewEvolvableSubstrateWithBias(layout EvolvableSubstrateLayout, hiddenNodesA
 	}
 }
 
-// CreateNetworkSolver Creates network solver based on current substrate layout and provided Compositional Pattern Producing Network which
-// used to define connections between network nodes. Optional graph_builder can be provided to collect graph nodes and edges
-// of created network solver. With graph builder it is possible to save/load network configuration as well as visualize it.
+// CreateNetworkSolver Creates a network solver based on the current substrate layout and provided
+// Compositional Pattern Producing Network, which used to define connections between network nodes.
+// Optional graph_builder can be provided to collect graph nodes and edges of the created network solver.
+// With graph builder it is possible to save/load network configuration as well as visualize it.
 func (es *EvolvableSubstrate) CreateNetworkSolver(cppn *network.Network, graphBuilder SubstrateGraphBuilder, options *eshyperneat.Options) (network.Solver, error) {
 	es.cppn = cppn
 
@@ -67,7 +68,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn *network.Network, graphBu
 	// The map to hold already created links
 	connMap := make(map[string]*network.FastNetworkLink)
 
-	// The function to add new link to the network if appropriate
+	// The function to add a new link to the network if appropriate
 	addLink := func(qp *QuadPoint, source, target int) (*network.FastNetworkLink, bool) {
 		key := fmt.Sprintf("%d_%d", source, target)
 		if _, ok := connMap[key]; ok {
@@ -78,7 +79,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn *network.Network, graphBu
 		if options.LeoEnabled && qp.Leo > 0 {
 			link = createLink(qp.Weight, source, target, options.WeightRange)
 		} else if !options.LeoEnabled && math.Abs(qp.Weight) >= options.LinkThreshold {
-			// add only connections with signal exceeding provided threshold
+			// add only connections with signal exceeding the provided threshold
 			link = createThresholdNormalizedLink(qp.Weight, source, target, options.LinkThreshold, options.WeightRange)
 		}
 		if link != nil {
@@ -90,7 +91,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn *network.Network, graphBu
 		}
 	}
 
-	// inline function to find activation type for a given neuron
+	// inline function to find an activation type for a given neuron
 	activationForNeuron := func(nodeIndex int) neatmath.NodeActivationType {
 		if nodeIndex < firstOutput {
 			// input nodes
@@ -107,7 +108,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn *network.Network, graphBu
 	// Build links from input nodes to the hidden nodes
 	var root *QuadNode
 	for in := firstInput; in < firstOutput; in++ {
-		// Analyse outgoing connectivity pattern from this input
+		// Analyse an outgoing connectivity pattern from this input
 		input, err := es.Layout.NodePosition(in-firstInput, network.InputNeuron)
 		if err != nil {
 			return nil, err
@@ -126,7 +127,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn *network.Network, graphBu
 		}
 		// iterate over quad points and add nodes/links
 		for _, qp := range qPoints {
-			// add hidden node to the substrate layout if needed
+			// add a hidden node to the substrate layout if needed
 			targetIndex, err := es.addHiddenNode(qp, firstHidden, graphBuilder)
 			if err != nil {
 				return nil, err
@@ -146,7 +147,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn *network.Network, graphBu
 	lastHidden := firstHiddenIter + es.Layout.HiddenCount()
 	for step := 0; step < options.ESIterations; step++ {
 		for hi := firstHiddenIter; hi < lastHidden; hi++ {
-			// Analyse outgoing connectivity pattern from this hidden node
+			// Analyse an outgoing connectivity pattern from this hidden node
 			hidden, err := es.Layout.NodePosition(hi-firstHidden, network.HiddenNeuron)
 			if err != nil {
 				return nil, err
@@ -160,7 +161,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn *network.Network, graphBu
 			}
 			// iterate over quad points and add nodes/links
 			for _, qp := range qPoints {
-				// add hidden node to the substrate layout if needed
+				// add a hidden node to the substrate layout if needed
 				targetIndex, err := es.addHiddenNode(qp, firstHidden, graphBuilder)
 				if err != nil {
 					return nil, err
@@ -182,7 +183,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn *network.Network, graphBu
 
 	// Connect hidden nodes to the output
 	for oi := firstOutput; oi < firstHidden; oi++ {
-		// Analyse incoming connectivity pattern
+		// Analyse an incoming connectivity pattern
 		output, err := es.Layout.NodePosition(oi-firstOutput, network.OutputNeuron)
 		if err != nil {
 			return nil, err
@@ -205,7 +206,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn *network.Network, graphBu
 			nodePoint := NewPointF(qp.X1, qp.Y1)
 			sourceIndex := es.Layout.IndexOfHidden(nodePoint)
 			if sourceIndex != -1 {
-				// only connect to the hidden nodes that already exists and connected to the input/hidden nodes
+				// only connect to the hidden nodes that already exist and connected to the input/hidden nodes
 				sourceIndex += firstHidden // adjust index to the global indexes space
 
 				// add connection
@@ -227,7 +228,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn *network.Network, graphBu
 		activations[i] = activationForNeuron(i)
 	}
 
-	// create fast network solver
+	// create a fast network solver
 	if totalNeuronCount == 0 || len(activations) != totalNeuronCount {
 		message := fmt.Sprintf("failed to create network solver: links [%d], nodes [%d], activations [%d], LEO [%t]",
 			len(links), totalNeuronCount, len(activations), options.LeoEnabled)
@@ -243,7 +244,7 @@ func (es *EvolvableSubstrate) addHiddenNode(qp *QuadPoint, firstHidden int, grap
 	nodePoint := NewPointF(qp.X2, qp.Y2)
 	targetIndex = es.Layout.IndexOfHidden(nodePoint)
 	if targetIndex == -1 {
-		// add hidden node to the substrate layout
+		// add a hidden node to the substrate layout
 		if targetIndex, err = es.Layout.AddHiddenNode(nodePoint); err != nil {
 			return -1, err
 		}
@@ -260,8 +261,9 @@ func (es *EvolvableSubstrate) addHiddenNode(qp *QuadPoint, firstHidden int, grap
 	return targetIndex, nil
 }
 
-// Divides and initialize the quadtree from provided coordinates of source (outgoing = true) or target node (outgoing = false) at (a,b,c).
-// Returns quadtree, in which each quadnode at (x,y,z) stores CPPN activation level for its position. The initialized
+// Divides and initialize the quadtree from provided coordinates of source (outgoing = true) or
+// target node (outgoing = false) at (a,b,c).
+// Returns quadtree, in which each quad-node at (x,y,z) stores CPPN activation level for its position. The initialized
 // quadtree is used in the PruningAndExtraction phase to generate the actual ANN connections.
 func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b, c float64, outgoing bool, options *eshyperneat.Options) (root *QuadNode, err error) {
 	root = NewQuadNode(0.0, 0.0, options.Width, options.Height, 1)
@@ -288,7 +290,7 @@ func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b, c float64, outgoing bo
 					return nil, err
 				}
 			} else {
-				// Querying connection to output node (Incoming connectivity pattern)
+				// Querying connection to the output node (Incoming connectivity pattern)
 				if node.CppnOut, err = es.queryCPPN(node.X, node.Y, node.Z, a, b, c); err != nil {
 					return nil, err
 				}
@@ -309,8 +311,8 @@ func (es *EvolvableSubstrate) quadTreeDivideAndInit(a, b, c float64, outgoing bo
 // Decides what regions should have higher neuron density based on variation and express new neurons and connections into
 // these regions.
 // Receive coordinates of source (outgoing = true) or target node (outgoing = false) at (a, b) and initialized quadtree node.
-// Adds the connections that are in bands of the two-dimensional cross-section of the  hypercube containing the source
-// or target node to the connections list and return modified list.
+// Adds the connections that are in bands of the two-dimensional cross-section of the hypercube containing the source
+// or target node to the connection list and return a modified list.
 func (es *EvolvableSubstrate) pruneAndExpress(a, b, c float64, connections []*QuadPoint, node *QuadNode, outgoing bool, options *eshyperneat.Options) ([]*QuadPoint, error) {
 	// fast check
 	if len(node.Nodes) == 0 {
@@ -331,8 +333,8 @@ func (es *EvolvableSubstrate) pruneAndExpress(a, b, c float64, connections []*Qu
 			}
 		} else if !options.LeoEnabled || (quadNode.Leo() > 0) {
 			// Band Pruning phase.
-			// If LEO is turned off this should always happen.
-			// If it is not it should only happen if the LEO output is greater than zero
+			// If LEO is turned off, this should always happen.
+			// If it is not, it should only happen if the LEO output is greater than zero
 			if outgoing {
 				if l, err := es.queryCPPN(a, b, c, quadNode.X-node.Width, quadNode.Y, quadNode.Z); err != nil {
 					return nil, err
@@ -378,7 +380,7 @@ func (es *EvolvableSubstrate) pruneAndExpress(a, b, c float64, connections []*Qu
 			}
 
 			if math.Max(math.Min(top, bottom), math.Min(left, right)) > options.BandingThreshold {
-				// Create new connection specified by QuadPoint(x1,y1,z1,x2,y2,z2,weight) in 4D hypercube
+				// Create a new connection specified by QuadPoint(x1,y1,z1,x2,y2,z2,weight) in 4D hypercube
 				var conn *QuadPoint
 				if outgoing {
 					conn = NewQuadPoint(a, b, c, quadNode.X, quadNode.Y, quadNode.Z, quadNode)

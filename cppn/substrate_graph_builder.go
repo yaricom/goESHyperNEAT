@@ -21,7 +21,7 @@ const (
 
 // SubstrateGraphBuilder The graph builder able to build weighted directed graphs representing substrate networks
 type SubstrateGraphBuilder interface {
-	// AddNode Adds specified node to the graph with provided position
+	// AddNode Adds the specified node to the graph with the provided position
 	AddNode(nodeId int, nodeNeuronType network.NodeNeuronType, nodeActivation math.NodeActivationType, position *PointF) error
 	// AddWeightedEdge Adds edge between two graph nodes
 	AddWeightedEdge(sourceId, targetId int, weight float64) error
@@ -33,7 +33,7 @@ type SubstrateGraphBuilder interface {
 
 	// Marshal the graph to the provided writer
 	Marshal(w io.Writer) error
-	// UnMarshal is to unmarshal graph from the provided reader
+	// UnMarshal is to unmarshal the graph from the provided reader
 	UnMarshal(r io.Reader) error
 }
 
@@ -42,15 +42,15 @@ type graphMLBuilder struct {
 	// The GraphML instance
 	graphML *graphml.GraphML
 
-	// The flag to indicate whether marshal should generate compact graph presentation
+	// The flag to indicate whether marshal should generate a compact graph presentation
 	compact bool
 
 	// The map to hold already added nodes
 	nodesMap map[int]*graphml.Node
 }
 
-// NewSubstrateGraphMLBuilder Creates new instance with specified description to be included into serialized graph.
-// If compact is true then graph will be marshaled into compact form
+// NewSubstrateGraphMLBuilder Creates new instance with specified description to be included in the serialized graph.
+// If compact is true, then the graph will be marshaled into compact form
 func NewSubstrateGraphMLBuilder(description string, compact bool) SubstrateGraphBuilder {
 	return &graphMLBuilder{
 		nodesMap: make(map[int]*graphml.Node),
@@ -61,7 +61,7 @@ func NewSubstrateGraphMLBuilder(description string, compact bool) SubstrateGraph
 
 func (b *graphMLBuilder) AddNode(nodeId int, nodeNeuronType network.NodeNeuronType,
 	nodeActivation math.NodeActivationType, position *PointF) (err error) {
-	// create attributes map
+	// create attribute map
 	nodeAttr := make(map[string]interface{})
 	nodeAttr[nodeAttrID] = nodeId
 	nodeAttr[nodeAttrNodeNeuronType] = network.NeuronTypeName(nodeNeuronType)
@@ -84,7 +84,7 @@ func (b *graphMLBuilder) AddNode(nodeId int, nodeNeuronType network.NodeNeuronTy
 }
 
 func (b *graphMLBuilder) AddWeightedEdge(sourceId, targetId int, weight float64) error {
-	// create attributes map
+	// create attribute map
 	edgeAttr := make(map[string]interface{})
 	edgeAttr[edgeAttrWeight] = weight
 	edgeAttr[edgeAttrSourceId] = sourceId
@@ -137,10 +137,10 @@ func (b *graphMLBuilder) UnMarshal(r io.Reader) error {
 	return nil
 }
 
-// returns graph associated with this builder
+// returns a graph associated with this builder
 func (b *graphMLBuilder) graph() (*graphml.Graph, error) {
 	if len(b.graphML.Graphs) == 0 {
-		// add new graph
+		// add a new graph
 		if graph, err := b.graphML.AddGraph("", graphml.EdgeDirectionDirected, nil); err != nil {
 			return nil, err
 		} else {

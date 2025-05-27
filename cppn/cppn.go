@@ -1,4 +1,4 @@
-// Package cppn provides implementation of Compositional Pattern Producing Network
+// Package cppn provides implementation of Compositional Pattern Producing Network,
 // which is a part of Hypercube-based NEAT algorithm implementation
 package cppn
 
@@ -35,7 +35,7 @@ func NetworkFromGenomeFile(genomePath string) (*network.Network, error) {
 // Creates normalized by threshold value link between source and target nodes, given calculated CPPN output for their coordinates
 func createThresholdNormalizedLink(cppnOutput float64, srcIndex, dstIndex int, linkThreshold, weightRange float64) *network.FastNetworkLink {
 	weight := (math.Abs(cppnOutput) - linkThreshold) / (1 - linkThreshold) // normalize [0, 1]
-	weight *= weightRange                                                  // scale to fit given weight range
+	weight *= weightRange                                                  // scale to fit a given weight range
 	if math.Signbit(cppnOutput) {
 		weight *= -1 // restore sign
 	}
@@ -47,10 +47,10 @@ func createThresholdNormalizedLink(cppnOutput float64, srcIndex, dstIndex int, l
 	return &link
 }
 
-// Creates link between source and target nodes, given calculated CPPN output for their coordinates
+// Creates a link between source and target nodes, given calculated CPPN output for their coordinates
 func createLink(cppnOutput float64, srcIndex, dstIndex int, weightRange float64) *network.FastNetworkLink {
 	weight := cppnOutput
-	weight *= weightRange // scale to fit given weight range
+	weight *= weightRange // scale to fit a given weight range
 	link := network.FastNetworkLink{
 		Weight:      weight,
 		SourceIndex: srcIndex,
@@ -59,9 +59,9 @@ func createLink(cppnOutput float64, srcIndex, dstIndex int, weightRange float64)
 	return &link
 }
 
-// Calculates outputs of provided CPPN network solver with given hypercube coordinates.
+// Calculates outputs of the provided CPPN network solver with given hypercube coordinates.
 func queryCPPN(coordinates []float64, cppn network.Solver) ([]float64, error) {
-	// flush networks activation from previous run
+	// flush networks activation from the previous run
 	if res, err := cppn.Flush(); err != nil {
 		return nil, err
 	} else if !res {
@@ -111,8 +111,8 @@ func queryCPPN(coordinates []float64, cppn network.Solver) ([]float64, error) {
 //	return cppn.ReadOutputs(), nil
 //}
 
-// Determines variance among CPPN values for certain hypercube region around specified node.
-// This variance is a heuristic indicator of the heterogeneity (i.e. presence of information) of a region.
+// Determines variance among CPPN values for a certain hypercube region around a specified node.
+// This variance is a heuristic indicator of a region's heterogeneity (i.e., presence of information).
 func nodeVariance(node *QuadNode) float64 {
 	// quick check
 	if len(node.Nodes) == 0 {
@@ -124,8 +124,8 @@ func nodeVariance(node *QuadNode) float64 {
 	return stat.Variance(cppnValues, nil)
 }
 
-// Collects the CPPN values stored in a given quadtree node
-// Used to estimate the variance in a certain region of space around node
+// Collects the CPPN values stored in a given quadtree node.
+// Used to estimate the variance in a certain region of space around the node.
 func nodeCPPNValues(n *QuadNode) []float64 {
 	if len(n.Nodes) > 0 {
 		accumulator := make([]float64, 0)

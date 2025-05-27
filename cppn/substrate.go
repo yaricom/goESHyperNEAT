@@ -9,9 +9,9 @@ import (
 	"math"
 )
 
-// Substrate represents substrate holding configuration of ANN with weights produced by CPPN. According to HyperNEAT method
-// the ANN neurons are encoded as coordinates in hypercube presented by this substrate.
-// By default, neurons will be placed into substrate within grid layout
+// Substrate represents a substrate that holds configuration of ANN with weights produced by CPPN.
+// According to the HyperNEAT method, the ANN neurons are encoded as coordinates in the hypercube presented
+// by this substrate. By default, neurons will be placed into substrate within the grid layout.
 type Substrate struct {
 	// Layout The layout of neuron nodes in this substrate
 	Layout SubstrateLayout
@@ -22,7 +22,7 @@ type Substrate struct {
 	OutputNodesActivation neatmath.NodeActivationType
 }
 
-// NewSubstrate creates new instance of substrate.
+// NewSubstrate creates a new instance of substrate.
 func NewSubstrate(layout SubstrateLayout, hiddenNodesActivation, outputNodesActivation neatmath.NodeActivationType) *Substrate {
 	substr := Substrate{
 		Layout:                layout,
@@ -32,12 +32,13 @@ func NewSubstrate(layout SubstrateLayout, hiddenNodesActivation, outputNodesActi
 	return &substr
 }
 
-// CreateNetworkSolver creates network solver based on current substrate layout and provided Compositional Pattern Producing Network which
-// used to define connections between network nodes. Optional graph_builder can be provided to collect graph nodes and edges
-// of created network solver. With graph builder it is possible to save/load network configuration as well as visualize it.
-// If the useLeo is True thar Link Expression Output extension to the HyperNEAT will be used instead of standard weight threshold
-// technique of HyperNEAT to determine whether to express link between two nodes or not. With LEO the link expressed based
-// on value of additional output of the CPPN (if > 0 then expressed)
+// CreateNetworkSolver creates a network solver based on the current substrate layout and provided
+// Compositional Pattern Producing Network, which used to define connections between network nodes.
+// Optional graph_builder can be provided to collect graph nodes and edges
+// of the created network solver. With graph builder it is possible to save/load network configuration as well as visualize it.
+// If the useLeo is True, thar Link Expression Output extension to the HyperNEAT will be used instead of the standard weight threshold
+// technique of HyperNEAT to determine whether to express a link between two nodes or not. With LEO the link is expressed based
+// on the value of additional output of the CPPN (if > 0 then expressed)
 func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphBuilder SubstrateGraphBuilder, options *hyperneat.Options) (network.Solver, error) {
 	// check conditions
 	if s.Layout.BiasCount() > 1 {
@@ -56,7 +57,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 	links := make([]*network.FastNetworkLink, 0)
 	biasList := make([]float64, totalNeuronCount)
 
-	// inline function to find activation type for a given neuron
+	// inline function to find an activation type for a given neuron
 	activationForNeuron := func(nodeIndex int) neatmath.NodeActivationType {
 		if nodeIndex < firstOutput {
 			// input nodes
@@ -98,7 +99,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 				coordinates[3] = hiddenPosition.Y
 				coordinates[4] = hiddenPosition.Z
 
-				// add node to graph
+				// add node to the graph
 				if _, err = addNodeToBuilder(graphBuilder, hi, network.HiddenNeuron, activationForNeuron(hi), hiddenPosition); err != nil {
 					return nil, err
 				}
@@ -108,7 +109,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 				return nil, err
 			} else if link != nil {
 				biasList[hi] = link.Weight
-				// add node and edge to graph
+				// add node and edge to the graph
 				if _, err := addEdgeToBuilder(graphBuilder, bi, hi, link.Weight); err != nil {
 					return nil, err
 				}
@@ -125,7 +126,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 				coordinates[3] = outputPosition.Y
 				coordinates[4] = outputPosition.Z
 
-				// add node to graph
+				// add node to the graph
 				if _, err = addNodeToBuilder(graphBuilder, oi, network.OutputNeuron, activationForNeuron(oi), outputPosition); err != nil {
 					return nil, err
 				}
@@ -135,7 +136,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 				return nil, err
 			} else if link != nil {
 				biasList[oi] = link.Weight
-				// add node and edge to graph
+				// add node and edge to the graph
 				if _, err := addEdgeToBuilder(graphBuilder, bi, oi, link.Weight); err != nil {
 					return nil, err
 				}
@@ -154,7 +155,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 				coordinates[1] = inputPosition.Y
 				coordinates[2] = inputPosition.Z
 
-				// add node to graph
+				// add node to the graph
 				if _, err = addNodeToBuilder(graphBuilder, in, network.InputNeuron, activationForNeuron(in), inputPosition); err != nil {
 					return nil, err
 				}
@@ -173,7 +174,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 					return nil, err
 				} else if link != nil {
 					links = append(links, link)
-					// add node and edge to graph
+					// add node and edge to the graph
 					if _, err := addEdgeToBuilder(graphBuilder, in, hi, link.Weight); err != nil {
 						return nil, err
 					}
@@ -204,7 +205,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 					return nil, err
 				} else if link != nil {
 					links = append(links, link)
-					// add node and edge to graph
+					// add node and edge to the graph
 					if _, err := addEdgeToBuilder(graphBuilder, hi, oi, link.Weight); err != nil {
 						return nil, err
 					}
@@ -222,7 +223,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 				coordinates[1] = inputPosition.Y
 				coordinates[2] = inputPosition.Z
 
-				// add node to graph
+				// add node to the graph
 				if _, err = addNodeToBuilder(graphBuilder, in, network.InputNeuron, activationForNeuron(in), inputPosition); err != nil {
 					return nil, err
 				}
@@ -241,7 +242,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 					return nil, err
 				} else if link != nil {
 					links = append(links, link)
-					// add node and edge to graph
+					// add node and edge to the graph
 					if _, err := addEdgeToBuilder(graphBuilder, in, oi, link.Weight); err != nil {
 						return nil, err
 					}
@@ -262,7 +263,7 @@ func (s *Substrate) CreateNetworkSolver(cppn network.Solver, useLeo bool, graphB
 		return nil, errors.New(message)
 	}
 
-	// create fast network solver
+	// create a fast network solver
 	solver := network.NewFastModularNetworkSolver(
 		s.Layout.BiasCount(), s.Layout.InputCount(), s.Layout.OutputCount(), totalNeuronCount,
 		activations, links, biasList, nil)
@@ -276,7 +277,7 @@ func fastNetworkLink(coordinates []float64, cppn network.Solver, useLeo bool, so
 		// add links only when CPPN LEO output signals to
 		return createLink(outs[0], source, target, options.WeightRange), nil
 	} else if !useLeo && math.Abs(outs[0]) >= options.LinkThreshold {
-		// add only links with signal exceeding provided threshold
+		// add only links with signal exceeding a provided threshold
 		return createThresholdNormalizedLink(outs[0], source, target, options.LinkThreshold, options.WeightRange), nil
 	}
 	return nil, nil

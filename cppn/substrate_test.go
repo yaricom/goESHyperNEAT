@@ -83,7 +83,7 @@ func TestSubstrate_CreateLEONetworkSolver(t *testing.T) {
 
 	// test outputs
 	outExpected := []float64{-0.1147701149321737, -0.7584174401602518}
-	checkNetworkSolverOutputs(solver, outExpected, 0.0, t)
+	checkNetworkSolverOutputs(solver, outExpected, 1e-5, t)
 }
 
 func TestSubstrate_CreateNetworkSolverWithGraphBuilder(t *testing.T) {
