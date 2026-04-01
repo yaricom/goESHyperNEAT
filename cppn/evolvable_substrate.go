@@ -178,7 +178,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn *network.Network, graphBu
 
 		// move to the next window
 		firstHiddenIter = lastHidden
-		lastHidden = lastHidden + (es.Layout.HiddenCount() - lastHidden)
+		lastHidden = firstHidden + es.Layout.HiddenCount()
 	}
 
 	// Connect hidden nodes to the output
