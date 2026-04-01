@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
@@ -113,39 +112,24 @@ func main() {
 
 	// prepare to execute
 	errChan := make(chan error)
-	ctx, cancel := context.WithCancel(experimentContext)
+	fmt.Println("\nPress Ctrl+C to stop")
+	ctx, cancel := signal.NotifyContext(experimentContext, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	defer cancel()
 
 	// run experiment in the separate GO routine
 	go func() {
-		if err = exp.Execute(ctx, startGenome, generationEvaluator, trialObserver); err != nil {
-			errChan <- err
-		} else {
-			errChan <- nil
-		}
+		errChan <- exp.Execute(ctx, startGenome, generationEvaluator, trialObserver)
 	}()
-
-	// register handler to wait for termination signals
-	//
-	go func(cancel context.CancelFunc) {
-		fmt.Println("\nPress Ctrl+C to stop")
-
-		signals := make(chan os.Signal, 1)
-		signal.Notify(signals, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-		select {
-		case <-signals:
-			// signal to stop test fixture
-			cancel()
-		case err = <-errChan:
-			// stop waiting
-		}
-	}(cancel)
 
 	// Wait for experiment completion
 	//
 	err = <-errChan
 	if err != nil {
-		// error during execution
-		log.Fatalf("Experiment execution failed: %s", err)
+		if ctx.Err() != nil {
+			fmt.Println("\nExperiment interrupted by user")
+		} else {
+			log.Fatalf("Experiment execution failed: %s", err)
+		}
 	}
 
 	// Print experiment results statistics
