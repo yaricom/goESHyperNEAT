@@ -18,7 +18,7 @@ LOG_LEVEL = info
 #
 RETINA_CONTEXT_FILE = "./data/retina/es_hyper.neat.yml"
 RETINA_GENOME_FILE = "./data/retina/cppn_genome.yml"
-RETINA_TRIALS_COUNT = 0
+RETINA_TRIALS_COUNT = 1
 RETINA_OUT_DIR = $(OUT_DIR)/retina
 
 # The default targets to run

@@ -289,44 +289,28 @@ func evaluateNetwork(solver network.Solver, leftObj VisualObject, rightObj Visua
 
 // evaluatePredictions returns the loss between predictions and ground truth of leftObj and rightObj
 func evaluatePredictions(predictions []float64, leftObj VisualObject, rightObj VisualObject) float64 {
-	// Convert predictions[i] to 1.0 or 0.0 about 0.5 threshold
-	normPredictions := make([]float64, len(predictions))
-	for i := 0; i < len(normPredictions); i++ {
-		if predictions[i] >= 0.5 {
-			normPredictions[i] = 1.0
-		} else {
-			predictions[i] = 0.0
+	// Threshold predictions to binary 0/1 at 0.5
+	binary := make([]float64, len(predictions))
+	for i, p := range predictions {
+		if p >= 0.5 {
+			binary[i] = 1.0
 		}
 	}
 
-	// Get ground truth values
+	// Build ground truth targets
 	targets := make([]float64, 2)
-
-	// Set target[0] to 1.0 if LeftObj is suitable for Left side, otherwise set to 0.0
 	if leftObj.Side == LeftSide || leftObj.Side == BothSide {
 		targets[0] = 1.0
-	} else {
-		targets[0] = 0.0
 	}
-
-	// Repeat for target[1], the right side truth value
 	if rightObj.Side == RightSide || rightObj.Side == BothSide {
 		targets[1] = 1.0
-	} else {
-		targets[1] = 0.0
 	}
 
-	// Find normalized loss
-	normLoss := (normPredictions[0]-targets[0])*(normPredictions[0]-targets[0]) + (normPredictions[1]-targets[1])*(normPredictions[1]-targets[1])
-	if normLoss == 0 {
-		return 0.0
-	}
-
-	// find loss as an item-wise difference between two vectors
-	loss := (math.Abs(predictions[0]-targets[0]) + math.Abs(predictions[1]-targets[1])) / 2.0
+	// Mean absolute distance between thresholded predictions and targets
+	loss := (math.Abs(binary[0]-targets[0]) + math.Abs(binary[1]-targets[1])) / 2.0
 
 	neat.DebugLog(fmt.Sprintf("[%.2f, %.2f] -> [%.2f, %.2f] loss: %.2f",
-		targets[0], targets[1], normPredictions[0], normPredictions[1], normLoss))
+		targets[0], targets[1], binary[0], binary[1], loss))
 
 	return loss
 }

@@ -127,6 +127,7 @@ func main() {
 	if err != nil {
 		if ctx.Err() != nil {
 			fmt.Println("\nExperiment interrupted by user")
+			os.Exit(1)
 		} else {
 			log.Fatalf("Experiment execution failed: %s", err)
 		}

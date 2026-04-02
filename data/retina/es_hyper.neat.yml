@@ -138,4 +138,4 @@ width: 1.0
 height: 1.0
 
 # ESIterations defines how many times ES-HyperNEAT should iteratively discover new hidden nodes.
-es_iterations: 1
+es_iterations: 5
