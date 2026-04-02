@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"github.com/yaricom/goESHyperNEAT/v2/eshyperneat"
@@ -113,39 +112,24 @@ func main() {
 
 	// prepare to execute
 	errChan := make(chan error)
-	ctx, cancel := context.WithCancel(experimentContext)
+	fmt.Println("\nPress Ctrl+C to stop")
+	ctx, cancel := signal.NotifyContext(experimentContext, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	defer cancel()
 
 	// run experiment in the separate GO routine
 	go func() {
-		if err = exp.Execute(ctx, startGenome, generationEvaluator, trialObserver); err != nil {
-			errChan <- err
-		} else {
-			errChan <- nil
-		}
+		errChan <- exp.Execute(ctx, startGenome, generationEvaluator, trialObserver)
 	}()
-
-	// register handler to wait for termination signals
-	//
-	go func(cancel context.CancelFunc) {
-		fmt.Println("\nPress Ctrl+C to stop")
-
-		signals := make(chan os.Signal, 1)
-		signal.Notify(signals, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-		select {
-		case <-signals:
-			// signal to stop test fixture
-			cancel()
-		case err = <-errChan:
-			// stop waiting
-		}
-	}(cancel)
 
 	// Wait for experiment completion
 	//
 	err = <-errChan
 	if err != nil {
-		// error during execution
-		log.Fatalf("Experiment execution failed: %s", err)
+		if ctx.Err() != nil {
+			fmt.Println("\nExperiment interrupted by user")
+		} else {
+			log.Fatalf("Experiment execution failed: %s", err)
+		}
 	}
 
 	// Print experiment results statistics
@@ -157,8 +141,14 @@ func main() {
 	expResPath := fmt.Sprintf("%s/%s.dat", outDir, *experimentName)
 	if expResFile, err := os.Create(expResPath); err != nil {
 		log.Fatal("Failed to create file for experiment results", err)
-	} else if err = exp.Write(expResFile); err != nil {
-		log.Fatal("Failed to save experiment results", err)
+	} else {
+		if err = exp.Write(expResFile); err != nil {
+			_ = expResFile.Close()
+			log.Fatal("Failed to save experiment results", err)
+		}
+		if err = expResFile.Close(); err != nil {
+			log.Fatal("Failed to close file for experiment results", err)
+		}
 	}
 
 	// Save experiment data in Numpy NPZ format if requested
@@ -166,7 +156,13 @@ func main() {
 	npzResPath := fmt.Sprintf("%s/%s.npz", outDir, *experimentName)
 	if npzResFile, err := os.Create(npzResPath); err != nil {
 		log.Fatalf("Failed to create file for experiment results: [%s], reason: %s", npzResPath, err)
-	} else if err = exp.WriteNPZ(npzResFile); err != nil {
-		log.Fatal("Failed to save experiment results as NPZ file", err)
+	} else {
+		if err = exp.WriteNPZ(npzResFile); err != nil {
+			_ = npzResFile.Close()
+			log.Fatal("Failed to save experiment results as NPZ file", err)
+		}
+		if err = npzResFile.Close(); err != nil {
+			log.Fatalf("Failed to close file for experiment results: [%s], reason: %s", npzResPath, err)
+		}
 	}
 }

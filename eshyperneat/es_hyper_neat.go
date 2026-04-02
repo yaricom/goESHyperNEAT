@@ -61,5 +61,9 @@ func LoadYAMLConfigFile(path string) (*Options, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to open ES-HyperNEAT configuration file")
 	}
+	defer func() {
+		_ = configFile.Close()
+	}()
+
 	return LoadYAMLOptions(configFile)
 }

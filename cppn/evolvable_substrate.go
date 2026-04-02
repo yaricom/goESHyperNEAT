@@ -178,7 +178,7 @@ func (es *EvolvableSubstrate) CreateNetworkSolver(cppn *network.Network, graphBu
 
 		// move to the next window
 		firstHiddenIter = lastHidden
-		lastHidden = lastHidden + (es.Layout.HiddenCount() - lastHidden)
+		lastHidden = firstHidden + es.Layout.HiddenCount()
 	}
 
 	// Connect hidden nodes to the output
@@ -325,12 +325,12 @@ func (es *EvolvableSubstrate) pruneAndExpress(a, b, c float64, connections []*Qu
 	for _, quadNode := range node.Nodes {
 		childVariance := nodeVariance(quadNode)
 
-		if childVariance >= options.VarianceThreshold {
-			if conn, err := es.pruneAndExpress(a, b, c, connections, quadNode, outgoing, options); err != nil {
-				return nil, err
-			} else {
-				connections = append(connections, conn...)
-			}
+			if childVariance >= options.VarianceThreshold {
+				if conn, err := es.pruneAndExpress(a, b, c, nil, quadNode, outgoing, options); err != nil {
+					return nil, err
+				} else {
+					connections = append(connections, conn...)
+				}
 		} else if !options.LeoEnabled || (quadNode.Leo() > 0) {
 			// Band Pruning phase.
 			// If LEO is turned off, this should always happen.
