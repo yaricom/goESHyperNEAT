@@ -1,5 +1,6 @@
 # The experiments outputs
 out
+out-*/
 
 # The vendor dependencies
 vendor
