@@ -39,7 +39,7 @@ execute-retina:
 # Run retina parallel experiment
 #
 execute-retina-parallel:
-	$(GORUN) executor.go --out $(OUT_DIR) \
+	$(GORUN) executor.go --out $(RETINA_OUT_DIR) \
 						 --context $(RETINA_CONTEXT_FILE) \
 						 --genome $(RETINA_GENOME_FILE) \
 						 --experiment retina-parallel \
