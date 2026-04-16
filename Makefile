@@ -19,6 +19,7 @@ LOG_LEVEL = info
 RETINA_CONTEXT_FILE = "./data/retina/es_hyper.neat.yml"
 RETINA_GENOME_FILE = "./data/retina/cppn_genome.yml"
 RETINA_TRIALS_COUNT = 1
+RETINA_MAX_WORKERS = 25
 RETINA_OUT_DIR = $(OUT_DIR)/retina
 
 # The default targets to run
@@ -32,6 +33,17 @@ execute-retina:
 						 --context $(RETINA_CONTEXT_FILE) \
 						 --genome $(RETINA_GENOME_FILE) \
 						 --experiment retina \
+						 --trials $(RETINA_TRIALS_COUNT) \
+						 --log-level $(LOG_LEVEL)
+
+# Run retina parallel experiment
+#
+execute-retina-parallel:
+	$(GORUN) executor.go --out $(RETINA_OUT_DIR) \
+						 --context $(RETINA_CONTEXT_FILE) \
+						 --genome $(RETINA_GENOME_FILE) \
+						 --experiment retina-parallel \
+						 --max-workers $(RETINA_MAX_WORKERS) \
 						 --trials $(RETINA_TRIALS_COUNT) \
 						 --log-level $(LOG_LEVEL)
 

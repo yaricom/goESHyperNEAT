@@ -21,7 +21,8 @@ func main() {
 	var outDirPath = flag.String("out", "./out", "The output directory to store results.")
 	var contextPath = flag.String("context", "./data/retina/es_hyper.neat.yml", "The execution context configuration file.")
 	var genomePath = flag.String("genome", "./data/retina/cppn_genome.yml", "The seed genome to start with.")
-	var experimentName = flag.String("experiment", "retina", "The name of experiment to run. [retina]")
+	var experimentName = flag.String("experiment", "retina", "The name of experiment to run. [retina, retina-parallel]")
+	var maxWorkers = flag.Int("max-workers", 1, "Maximum number of workers to use for parallel experiments.")
 	var speciesTarget = flag.Int("species_target", 15, "The target number of species to maintain.")
 	var speciesCompatAdjustFreq = flag.Int("species_adjust_freq", 10, "The frequency of species compatibility threshold adjustments when trying to maintain their number.")
 
@@ -82,6 +83,9 @@ func main() {
 	if len(*logLevel) > 0 {
 		neat.LogLevel = neat.LoggerLevel(*logLevel)
 	}
+	if *maxWorkers < 1 {
+		*maxWorkers = 1
+	}
 
 	// Create Experiment
 	experimentContext := neatOptions.NeatContext()
@@ -105,6 +109,19 @@ func main() {
 		} else {
 			generationEvaluator, trialObserver = retina.NewGenerationEvaluator(
 				*outDirPath, env, *speciesTarget, *speciesCompatAdjustFreq)
+		}
+	case "retina-parallel":
+		opts, err := eshyperneat.LoadYAMLConfigFile(*contextPath)
+		if err != nil {
+			log.Fatal("Failed to load ES-HyperNEAT options from config file: ", err)
+		} else {
+			experimentContext = eshyperneat.NewContext(experimentContext, opts)
+		}
+		if env, err := retina.NewRetinaEnvironment(retina.CreateRetinaDataset(), 4); err != nil {
+			log.Fatalf("Failed to create retina environment, reason: %s", err)
+		} else {
+			generationEvaluator, trialObserver = retina.NewParallelGenerationEvaluator(
+				*outDirPath, env, *speciesTarget, *speciesCompatAdjustFreq, *maxWorkers)
 		}
 	default:
 		log.Fatalf("Unsupported experiment name requested: %s\n", *experimentName)
